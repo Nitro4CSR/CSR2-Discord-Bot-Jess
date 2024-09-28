@@ -7,10 +7,10 @@ This Bot is brought to you by TheMaintainers.<br>
 2. discord.py
 3. cogs
 4. dotenv
-5. idk maybe more just look at the errors when launching ¯\_( ͡° ͜ʖ ͡°)_/¯
+5. idk maybe more just look at the errors when launching ¯\\\_( ͡° ͜ʖ ͡°)_/¯
 
 ## Data Sources
-1. https://docs.google.com/spreadsheets/d/1nZ8pGqd5ZmNgc0jcEv-pMcOznzLjdq7eRLHSbgTq9CE/edit?gid=539149962#gid=539149962 (car data)
+1. https://docs.google.com/spreadsheets/d/1nZ8pGqd5ZmNgc0jcEv-pMcOznzLjdq7eRLHSbgTq9CE (car data)
 2. https://discord.gg/csr-racing (car specs only)
 
 ## Future
