@@ -24,6 +24,10 @@ def load_super_admin():
     SUPER_ADMIN = os.getenv('SUPER_ADMIN')
     return SUPER_ADMIN
 
+def load_admin_server():
+    ADMIN_SERVER = os.getenv('ADMIN_SERVER')
+    return ADMIN_SERVER
+
 def load_log_channel():
     LOG_CHANNEL = os.getenv('LOG_CHANNEL_ID')
     return LOG_CHANNEL

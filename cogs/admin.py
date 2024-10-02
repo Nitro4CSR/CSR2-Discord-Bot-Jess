@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Determine the base directory (project root)
 # File to store admin list
 ADMIN_FILE = helpers.load_admin_file()
+ADMIN_SERVER = helpers.load_admin_server()
 
 def save_admins(admins):
     """Save admin user IDs to a JSON file."""
@@ -101,4 +102,5 @@ class AdminCog(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(AdminCog(bot), guilds=[discord.Object(id=911297387765567498)])
+    await bot.add_cog(AdminCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))])
+    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))

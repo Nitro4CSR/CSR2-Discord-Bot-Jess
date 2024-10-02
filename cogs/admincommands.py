@@ -15,6 +15,8 @@ NITRO = helpers.load_super_admin()
 # Define the path to the JSON file
 ADMIN_FILE = helpers.load_admin_file()
 
+ADMIN_SERVER = helpers.load_admin_server()
+
 admins = helpers.load_admins()
 
 def is_admin(interaction: discord.Interaction):
@@ -61,4 +63,5 @@ class AdmincommandsCog(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(AdmincommandsCog(bot), guilds=[discord.Object(id=911297387765567498)])
+    await bot.add_cog(AdmincommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))])
+    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))

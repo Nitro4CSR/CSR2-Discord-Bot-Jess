@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 NITRO = helpers.load_super_admin()
+ADMIN_SERVER = helpers.load_admin_server()
 
 class StatusCommandsCog(commands.Cog):
     def __init__(self, bot):
@@ -48,5 +49,5 @@ class StatusCommandsCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, interaction)
 
 async def setup(bot):
-    await bot.add_cog(StatusCommandsCog(bot), guilds=[discord.Object(id=911297387765567498)])
-    await bot.tree.sync(guild=discord.Object(id=911297387765567498))
+    await bot.add_cog(StatusCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))])
+    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))

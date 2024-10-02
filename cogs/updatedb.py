@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # File to store admin list
 ADMIN_FILE = helpers.load_super_admin
+ADMIN_SERVER = helpers.load_admin_server()
 
 admins = helpers.load_admins()
 
@@ -52,5 +53,5 @@ class DatabaseUpdateCog(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(DatabaseUpdateCog(bot), guilds=[discord.Object(id=911297387765567498)])
-    await bot.tree.sync(guild=discord.Object(id=911297387765567498))
+    await bot.add_cog(DatabaseUpdateCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))])
+    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
