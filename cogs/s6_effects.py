@@ -3,7 +3,6 @@ from discord.ext import commands
 from discord import app_commands
 import sqlite3
 from difflib import get_close_matches
-import os
 import asyncio
 import json
 import logging
@@ -176,7 +175,7 @@ class S6ECog(commands.Cog):
                     async def button_callback(interaction: discord.Interaction, entry=entry):
                         try:
                             selected_unique_id = all_unique_ids[entry][0]
-                            await self.fetch_and_send_s6e_by_unique_id(interaction, selected_unique_id)
+                            await self.fetch_and_send_s6e_by_unique_id(interaction, selected_unique_id, log)
                         except discord.errors.NotFound:
                             await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
 
@@ -205,8 +204,7 @@ class S6ECog(commands.Cog):
 
     async def fetch_and_send_s6e_by_unique_id(self, interaction: discord.Interaction, unique_id: str, log: str):
         # Connect to the database
-        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        DATABASE_PATH = os.path.join(BASE_DIR, 'resources', 'WRs.db')
+        DATABASE_PATH = helpers.load_external_db()
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         
@@ -229,7 +227,7 @@ class S6ECog(commands.Cog):
         if rows:
             logger.info(f"Query success")
             log += f"\nQuery success"
-            await self.send_s6e_in_channel(interaction, rows, direct_match=False)
+            await self.send_s6e_in_channel(interaction, rows, log, direct_match=False)
         else:
             logger.info(f"Query found no S6E entry... Sending contribute notice")
             log += f"\nQuery found no S6E entry... Sending contribute notice"
