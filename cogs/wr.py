@@ -130,7 +130,7 @@ class WRCommandCog(commands.Cog):
             similar_entries_query = ("""\nSELECT records."Ingame Name Clarification", records.UniqueID, records.★\nFROM records""")
 
             if csr2_version:
-                similar_entries_query += """JOIN info ON records.UniqueID = info.UniqueID"""
+                similar_entries_query += """\nJOIN info ON records.UniqueID = info.UniqueID"""
 
             if any([rarity, tier, csr2_version]):
                 similar_entries_query += """\nWHERE"""
