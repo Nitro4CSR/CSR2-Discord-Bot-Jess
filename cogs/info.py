@@ -3,7 +3,6 @@ from discord.ext import commands
 from discord import app_commands
 import sqlite3
 from difflib import get_close_matches
-import os
 import asyncio
 import json
 import logging
@@ -44,14 +43,14 @@ class InfoCommandCog(commands.Cog):
     async def fetch_and_send_info(self, interaction: discord.Interaction, car: str, rarity: str, tier: str, csr2_version: str, log: str):
 
         # Connect to the database
-        DATABASE_PATH = helpers.load_base_dir()
+        DATABASE_PATH = helpers.load_external_db()
         LIMIT_FILE = helpers.load_server_limits()
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
         # Query by different criteria
         parameters = []
-        query = """\nSELECT "UniqueID", "DB Name", "Ingame Name Clarification", Un, ★, IMG, "Vision Info", "is EV?", "thread"\nFROM info"""
+        query = """\nSELECT "UniqueID", "DB Name", "Ingame Name", Un, ★, IMG, "Vision Info", "is EV?", "thread"\nFROM info"""
 
         if any([car, rarity, tier, csr2_version]):
             query += "\nWHERE"
@@ -65,7 +64,7 @@ class InfoCommandCog(commands.Cog):
             elif db_name_valid:
                 query += """ "DB Name" COLLATE NOCASE LIKE ?"""
             else:
-                query += """ "Ingame Name Clarification" COLLATE NOCASE LIKE ?"""
+                query += """ "Ingame Name" COLLATE NOCASE LIKE ?"""
             parameters.append(f"%{car}%")
 
         # Add rarity and tier filter if provided
@@ -121,12 +120,12 @@ class InfoCommandCog(commands.Cog):
             logger.info(f"No direct matches found, using cutoff to potentially recover.")
             log += f"\nNo direct matches found, using cutoff to potentially recover."
             parameters = []
-            similar_entries_query = ("""\nSELECT "Ingame Name Clarification", UniqueID, ★\nFROM info""")
+            similar_entries_query = ("""\nSELECT "Ingame Name", UniqueID, ★\nFROM info""")
 
             if any([car, rarity, tier, csr2_version]):
                 similar_entries_query += """\nWHERE"""
             if car:
-                similar_entries_query += """ "Ingame Name Clarification" COLLATE NOCASE LIKE ?"""
+                similar_entries_query += """ "Ingame Name" COLLATE NOCASE LIKE ?"""
                 parameters.append(f"%{car}%")
             if rarity:
                 if car:
@@ -203,7 +202,7 @@ class InfoCommandCog(commands.Cog):
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
-        query = """\nSELECT UniqueID, "DB Name", "Ingame Name Clarification", Un, ★, IMG, "Vision Info", "is EV?", thread\nFROM info\nWHERE UniqueID = ?"""
+        query = """\nSELECT UniqueID, "DB Name", "Ingame Name", Un, ★, IMG, "Vision Info", "is EV?", thread\nFROM info\nWHERE UniqueID = ?"""
 
         logger.info(f"The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}")
         log += f"\nThe following query has been used: {query}\nThe following parameters were used: {(unique_id,)}"
@@ -307,7 +306,7 @@ class InfoCommandCog(commands.Cog):
                 row_list[7] = 'Electric Car'
 
             embed = discord.Embed(
-                title=row_list[2],  # Ingame Name Clarification
+                title=row_list[2],  # Ingame Name
                 description="",
                 color=discord.Color(0xff00ff)
             )
