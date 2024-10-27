@@ -20,6 +20,27 @@ def load_client_id():
     CLIENT_ID = os.getenv('CLIENT_ID')
     return CLIENT_ID
 
+def load_default_pfp():
+     return os.path.join('assets/PfP.png')
+
+def load_halloween_pfp():
+    return os.path.join('assets/PfP_Halloween.png')
+
+def load_xmas_pfp():
+    return os.path.join('assets/PfP_Christmas.png')
+
+def load_default_name():
+    CLIENT_DEFAULT_NAME = os.getenv('CLIENT_DEFAULT_NAME')
+    return CLIENT_DEFAULT_NAME
+
+def load_halloween_name():
+    CLIENT_HALLOWEEN_NAME = os.getenv('CLIENT_HALLOWEEN_NAME')
+    return CLIENT_HALLOWEEN_NAME
+
+def load_xmas_name():
+    CLIENT_CHRISTMAS_NAME = os.getenv('CLIENT_CHRISTMAS_NAME')
+    return CLIENT_CHRISTMAS_NAME
+
 def load_super_admin():
     SUPER_ADMIN = os.getenv('SUPER_ADMIN')
     return SUPER_ADMIN

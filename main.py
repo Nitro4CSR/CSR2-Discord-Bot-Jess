@@ -1,8 +1,10 @@
 import discord
 from discord.ext import commands
+from discord.ext import tasks
 import os
 import logging
 import asyncio
+import datetime
 import database_manager
 import tunes_manager
 import helpers
@@ -16,6 +18,16 @@ logging.basicConfig(
 # Load environment variables from .env file
 TOKEN = helpers.load_token()
 CLIENT_ID = helpers.load_client_id()
+
+# Paths to the profile images
+DEFAULT_PFP_PATH = helpers.load_default_pfp()
+HALLOWEEN_PFP_PATH = helpers.load_halloween_pfp()
+CHRISTMAS_PFP_PATH = helpers.load_xmas_pfp()
+
+# Desired names
+DEFAULT_NAME = helpers.load_default_name()
+HALLOWEEN_NAME = helpers.load_halloween_name()
+CHRISTMAS_NAME = helpers.load_xmas_name()
 
 # Ensure CLIENT_ID and TOKEN are loaded
 if not TOKEN or not CLIENT_ID:
@@ -46,6 +58,34 @@ async def on_ready():
     activity = discord.Game(name="CSR Racing")
     await bot.change_presence(activity=activity)
     logging.info("Basic presence set")
+    await check_date()
+
+@tasks.loop(hours=24)
+async def check_date():
+    # Runs daily at midnight to check if it's October 1st or November 1st.
+    today = datetime.datetime.now().date()
+    
+    # Check if current month is November or January
+    if today.month == 11 or today.month == 1:
+        await update_bot_profile(DEFAULT_PFP_PATH, DEFAULT_NAME)
+    # Check if current month is October
+    elif today.month == 10:
+        await update_bot_profile(HALLOWEEN_PFP_PATH, HALLOWEEN_NAME)
+    # Check if current month is December
+    elif today.month == 12:
+        await update_bot_profile(CHRISTMAS_PFP_PATH, CHRISTMAS_NAME)
+
+
+
+async def update_bot_profile(pfp_path, new_name):
+    # Updates bot's profile picture and name based on given parameters.
+    with open(pfp_path, 'rb') as pfp_file:
+        try:
+            # Update bot name and avatar
+            await bot.user.edit(username=new_name, avatar=pfp_file.read())
+            print(f"Updated bot name to '{new_name}' and profile picture.")
+        except discord.HTTPException as e:
+            print(f"Failed to update bot profile: {e}")
 
 async def schedule_updates():
     tunes_manager.create_database()
