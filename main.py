@@ -58,10 +58,9 @@ async def on_ready():
     activity = discord.Game(name="CSR Racing")
     await bot.change_presence(activity=activity)
     logging.info("Basic presence set")
-    await check_date()
+    await profile_update()
 
-@tasks.loop(hours=24)
-async def check_date():
+async def profile_update():
     # Runs daily at midnight to check if it's October 1st or November 1st.
     today = datetime.datetime.now().date()
     
@@ -87,7 +86,7 @@ async def update_bot_profile(pfp_path, new_name):
         except discord.HTTPException as e:
             print(f"Failed to update bot profile: {e}")
 
-async def schedule_updates():
+async def schedule_db_updates():
     tunes_manager.create_database()
     while True:
         try:
@@ -96,8 +95,17 @@ async def schedule_updates():
             logging.error(f"Error during database update: {e}")
         await asyncio.sleep(3600)  # Sleep for 1 hour
 
+async def schedule_profile_update():
+    while True:
+        try:
+            await schedule_profile_update()
+        except Exception as e:
+            logging.error(f"Error during profile update: {e}")
+        await asyncio.sleep(86400)
+
 async def main():
-    asyncio.create_task(schedule_updates())
+    asyncio.create_task(schedule_db_updates())
+    asyncio.create_task(schedule_profile_update())
     await bot.start(TOKEN)
 
 if __name__ == "__main__":
