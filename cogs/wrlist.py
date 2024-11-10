@@ -35,13 +35,13 @@ class WRlist(commands.Cog):
         logger.info(f"{len(results)} results found")
         log += f"\n{len(results)} results found"
         
-        if results:
+        if len(results) > 0:
             view = PaginatedView(results, interaction.user, car, rarity, tier, csr2_version)
             await view.start(interaction)
             await in_app_logging.send_log(self.bot, log, interaction)
         else:
             logger.info(f"Sending message...")
-            log += logger.info(f"Sending message...")
+            log += f"Sending message..."
             await in_app_logging.send_log(self.bot, log, interaction)
             await interaction.followup.send("No results found.")
 
