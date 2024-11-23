@@ -29,6 +29,9 @@ def load_halloween_pfp():
 def load_xmas_pfp():
     return os.path.join('assets/PfP_Christmas.png')
 
+def load_bday_pfp():
+    return os.path.join('assets/PfP_Birthday.png')
+
 def load_default_name():
     CLIENT_DEFAULT_NAME = os.getenv('CLIENT_DEFAULT_NAME')
     return CLIENT_DEFAULT_NAME
@@ -40,6 +43,16 @@ def load_halloween_name():
 def load_xmas_name():
     CLIENT_CHRISTMAS_NAME = os.getenv('CLIENT_CHRISTMAS_NAME')
     return CLIENT_CHRISTMAS_NAME
+
+def load_bday_name():
+    CLIENT_BIRTHDAY_NAME = os.getenv('CLIENT_BIRTHDAY_NAME')
+    return CLIENT_BIRTHDAY_NAME
+
+def load_bday_month():
+    return int(os.getenv('CLIENT_BIRTHDAY_MONTH'))
+
+def load_bday_day():
+    return int(os.getenv('CLIENT_BIRTHDAY_DAY'))
 
 def load_super_admin():
     SUPER_ADMIN = os.getenv('SUPER_ADMIN')

@@ -23,11 +23,16 @@ CLIENT_ID = helpers.load_client_id()
 DEFAULT_PFP_PATH = helpers.load_default_pfp()
 HALLOWEEN_PFP_PATH = helpers.load_halloween_pfp()
 CHRISTMAS_PFP_PATH = helpers.load_xmas_pfp()
+BIRTHDAY_PFP_PATH = helpers.load_bday_pfp()
 
 # Desired names
 DEFAULT_NAME = helpers.load_default_name()
 HALLOWEEN_NAME = helpers.load_halloween_name()
 CHRISTMAS_NAME = helpers.load_xmas_name()
+BIRTHDAY_NAME = helpers.load_bday_name()
+
+BDAY_MONTH = helpers.load_bday_month()
+BDAY_DAY = helpers.load_bday_day()
 
 # Ensure CLIENT_ID and TOKEN are loaded
 if not TOKEN or not CLIENT_ID:
@@ -64,15 +69,18 @@ async def profile_update():
     # Runs daily at midnight to check if it's October 1st or November 1st.
     today = datetime.datetime.now().date()
     
-    # Check if current month is November or January
-    if today.month == 11 or today.month == 1:
-        await update_bot_profile(DEFAULT_PFP_PATH, DEFAULT_NAME)
+    # Check if current day is Birthday
+    if today.month == BDAY_MONTH and today.day == BDAY_DAY:
+        await update_bot_profile(BIRTHDAY_PFP_PATH, DEFAULT_NAME)
     # Check if current month is October
     elif today.month == 10:
         await update_bot_profile(HALLOWEEN_PFP_PATH, HALLOWEEN_NAME)
     # Check if current month is December
     elif today.month == 12:
         await update_bot_profile(CHRISTMAS_PFP_PATH, CHRISTMAS_NAME)
+    # Fallback to default
+    else:
+        await update_bot_profile(DEFAULT_PFP_PATH, DEFAULT_NAME)
 
 
 
@@ -98,9 +106,9 @@ async def schedule_db_updates():
 async def schedule_profile_update():
     while True:
         try:
-            await schedule_profile_update()
+            await profile_update()
         except Exception as e:
-            logging.error(f"Error during profile update: {e}")
+            logging.error(f"Error during profile update: {e}\nNormal during Startup")
         await asyncio.sleep(86400)
 
 async def main():
