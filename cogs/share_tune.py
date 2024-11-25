@@ -440,7 +440,7 @@ class ShareTune(commands.Cog):
         chunks = [cars_with_index[i:i + 20] for i in range(0, len(cars_with_index), 20)]
         current_page = 0
 
-        await self.send_car_selection_embed(interaction.user, chunks, current_page)
+        await self.send_car_selection_embed(interaction.user, chunks, current_page, log)
         
         response = await self.bot.wait_for('message', check=lambda m: m.author == interaction.user)
         if response.content.upper() == "CANCEL":
@@ -470,9 +470,9 @@ class ShareTune(commands.Cog):
         ]
         return sub_questions
 
-    async def send_car_selection_embed(self, user, chunks, page):
+    async def send_car_selection_embed(self, user, chunks, page, log):
         embed = self.create_car_embed(chunks, page)
-        view = CarSelectionView(chunks, page, user, self)
+        view = CarSelectionView(chunks, page, user, self, log)
         self.car_message = await user.send(embed=embed, view=view)
 
     def create_car_embed(self, chunks, page):
@@ -495,7 +495,7 @@ class ShareTune(commands.Cog):
         stars = car[3]
         
         selection_message = f"You selected: {ign} (Tier: {tier}, Stars: {stars})\n\nDo you want to confirm this selection?"
-        view, log = ConfirmSelectionView(self, car, log)
+        view = ConfirmSelectionView(self, car, log)
         await interaction.response.send_message(selection_message, view=view)
 
     async def ask_questions(self, user, car, interaction: discord.Interaction, log: str):
@@ -512,7 +512,7 @@ class ShareTune(commands.Cog):
             "What is your Nitrous Tuning setup? Format: <power>/duration Example: `188/4.0` If you don't have access to this part of tuning type `none`!",
             "What is your Final Drive Tuning setup? Format: x.xx Example: `3.49` If you don't have access to this part of tuning type `none`!",
             "What is your Tire Pressure Tuning setup? Format: <acceleration>/<grip> Example: `0/100` If you don't have access to this part of tuning type `none`!",
-            "What is your Tuning setup's Dyno time format: x.xxx Example 12.040 If you don't have access to this part of tuning type `none`!",
+            "What is your Tuning setup's Dyno time format: x.xxx Example `12.040` If you don't have access to this part of tuning type `none`!",
             "What is the purpose of your setup? Good statements are Live Racing, Story, Tempest, Speedtraps, Sprint Races, WEC, Live Bots, etc.",
             "Give a short but good explanation of how to use your tune. When should you shift into each gear? When should you activate Nitrous? Are downshifts needed? Anything that you think is needed to use the setup like you use it."
         ]
@@ -690,7 +690,8 @@ class ShareTune(commands.Cog):
             embed.add_field(name=f"Tier: {result[3]}", value=f"**PP: {result[5]}**", inline=True)
             embed.add_field(name=f"Stars: {result[4]}", value=f"**EVO: {result[6]}**", inline=True)
             embed.add_field(name="Part                                      Upgrades", value=f"`\nEngine/Motor        Stage {result[7]}\nTurbo/Battery       Stage {result[14]}\nIntake/Inverter     Stage {result[21]}\nNitrous/Overboost   Stage {result[28]}\nBody                Stage {result[35]}\nTires               Stage {result[42]}\nTransmission        Stage {result[49]}`", inline=False)
-            embed.add_field(name="Part                                      Fusuions", value=f"`\n**Engine/Motor**\n - Stage 1:         {result[8]}\n - Stage 2:          {result[9]}\n - Stage 3:         {result[10]}\n - Stage 4:         {result[11]}\n - Stage 5:         {result[12]}\n - Stage 6:         {result[13]}\n**Turbo/Battery**\n - Stage 1:         {result[15]}\n - Stage 2:         {result[16]}\n - Stage 3:         {result[17]}\n - Stage 4:         {result[18]}\n - Stage 5:         {result[19]}\n - Stage 6:         {result[20]}\n**Intake/Inverter**\n - Stage 1:         {result[22]}\n - Stage 2:         {result[23]}\n - Stage 3:         {result[24]}\n - Stage 4:         {result[25]}\n - Stage 5:         {result[26]}\n - Stage 6:         {result[27]}\n**Nitrous/Overboost**\n - Stage 1:         {result[29]}\n - Stage 2:         {result[30]}\n - Stage 3:         {result[31]}\n - Stage 4:         {result[32]}\n - Stage 5:         {result[33]}\n - Stage 6:         {result[34]}\n**Body**\n - Stage 1:         {result[36]}\n - Stage 2:         {result[37]}\n - Stage 3:         {result[38]}\n - Stage 4:         {result[39]}\n - Stage 5:         {result[40]}\n - Stage 6:         {result[41]}\n**Tires**\n - Stage 1:         {result[43]}\n - Stage 2:         {result[44]}\n - Stage 3:         {result[45]}\n - Stage 4:         {result[46]}\n - Stage 5:         {result[47]}\n - Stage 6:         {result[48]}\n**Transmission**\n - Stage 1:         {result[50]}\n - Stage 2:         {result[51]}\n - Stage 3:         {result[52]}\n - Stage 4:         {result[53]}\n - Stage 5:         {result[54]}\n - Stage 6:         {result[55]}\n`", inline=False)
+            embed.add_field(name="Part                                      Fusuions", value=f"`\n**Engine/Motor**\n - Stage 1:         {result[8]}\n - Stage 2:          {result[9]}\n - Stage 3:         {result[10]}\n - Stage 4:         {result[11]}\n - Stage 5:         {result[12]}\n - Stage 6:         {result[13]}\n**Turbo/Battery**\n - Stage 1:         {result[15]}\n - Stage 2:         {result[16]}\n - Stage 3:         {result[17]}\n - Stage 4:         {result[18]}\n - Stage 5:         {result[19]}\n - Stage 6:         {result[20]}\n**Intake/Inverter**\n - Stage 1:         {result[22]}\n - Stage 2:         {result[23]}\n - Stage 3:         {result[24]}\n - Stage 4:         {result[25]}\n - Stage 5:         {result[26]}\n - Stage 6:         {result[27]}\n", inline=False)
+            embed.add_field(name=f"`Nitrous/Overboost`", value=f"` - Stage 1:         {result[29]}\n - Stage 2:         {result[30]}\n - Stage 3:         {result[31]}\n - Stage 4:         {result[32]}\n - Stage 5:         {result[33]}\n - Stage 6:         {result[34]}`\n**Body**`\n - Stage 1:         {result[36]}\n - Stage 2:         {result[37]}\n - Stage 3:         {result[38]}\n - Stage 4:         {result[39]}\n - Stage 5:         {result[40]}\n - Stage 6:         {result[41]}`\n**Tires**`\n - Stage 1:         {result[43]}\n - Stage 2:         {result[44]}\n - Stage 3:         {result[45]}\n - Stage 4:         {result[46]}\n - Stage 5:         {result[47]}\n - Stage 6:         {result[48]}`\n**Transmission**`\n - Stage 1:         {result[50]}\n - Stage 2:         {result[51]}\n - Stage 3:         {result[52]}\n - Stage 4:         {result[53]}\n - Stage 5:         {result[54]}\n - Stage 6:         {result[55]}\n`")
             embed.add_field(name="Tuning", value=f"Nitrous: {result[56]}\nFinal Drive: {result[57]}\nTire Pressure: {result[58]}\n\nDyno: {float(result[59]):.3f}", inline=False)
             embed.add_field(name=f"Purpose: {result[60]}", value=f"**Usage**\n{result[61]}\n\n-# Creator: {result[62]} ({result[63]})", inline=False)
             embed.set_footer(text=f"TuneID: {result[0]} - DB_Name: {result[1]}")
@@ -723,15 +724,16 @@ def save_fusion_selection(fusions: int):
             return fs
 
 class CarSelectionView(ui.View):
-    def __init__(self, chunks, page, user, cog):
+    def __init__(self, chunks, page, user, cog, log):
         super().__init__()
         self.chunks = chunks
         self.page = page
         self.user = user
         self.cog = cog
+        self.log = log
 
         for idx, car in enumerate(self.chunks[self.page]):
-            self.add_item(CarSelectionButton(idx + 1, car, self.cog))
+            self.add_item(CarSelectionButton(idx + 1, car, self.cog, self.log))
 
         if len(chunks) > 1:
             self.add_item(NavigationButton(label="Back", direction=-1, page=self.page, chunks=self.chunks, user=self.user, cog=self.cog))
@@ -745,14 +747,15 @@ class CarSelectionView(ui.View):
                 await self.cog.car_message.delete()
 
 class CarSelectionButton(ui.Button):
-    def __init__(self, index, car_data, cog):
+    def __init__(self, index, car_data, cog, log):
         super().__init__(label=str(index), style=discord.ButtonStyle.primary)
         self.car_data = car_data
         self.cog = cog
+        self.log = log
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id in self.cog.active_submissions:
-            await self.cog.handle_car_selection(interaction, self.car_data)
+            await self.cog.handle_car_selection(interaction, self.car_data, self.log)
 
 class NavigationButton(ui.Button):
     def __init__(self, label, direction, page, chunks, user, cog):
@@ -787,13 +790,13 @@ class ConfirmButton(ui.Button):
         self.car = car
         self.log = log
 
-    async def callback(self, interaction: discord.Interaction, log: str):
+    async def callback(self, interaction: discord.Interaction):
         logger.info(f"Car confirmed")
-        log += f"\nCar confirmed"
+        self.log += f"\nCar confirmed"
         if self.cog.car_message:
             await self.cog.car_message.delete()
         await interaction.response.edit_message(content="Car selection confirmed! Proceeding with the next steps...")
-        await self.cog.ask_questions(interaction.user, self.car, interaction, log)
+        await self.cog.ask_questions(interaction.user, self.car, interaction, self.log)
         self.cog.active_submissions.pop(interaction.user.id, None)
 
 class DeclineButton(ui.Button):
@@ -801,10 +804,10 @@ class DeclineButton(ui.Button):
         super().__init__(label="Decline", style=discord.ButtonStyle.danger)
         self.log = log
 
-    async def callback(self, interaction: discord.Interaction, log: str):
+    async def callback(self, interaction: discord.Interaction):
         await interaction.message.delete()
         logger.info("Car selection declined and message deleted.")
-        log += f"\nCar selection declined and message deleted."
+        self.log += f"\nCar selection declined and message deleted."
 
 async def setup(bot):
     await bot.add_cog(ShareTune(bot))
