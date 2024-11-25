@@ -1,6 +1,7 @@
 import sqlite3
 import os
-import requests
+import urllib.request
+import json
 import logging
 import schedule
 import time
@@ -45,16 +46,16 @@ def check_and_create_database():
     else:
         logging.info(f"No existing database found. Proceeding to create a new one.")
 
+def fetch_data_with_urllib(url):
+    with urllib.request.urlopen(url) as response:
+        data = response.read()
+        return json.loads(data)
+
 def fetch_json_data():
     json_data = {}
     for table_name, url in JSON_URL.items():
-        response = requests.get(url)
-        if response.status_code == 200:
-            json_data[table_name] = response.json()
-            logging.info(f"Fetched data for {table_name}: {json_data[table_name][:2]}... (showing first 2 records)")
-        else:
-            logging.error(f"Failed to fetch data for {table_name}")
-            json_data[table_name] = []
+        json_data[table_name] = fetch_data_with_urllib(url)
+        logging.info(f"Fetched data for {table_name}: {json_data[table_name][:2]}... (showing first 2 records)")
     return json_data
 
 def create_tables(cursor):
@@ -63,7 +64,6 @@ def create_tables(cursor):
         logging.info(f"Created table: {table_name} with schema: {schema}")
 
 def insert_data(cursor, json_data):
-    
     for table_name, data in json_data.items():
         if data:
             # Extract keys and values from JSON data
