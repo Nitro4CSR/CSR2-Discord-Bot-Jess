@@ -12,7 +12,7 @@ import helpers
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class WRlist(commands.Cog):
+class WRlistCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -183,4 +183,4 @@ class PaginatedView(discord.ui.View):
 
 
 async def setup(bot):
-    await bot.add_cog(WRlist(bot))
+    await bot.add_cog(WRlistCog(bot))

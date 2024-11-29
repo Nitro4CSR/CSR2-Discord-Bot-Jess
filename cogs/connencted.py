@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 TOKEN = helpers.load_token()
 CLIENT_ID = helpers.load_client_id()
 NITRO = helpers.load_super_admin()
+ADMIN_SERVER = helpers.load_admin_server()
 
 class ConnectedCog(commands.Cog):
     def __init__(self, bot):
@@ -51,4 +52,5 @@ class ConnectedCog(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(ConnectedCog(bot), guilds=[discord.Object(id=911297387765567498)])
+    await bot.add_cog(ConnectedCog(bot), guilds=[discord.Object(id=ADMIN_SERVER)])
+    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))

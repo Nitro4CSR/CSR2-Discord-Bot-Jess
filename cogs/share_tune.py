@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 NITRO = helpers.load_super_admin()
 
-class ShareTune(commands.Cog):
+class ShareTuneCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.car_message = None
@@ -810,4 +810,4 @@ class DeclineButton(ui.Button):
         self.log += f"\nCar selection declined and message deleted."
 
 async def setup(bot):
-    await bot.add_cog(ShareTune(bot))
+    await bot.add_cog(ShareTuneCog(bot))

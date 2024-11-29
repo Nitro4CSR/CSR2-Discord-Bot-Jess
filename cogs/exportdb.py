@@ -24,7 +24,7 @@ def is_admin(interaction: discord.Interaction):
     if str(interaction.user.id) in admins:
         return interaction.user.id
 
-class exportDBCog(commands.Cog):
+class ExportDBCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -59,4 +59,5 @@ class exportDBCog(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(exportDBCog(bot), guilds=[discord.Object(id=ADMIN_SERVER)])
+    await bot.add_cog(ExportDBCog(bot), guilds=[discord.Object(id=ADMIN_SERVER)])
+    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))

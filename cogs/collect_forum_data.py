@@ -20,7 +20,7 @@ TOKEN = helpers.load_token()
 CLIENT_ID = helpers.load_client_id()
 NITRO = helpers.load_super_admin()
 
-class ForumCollector(commands.Cog):
+class CollectForumDataCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -107,4 +107,4 @@ class ForumCollector(commands.Cog):
                 await asyncio.sleep(retry_after)
 
 async def setup(bot):
-    await bot.add_cog(ForumCollector(bot))
+    await bot.add_cog(CollectForumDataCog(bot))

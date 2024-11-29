@@ -22,7 +22,7 @@ def is_mod(interaction: discord.Interaction):
         return interaction.user.id
     return None
 
-class LimitResults(commands.Cog):
+class LimitResultsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -110,4 +110,4 @@ class LimitResults(commands.Cog):
         await in_app_logging.send_log(self.bot, log, interaction)
 
 async def setup(bot):
-    await bot.add_cog(LimitResults(bot))
+    await bot.add_cog(LimitResultsCog(bot))

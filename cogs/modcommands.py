@@ -30,7 +30,7 @@ class ModcommandsCog(commands.Cog):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_modcommands commad: {command}")
         log = f"The following command has been used: /csr2_modcommands commad: {command}"
-        
+
         if interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
             await interaction.response.defer()
 

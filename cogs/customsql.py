@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 
 LIMIT_FILE = helpers.load_server_limits()
 
-class CustomSQL(commands.Cog):
+class CustomSQLCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @app_commands.command(name="csr2_customsql", description="Custom SQL command for CSR2.")
     @app_commands.describe(database="Choose the database to connect to.", select="The SELECT part of the SQL statement.", update="The UPDATE part of the SQL statement.", create_table="The CREATE TABLE part of the SQL statement.", insert_into="The INSERT INTO part of the SQL statement.", from_="The FROM part of the SQL statement.", set_="The SET part of the SQL statement.", where="The WHERE part of the SQL statement.")
-    @app_commands.choices(database=[app_commands.Choice(name="WRs", value="WRs"), app_commands.Choice(name="tunes", value="tunes")])
+    @app_commands.choices(database=[app_commands.Choice(name="WRs", value="EDB"), app_commands.Choice(name="tunes", value="tunes")])
     @app_commands.choices(from_=[app_commands.Choice(name="records", value="records"), app_commands.Choice(name="s6_effects", value="s6_effects"), app_commands.Choice(name="info", value="info"), app_commands.Choice(name="updates", value="updates"), app_commands.Choice(name="community_tunes", value="community_tunes")])
     async def customsql(self, interaction: discord.Interaction, database: app_commands.Choice[str], select: str = None, update: str = None, create_table: str = None, insert_into: str = None, from_: app_commands.Choice[str] = None, set_: str = None, where: str = None):
         logger.info(f"The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}")
@@ -261,4 +261,4 @@ class CustomSQL(commands.Cog):
 
 # Setup function to add this cog to the bot
 async def setup(bot):
-    await bot.add_cog(CustomSQL(bot))
+    await bot.add_cog(CustomSQLCog(bot))

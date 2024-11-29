@@ -22,6 +22,7 @@ def save_admins(admins):
             json.dump(list(admins), f)
     except Exception as e:
         logger.error(f"Error saving admin file: {e}")
+        log =+ f"Error saving admin file: {e}"
 
 admins = helpers.load_admins()
 
