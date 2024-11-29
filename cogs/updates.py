@@ -10,7 +10,7 @@ import helpers
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class UpdatesCommandCog(commands.Cog):
+class UpdatesCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -130,4 +130,4 @@ class PaginatedView(discord.ui.View):
 
 
 async def setup(bot):
-    await bot.add_cog(UpdatesCommandCog(bot))
+    await bot.add_cog(UpdatesCog(bot))

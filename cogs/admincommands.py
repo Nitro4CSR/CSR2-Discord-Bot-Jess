@@ -77,5 +77,5 @@ class AdminCommandsCog(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))])
+    await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
     await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
