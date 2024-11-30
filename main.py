@@ -7,6 +7,8 @@ import asyncio
 import datetime
 import database_manager
 import tunes_manager
+import version_check_manager_CSR2
+import version_check_manager_CSR3
 import helpers
 
 # Configure logging
@@ -63,7 +65,9 @@ async def on_ready():
     activity = discord.Game(name="CSR Racing")
     await bot.change_presence(activity=activity)
     logging.info("Basic presence set")
-    await profile_update()
+    asyncio.create_task(schedule_profile_update())
+    await asyncio.sleep(10)
+    asyncio.create_task(schedule_version_check())
 
 async def profile_update():
     # Runs daily at midnight to check if it's October 1st or November 1st.
@@ -90,9 +94,9 @@ async def update_bot_profile(pfp_path, new_name):
         try:
             # Update bot name and avatar
             await bot.user.edit(username=new_name, avatar=pfp_file.read())
-            print(f"Updated bot name to '{new_name}' and profile picture.")
+            logging.info(f"Updated bot name to '{new_name}' and profile picture.")
         except discord.HTTPException as e:
-            print(f"Failed to update bot profile: {e}")
+            logging.info(f"Failed to update bot profile: {e}")
 
 async def schedule_db_updates():
     tunes_manager.create_database()
@@ -103,17 +107,25 @@ async def schedule_db_updates():
             logging.error(f"Error during database update: {e}")
         await asyncio.sleep(3600)  # Sleep for 1 hour
 
+async def schedule_version_check():
+    while True:
+        try:
+            await version_check_manager_CSR2.version_check_task(bot)
+            await version_check_manager_CSR3.version_check_task(bot)
+        except Exception as e:
+            logging.error(f"Error during version check: {e}")
+        await asyncio.sleep(1200)  # Sleep for 20 minutes
+
 async def schedule_profile_update():
     while True:
         try:
             await profile_update()
         except Exception as e:
-            logging.error(f"Error during profile update: {e}\nNormal during Startup")
-        await asyncio.sleep(86400)
+            logging.error(f"Error during profile update: {e}")
+        await asyncio.sleep(86400) # Sleep for 1 day
 
 async def main():
     asyncio.create_task(schedule_db_updates())
-    asyncio.create_task(schedule_profile_update())
     await bot.start(TOKEN)
 
 if __name__ == "__main__":

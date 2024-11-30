@@ -69,20 +69,38 @@ def load_log_channel():
 def load_admin_file():
     return os.path.join('resources/admins.json')
 
+def load_CSR2_announcement_channel_file():
+    return os.path.join('resources/CSR2_announcement_channels.json')
+
+def load_CSR3_announcement_channel_file():
+    return os.path.join('resources/CSR3_announcement_channels.json')
+
+def load_CSR2_announcement_user_file():
+    return os.path.join('resources/CSR2_announcement_users.json')
+
+def load_CSR3_announcement_user_file():
+    return os.path.join('resources/CSR3_announcement_users.json')
+
+def load_CSR2versions_json():
+    return os.path.join('resources/CSR2_versions.json')
+
+def load_CSR3versions_json():
+    return os.path.join('resources/CSR3_versions.json')
+
+def load_server_limits():
+    return os.path.join('resources/limits.json')
+
 def load_external_db():
     return os.path.join('resources/EDB.db')
 
 def load_community_db():
     return os.path.join('resources/tunes.db')
 
-def load_server_limits():
-    return os.path.join('resources/limits.json')
-
 # File to store admin list
 ADMIN_FILE = load_admin_file()
 
 def load_admins():
-    """Load admin user IDs from a JSON file."""
+    # Load admin user IDs from a JSON file.
     if os.path.exists(ADMIN_FILE):
         try:
             with open(ADMIN_FILE, 'r') as f:
@@ -100,4 +118,96 @@ def load_admins():
             logger.error(f"Error loading admin file: {e}")
     else:
         logger.error(f"Admin file '{ADMIN_FILE}' not found.")
+    return set()
+
+CSR2_ANNOUNCEMENT_CHANNEL_FILE = load_CSR2_announcement_channel_file()
+
+def load_CSR2_announcement_channels():
+    # Load Channels to announce CSR2 Updates from a json file.
+    if os.path.exists(CSR2_ANNOUNCEMENT_CHANNEL_FILE):
+        try:
+            with open(CSR2_ANNOUNCEMENT_CHANNEL_FILE, 'r') as f:
+                data = json.load(f)
+                # Ensure data is a list of strings
+                if isinstance(data, list) and all(isinstance(i, str) for i in data):
+                    return set(data)  # Use a set to handle uniqueness
+                else:
+                    raise ValueError("JSON file is not in the expected format")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+        except Exception as e:
+            logger.error(f"Error loading CSR2 announcement channel file: {e}")
+    else:
+        logger.error(f"CSR2 announcement channel file '{CSR2_ANNOUNCEMENT_CHANNEL_FILE}' not found.")
+    return set()
+
+CSR3_ANNOUNCEMENT_CHANNEL_FILE = load_CSR3_announcement_channel_file()
+
+def load_CSR3_announcement_channels():
+    # Load Channels to announce CSR2 Updates from a json file.
+    if os.path.exists(CSR3_ANNOUNCEMENT_CHANNEL_FILE):
+        try:
+            with open(CSR3_ANNOUNCEMENT_CHANNEL_FILE, 'r') as f:
+                data = json.load(f)
+                # Ensure data is a list of strings
+                if isinstance(data, list) and all(isinstance(i, str) for i in data):
+                    return set(data)  # Use a set to handle uniqueness
+                else:
+                    raise ValueError("JSON file is not in the expected format")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+        except Exception as e:
+            logger.error(f"Error loading CSR3 announcement channel file: {e}")
+    else:
+        logger.error(f"CSR3 announcement channel file '{CSR3_ANNOUNCEMENT_CHANNEL_FILE}' not found.")
+    return set()
+
+CSR2_ANNOUNCEMENT_USER_FILE = load_CSR2_announcement_user_file()
+
+def load_CSR2_announcement_users():
+    # Load Channels to announce CSR2 Updates from a json file.
+    if os.path.exists(CSR2_ANNOUNCEMENT_USER_FILE):
+        try:
+            with open(CSR2_ANNOUNCEMENT_USER_FILE, 'r') as f:
+                data = json.load(f)
+                # Ensure data is a list of strings
+                if isinstance(data, list) and all(isinstance(i, str) for i in data):
+                    return set(data)  # Use a set to handle uniqueness
+                else:
+                    raise ValueError("JSON file is not in the expected format")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+        except Exception as e:
+            logger.error(f"Error loading CSR2 announcement user file: {e}")
+    else:
+        logger.error(f"CSR2 announcement user file '{CSR2_ANNOUNCEMENT_USER_FILE}' not found.")
+    return set()
+
+CSR3_ANNOUNCEMENT_USER_FILE = load_CSR3_announcement_user_file()
+
+def load_CSR3_announcement_users():
+    # Load Channels to announce CSR2 Updates from a json file.
+    if os.path.exists(CSR3_ANNOUNCEMENT_USER_FILE):
+        try:
+            with open(CSR3_ANNOUNCEMENT_USER_FILE, 'r') as f:
+                data = json.load(f)
+                # Ensure data is a list of strings
+                if isinstance(data, list) and all(isinstance(i, str) for i in data):
+                    return set(data)  # Use a set to handle uniqueness
+                else:
+                    raise ValueError("JSON file is not in the expected format")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+        except Exception as e:
+            logger.error(f"Error loading CSR3 announcement user file: {e}")
+    else:
+        logger.error(f"Admin CSR3 announcement user '{CSR3_ANNOUNCEMENT_USER_FILE}' not found.")
     return set()
