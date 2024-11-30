@@ -39,7 +39,7 @@ class NotifyUpdatesCog(commands.Cog):
             csr2_check, log = save_csr2_users(csr2, log)
             if interaction.user.id not in csr3:
                 csr3.add(str(interaction.user.id))
-            csr3_check, log = save_csr2_users(csr3, log)
+            csr3_check, log = save_csr3_users(csr3, log)
             if csr2_check == 1 and csr3_check == 1:
                 check = 1
             else:
@@ -55,7 +55,7 @@ class NotifyUpdatesCog(commands.Cog):
         elif (scope == "CSR3"):
             if interaction.user.id not in csr3:
                 csr3.add(str(interaction.user.id))
-            csr3_check, log = save_csr2_users(csr3, log)
+            csr3_check, log = save_csr3_users(csr3, log)
             if csr3_check == 1:
                 check = 1
             else:
@@ -104,7 +104,7 @@ class NotifyUpdatesCog(commands.Cog):
                 csr3.remove(str(interaction.user.id))
             except Exception as e:
                 log += f"User {interaction.user.id} not in CSR3 announcemt user list"
-            csr3_check, log = save_csr2_users(csr3, log)
+            csr3_check, log = save_csr3_users(csr3, log)
             if csr2_check == 1 and csr3_check == 1:
                 check = 1
             else:
@@ -124,7 +124,7 @@ class NotifyUpdatesCog(commands.Cog):
                 csr3.remove(str(interaction.user.id))
             except Exception as e:
                 log += f"User {interaction.user.id} not in CSR3 announcemt user list"
-            csr3_check, log = save_csr2_users(csr3, log)
+            csr3_check, log = save_csr3_users(csr3, log)
             if csr3_check == 1:
                 check = 1
             else:

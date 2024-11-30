@@ -50,7 +50,7 @@ class AnnounceUpdatesCog(commands.Cog):
                 csr2_check, log = save_csr2_channels(csr2, log)
                 if channel.id not in csr3:
                     csr3.add(str(channel.id))
-                csr3_check, log = save_csr2_channels(csr3, log)
+                csr3_check, log = save_csr3_channels(csr3, log)
                 if csr2_check == 1 and csr3_check == 1:
                     check = 1
                 else:
@@ -66,7 +66,7 @@ class AnnounceUpdatesCog(commands.Cog):
             elif (scope == "CSR3"):
                 if channel.id not in csr3:
                     csr3.add(str(channel.id))
-                csr3_check, log = save_csr2_channels(csr3, log)
+                csr3_check, log = save_csr3_channels(csr3, log)
                 if csr3_check == 1:
                     check = 1
                 else:
@@ -119,7 +119,7 @@ class AnnounceUpdatesCog(commands.Cog):
                     csr3.remove(str(channel.id))
                 except Exception as e:
                     log += f"Channel {channel.id} not in CSR3 announcemt channel list"
-                csr3_check, log = save_csr2_channels(csr3, log)
+                csr3_check, log = save_csr3_channels(csr3, log)
                 if csr2_check == 1 and csr3_check == 1:
                     check = 1
                 else:
@@ -139,7 +139,7 @@ class AnnounceUpdatesCog(commands.Cog):
                     csr3.remove(str(channel.id))
                 except Exception as e:
                     log += f"Channel {channel.id} not in CSR3 announcemt channel list"
-                csr3_check, log = save_csr2_channels(csr3, log)
+                csr3_check, log = save_csr3_channels(csr3, log)
                 if csr3_check == 1:
                     check = 1
                 else:
