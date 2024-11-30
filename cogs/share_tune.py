@@ -2,7 +2,6 @@ import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands, ui
-import os
 import json
 import in_app_logging
 import tunes_manager

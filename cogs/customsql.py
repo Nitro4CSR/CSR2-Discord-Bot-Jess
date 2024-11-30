@@ -2,7 +2,6 @@ import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
-import os
 import sqlite3
 from cogs import admin
 import logging
@@ -32,8 +31,8 @@ class CustomSQLCog(commands.Cog):
         # await asyncio.sleep(1)
         # Mapping database options to paths
         database_paths = {
-            "WRs": os.path.join('resources', 'WRs.db'),
-            "tunes": os.path.join('resources', 'tunes.db')
+            "WRs": helpers.load_external_db(),
+            "tunes": helpers.load_community_db()
         }
 
         # Get the database path from the selected choice

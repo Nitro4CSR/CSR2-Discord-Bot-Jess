@@ -4,7 +4,6 @@ from discord import app_commands
 import sqlite3
 import asyncio
 import logging
-import os
 import in_app_logging
 import helpers
 

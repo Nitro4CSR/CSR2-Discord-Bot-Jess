@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import os
 import logging
 import in_app_logging
 import helpers
