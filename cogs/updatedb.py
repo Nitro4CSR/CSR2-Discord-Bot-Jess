@@ -54,4 +54,3 @@ class DatabaseUpdateCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(DatabaseUpdateCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
-    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))

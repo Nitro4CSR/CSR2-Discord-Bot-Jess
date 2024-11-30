@@ -78,4 +78,3 @@ class AdminCommandsCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
-    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
