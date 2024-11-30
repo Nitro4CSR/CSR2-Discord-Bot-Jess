@@ -41,6 +41,9 @@ class AnnounceUpdatesCog(commands.Cog):
             csr2 = helpers.load_CSR2_announcement_channels()
             csr3 = helpers.load_CSR3_announcement_channels()
 
+            csr2_check = 0
+            csr3_check = 0
+
             if (scope == "Both"):
                 if channel.id not in csr2:
                     csr2.add(str(channel.id))
@@ -69,8 +72,8 @@ class AnnounceUpdatesCog(commands.Cog):
                 else:
                     check = 0
             else:
-                logger.error(f"Channel {channel.id} could not be added to announcements lists because no scope was defined")
-                log += f"\nChannel {channel.id} could not be added to announcements lists because no scope was defined"
+                logger.error(f"Channel {channel} could not be added to announcements lists because no scope was defined")
+                log += f"\nChannel {channel} could not be added to announcements lists because no scope was defined"
                 check = 0
             
             if check == 1:
@@ -102,6 +105,9 @@ class AnnounceUpdatesCog(commands.Cog):
 
             csr2 = helpers.load_CSR2_announcement_channels()
             csr3 = helpers.load_CSR3_announcement_channels()
+
+            csr2_check = 0
+            csr3_check = 0
 
             if (scope == "Both"):
                 try:
@@ -162,11 +168,10 @@ def save_csr2_channels(csr2, log):
         with open(CSR2_ANNOUNCEMENT_CHANNEL_FILE, 'w') as f:
             json.dump(list(csr2), f)
             check = 1
-            return check, log
     except Exception as e:
         logger.error(f"Error saving CSR2 announcement channels file: {e}")
         log += f"\nError saving CSR2 announcement channels file: {e}"
-        return check, log
+    return check, log
 
 def save_csr3_channels(csr3, log):
     CSR3_ANNOUNCEMENT_CHANNEL_FILE = helpers.load_CSR3_announcement_channel_file()
@@ -174,11 +179,10 @@ def save_csr3_channels(csr3, log):
         with open(CSR3_ANNOUNCEMENT_CHANNEL_FILE, 'w') as f:
             json.dump(list(csr3), f)
             check = 1
-            return check, log
     except Exception as e:
         logger.error(f"Error saving CSR3 announcement channels file: {e}")
         log += f"\nError saving CSR3 announcement channels file: {e}"
-        return check, log
+    return check, log
 
 async def setup(bot):
     await bot.add_cog(AnnounceUpdatesCog(bot))

@@ -30,6 +30,9 @@ class NotifyUpdatesCog(commands.Cog):
         csr2 = helpers.load_CSR2_announcement_users()
         csr3 = helpers.load_CSR3_announcement_users()
 
+        csr2_check = 0
+        csr3_check = 0
+
         if (scope == "Both"):
             if interaction.user.id not in csr2:
                 csr2.add(str(interaction.user.id))
@@ -58,16 +61,16 @@ class NotifyUpdatesCog(commands.Cog):
             else:
                 check = 0
         else:
-            logger.error(f"User {interaction.user.id} could not be added to announcements lists because no scope was defined")
-            log += f"User {interaction.user.id} could not be added to announcements lists because no scope was defined"
+            logger.error(f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined")
+            log += f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined"
             check = 0
 
         if check == 1:
-             await interaction.followup.send(f"The user {interaction.user.id} has been added to announcement users list", ephemeral=True)
-             log += f"The user {interaction.user.id} has been added to announcement users list"
+             await interaction.followup.send(f"The user {interaction.user.display_name} has been added to announcement users list", ephemeral=True)
+             log += f"The user {interaction.user.display_name} has been added to announcement users list"
         else:
-             await interaction.followup.send(f"There was an error adding the user {interaction.user.id} to announcement users list", ephemeral=True)
-             log += f"There was an error adding the user {interaction.user.id} to announcement users list"
+             await interaction.followup.send(f"There was an error adding the user {interaction.user.display_name} to announcement users list", ephemeral=True)
+             log += f"There was an error adding the user {interaction.user.display_name} to announcement users list"
 
         await in_app_logging.send_log(self.bot, log, interaction)
 
@@ -88,6 +91,9 @@ class NotifyUpdatesCog(commands.Cog):
         csr2 = helpers.load_CSR2_announcement_users()
         csr3 = helpers.load_CSR3_announcement_users()
 
+        csr2_check = 0
+        csr3_check = 0
+
         if (scope == "Both"):
             try:
                 csr2.remove(str(interaction.user.id))
@@ -124,16 +130,16 @@ class NotifyUpdatesCog(commands.Cog):
             else:
                 check = 0
         else:
-            logger.error(f"User {interaction.user.id} could not be removed from announcements lists because no scope was defined")
-            log += f"\nUser {interaction.user.id} could not be removed from announcements lists because no scope was defined"
+            logger.error(f"User {interaction.user.display_name} could not be removed from announcements lists because no scope was defined")
+            log += f"\nUser {interaction.user.display_name} could not be removed from announcements lists because no scope was defined"
             check = 0
 
         if check == 1:
-             await interaction.followup.send(f"The user {interaction.user.id} has been removed from announcement users list", ephemeral=True)
-             log += f"\nThe user {interaction.user.id} has been removed from announcement users list"
+             await interaction.followup.send(f"The user {interaction.user.display_name} has been removed from announcement users list", ephemeral=True)
+             log += f"\nThe user {interaction.user.display_name} has been removed from announcement users list"
         else:
-             await interaction.followup.send(f"There was an error removing the user {interaction.user.id} from announcement users list", ephemeral=True)
-             log += f"\nThere was an error removing the user {interaction.user.id} from announcement users list"
+             await interaction.followup.send(f"There was an error removing the user {interaction.user.display_name} from announcement users list", ephemeral=True)
+             log += f"\nThere was an error removing the user {interaction.user.display_name} from announcement users list"
 
         await in_app_logging.send_log(self.bot, log, interaction)
 
@@ -144,11 +150,10 @@ def save_csr2_users(csr2, log):
         with open(CSR2_ANNOUNCEMENT_USER_FILE, 'w') as f:
             json.dump(list(csr2), f)
             check = 1
-            return check
     except Exception as e:
         logger.error(f"Error saving CSR2 announcement user file: {e}")
         log += f"\nError saving CSR2 announcement user file: {e}"
-        return check, log
+    return check, log
 
 def save_csr3_users(csr3, log):
     CSR3_ANNOUNCEMENT_USER_FILE = helpers.load_CSR3_announcement_user_file()
@@ -156,11 +161,10 @@ def save_csr3_users(csr3, log):
         with open(CSR3_ANNOUNCEMENT_USER_FILE, 'w') as f:
             json.dump(list(csr3), f)
             check = 1
-            return check
     except Exception as e:
         logger.error(f"Error saving CSR3 announcement user file: {e}")
         log += f"\nError saving CSR3 announcement user file: {e}"
-        return check, log
+    return check, log
 
 async def setup(bot):
     await bot.add_cog(NotifyUpdatesCog(bot))
