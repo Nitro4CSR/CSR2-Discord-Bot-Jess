@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ext import tasks
 import os
 import logging
 import asyncio
@@ -20,6 +19,7 @@ logging.basicConfig(
 # Load environment variables from .env file
 TOKEN = helpers.load_token()
 CLIENT_ID = helpers.load_client_id()
+ADMIN_SERVER = helpers.load_admin_server()
 
 # Paths to the profile images
 DEFAULT_PFP_PATH = helpers.load_default_pfp()
@@ -64,9 +64,15 @@ async def on_ready():
     # Set a simple presence for the bot using discord.py
     activity = discord.Game(name="CSR Racing")
     await bot.change_presence(activity=activity)
+    try:
+        logging.info(f"Trying to sync commands to {ADMIN_SERVER}")
+        await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
+        logging.info(f"Commands synced to {ADMIN_SERVER}")
+    except Exception as e:
+        logging.error(f"Failed to sync commands: {e}")
     logging.info("Basic presence set")
     asyncio.create_task(schedule_profile_update())
-    await asyncio.sleep(10)
+    await asyncio.sleep(3)
     asyncio.create_task(schedule_version_check())
 
 async def profile_update():
