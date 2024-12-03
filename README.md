@@ -4,10 +4,23 @@ This Bot is brought to you by TheMaintainers.<br>
 
 ## Requirements
 1. Python
-2. discord.py
-3. cogs
-4. dotenv
-5. idk maybe more just look at the errors when launching ¯\\\_( ͡° ͜ʖ ͡°)_/¯
+2. Python packages
+ - discord.py
+ - aiohttp
+ - aiosignal
+ - discord
+ - discord-py-interactions
+ - discord-py-slash-command
+ - discord.py
+ - google_play_scraper
+ - itunes-app-scraper-dmi
+ - pycountry
+ - pypresence
+ - python-dotenv
+ - requests
+ - schedule
+ - six
+ - urllib3
 
 ## Data Sources
 1. https://docs.google.com/spreadsheets/d/1nZ8pGqd5ZmNgc0jcEv-pMcOznzLjdq7eRLHSbgTq9CE (car data)
