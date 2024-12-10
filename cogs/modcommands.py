@@ -23,7 +23,7 @@ class ModcommandsCog(commands.Cog):
         self.bot = bot
         
     @app_commands.command(name="csr2_modcommands", description="List of all available commands")
-    @app_commands.choices(command=[app_commands.Choice(name='csr2_limitresults', value='limitresults')])
+    @app_commands.choices(command=[app_commands.Choice(name='csr2_limitresults', value='limitresults'), app_commands(name='csr2_announce_updates_add', value='announce_updates_add'), app_commands(name='csr2_announce_updates_delete', value='announce_updates_delete')])
     @app_commands.check(is_mod)
     async def modcommands(self, interaction: discord.Interaction, command: str = None):
         # Log the command usage and parameters
@@ -42,8 +42,10 @@ class ModcommandsCog(commands.Cog):
                 title_text = 'Command Usage'
 
             descriptions = {
-                'default': '</csr2_limitresults:1266755136114659370>\n',
-                'limitresults': '## </csr2_limitresults:1266755136114659370>\nAdditional operators:\n- limit: Accepts integers.\n'
+                'default': '</csr2_limitresults:1266755136114659370>\n</csr2_announce_updates_add:1312451900288794666>\n</csr2_announce_updates_delete:1312451900288794667>\n',
+                'limitresults': '## </csr2_limitresults:1266755136114659370>\nAdditional operators:\n- limit: Accepts integers.\n',
+                'announce_updates_add': '## </csr2_announce_updates_add:1312451900288794666>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to "Both". Available: CSR2, CSR3 & Both (optional)\n',
+                'announce_updates_delete': '## </csr2_announce_updates_delete:1312451900288794667>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to "Both". Available: CSR2, CSR3 & Both (optional)\n',
             }
 
             description_text = descriptions[command]
