@@ -28,7 +28,7 @@ class AdminCommandsCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="csr2_admincommands", description="List of all available commands")
-    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins")])
+    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_scrape", value="scrape")])
     @app_commands.check(is_admin)
     async def admincommands(self, interaction: discord.Interaction, command: str = None):
         # Log the command usage and parameters
@@ -48,11 +48,12 @@ class AdminCommandsCog(commands.Cog):
                 title_text = 'Command Usage'
 
             descriptions = {
-                'default': '</csr2_updatedb:1296765246958207017>\n</csr2_addadmin:1296764993974439999>\n</csr2_removeadmin:1296764993974440000>\n</csr2_listadmins:1296764993974439998>\n',
+                'default': '</csr2_updatedb:1296765246958207017>\n</csr2_addadmin:1296764993974439999>\n</csr2_removeadmin:1296764993974440000>\n</csr2_listadmins:1296764993974439998>\n</csr2_scrape:1316279353436409892>\n',
                 'updatedb': '## </csr2_updatedb:1296765246958207017>\nUpdates the internal DataBase\n',
                 'addadmin': '## </csr2_addadmin:1296764993974439999>\nAdditional Operators:\n - user: ping a user and add him to the Bot Admin team\n',
                 'removeadmin': '## </csr2_removeadmin:1296764993974440000>\nAdditional Operators:\n - user: ping a user and remove him from the Bot Admin team\n',
-                'listadmins': '"## </csr2_listadmins:1296764993974439998>\nAdditional Operators:\n - List all Bot Admins\n'
+                'listadmins': '"## </csr2_listadmins:1296764993974439998>\nAdditional Operators:\n - List all Bot Admins\n',
+                'scrape': '## </csr2_scrape:1316279353436409892>\nScrape the appstores for CSR2 and CSR3 app updates\n'
             }
 
             description_text = descriptions[command]
