@@ -23,7 +23,7 @@ class ModcommandsCog(commands.Cog):
         self.bot = bot
         
     @app_commands.command(name="csr2_modcommands", description="List of all available commands")
-    @app_commands.choices(command=[app_commands.Choice(name='csr2_limitresults', value='limitresults'), app_commands(name='csr2_announce_updates_add', value='announce_updates_add'), app_commands(name='csr2_announce_updates_delete', value='announce_updates_delete')])
+    @app_commands.choices(command=[app_commands.Choice(name='csr2_limitresults', value='limitresults'), app_commands.Choice(name='csr2_announce_updates_add', value='announce_updates_add'), app_commands.Choice(name='csr2_announce_updates_delete', value='announce_updates_delete')])
     @app_commands.check(is_mod)
     async def modcommands(self, interaction: discord.Interaction, command: str = None):
         # Log the command usage and parameters
