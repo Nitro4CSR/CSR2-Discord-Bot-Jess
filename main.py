@@ -120,7 +120,7 @@ async def schedule_version_check():
             await version_check_manager_CSR3.version_check_task(bot)
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(1200)  # Sleep for 20 minutes
+        await asyncio.sleep(1800)  # Sleep for 30 minutes
 
 async def schedule_profile_update():
     while True:

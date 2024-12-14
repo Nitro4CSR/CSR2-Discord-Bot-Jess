@@ -8,7 +8,6 @@ from datetime import datetime
 from google_play_scraper import app as google_play_app
 from itunes_app_scraper.scraper import AppStoreScraper  # Correct import for AppStoreScraper
 from concurrent.futures import ThreadPoolExecutor
-
 import pycountry
 import helpers
 
