@@ -27,43 +27,15 @@ class NotifyUpdatesCog(commands.Cog):
         if (scope == None):
              scope = "Both"
 
-        csr2 = helpers.load_CSR2_announcement_users()
-        csr3 = helpers.load_CSR3_announcement_users()
+        embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} app update announcements.", color=discord.Color(0xff00ff))
+        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
-        csr2_check = 0
-        csr3_check = 0
-
-        if (scope == "Both"):
-            if interaction.user.id not in csr2:
-                csr2.add(str(interaction.user.id))
-            csr2_check, log = save_csr2_users(csr2, log)
-            if interaction.user.id not in csr3:
-                csr3.add(str(interaction.user.id))
-            csr3_check, log = save_csr3_users(csr3, log)
-            if csr2_check == 1 and csr3_check == 1:
-                check = 1
-            else:
-                check = 0
-        elif (scope == "CSR2"):
-            if interaction.user.id not in csr2:
-                csr2.add(str(interaction.user.id))
-            csr2_check, log = save_csr2_users(csr2, log)
-            if csr2_check == 1:
-                check = 1
-            else:
-                 check = 0
-        elif (scope == "CSR3"):
-            if interaction.user.id not in csr3:
-                csr3.add(str(interaction.user.id))
-            csr3_check, log = save_csr3_users(csr3, log)
-            if csr3_check == 1:
-                check = 1
-            else:
-                check = 0
-        else:
-            logger.error(f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined")
-            log += f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined"
-            check = 0
+        try:
+            interaction.user.send(embed=embed)
+            check = add_user(interaction.user.id, scope, interaction)
+        except Exception as e:
+            interaction.channel.send(f"There was an error with trying to send a message")
+            return
 
         if check == 1:
              await interaction.followup.send(f"The user {interaction.user.display_name} has been added to announcement users list", ephemeral=True)
@@ -80,69 +52,113 @@ class NotifyUpdatesCog(commands.Cog):
     @app_commands.describe(scope="Which app updates to announce")
     async def notify_updates_delete(self, interaction: discord.Interaction, scope: str = None):
         # Log the command usage and parameters
-        logger.info(f"The following command has been used: /csr2_announce_updates_add scope: {scope}")
-        log = f"The following command has been used: /csr2_announce_updates_add scope: {scope}"
+        logger.info(f"The following command has been used: /csr2_announce_updates_delete scope: {scope}")
+        log = f"The following command has been used: /csr2_announce_updates_delete scope: {scope}"
 
         log += f"\nUser is Server Owner"
         await interaction.response.defer(ephemeral=True)
         if (scope == None):
              scope = "Both"
 
-        csr2 = helpers.load_CSR2_announcement_users()
-        csr3 = helpers.load_CSR3_announcement_users()
-
-        csr2_check = 0
-        csr3_check = 0
-
-        if (scope == "Both"):
-            try:
-                csr2.remove(str(interaction.user.id))
-            except Exception as e:
-                log += f"User {interaction.user.id} not in CSR2 announcemt user list"
-            csr2_check, log = save_csr2_users(csr2, log)
-            try:
-                csr3.remove(str(interaction.user.id))
-            except Exception as e:
-                log += f"User {interaction.user.id} not in CSR3 announcemt user list"
-            csr3_check, log = save_csr3_users(csr3, log)
-            if csr2_check == 1 and csr3_check == 1:
-                check = 1
-            else:
-                check = 0
-        elif (scope == "CSR2"):
-            try:
-                csr2.remove(str(interaction.user.id))
-            except Exception as e:
-                log += f"User {interaction.user.id} not in CSR2 announcemt user list"
-            csr2_check, log = save_csr2_users(csr2, log)
-            if csr2_check == 1:
-                check = 1
-            else:
-                 check = 0
-        elif (scope == "CSR3"):
-            try:
-                csr3.remove(str(interaction.user.id))
-            except Exception as e:
-                log += f"User {interaction.user.id} not in CSR3 announcemt user list"
-            csr3_check, log = save_csr3_users(csr3, log)
-            if csr3_check == 1:
-                check = 1
-            else:
-                check = 0
-        else:
-            logger.error(f"User {interaction.user.display_name} could not be removed from announcements lists because no scope was defined")
-            log += f"\nUser {interaction.user.display_name} could not be removed from announcements lists because no scope was defined"
-            check = 0
-
+        check = delete_user(scope, interaction)
+            
         if check == 1:
-             await interaction.followup.send(f"The user {interaction.user.display_name} has been removed from announcement users list", ephemeral=True)
-             log += f"\nThe user {interaction.user.display_name} has been removed from announcement users list"
+             await interaction.followup.send(f"You were removed from announcement channels list", ephemeral=True)
+             log += f"\nYou were removed from announcement channels list"
         else:
-             await interaction.followup.send(f"There was an error removing the user {interaction.user.display_name} from announcement users list", ephemeral=True)
-             log += f"\nThere was an error removing the user {interaction.user.display_name} from announcement users list"
-
+             await interaction.followup.send(f"There was an error removing you from announcement channels list", ephemeral=True)
+             log += f"\nThere was an error removing you from announcement channels list"
         await in_app_logging.send_log(self.bot, log, interaction)
 
+
+
+def add_user(scope: str, interaction: discord.Interaction):
+    csr2 = helpers.load_CSR2_announcement_users()
+    csr3 = helpers.load_CSR3_announcement_users()
+
+    csr2_check = 0
+    csr3_check = 0
+
+    if (scope == "Both"):
+        if interaction.user.id not in csr2:
+            csr2.add(str(interaction.user.id))
+        csr2_check, log = save_csr2_users(csr2, log)
+        if interaction.user.id not in csr3:
+            csr3.add(str(interaction.user.id))
+        csr3_check, log = save_csr3_users(csr3, log)
+        if csr2_check == 1 and csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    elif (scope == "CSR2"):
+        if interaction.user.id not in csr2:
+            csr2.add(str(interaction.user.id))
+        csr2_check, log = save_csr2_users(csr2, log)
+        if csr2_check == 1:
+            check = 1
+        else:
+             check = 0
+    elif (scope == "CSR3"):
+        if interaction.user.id not in csr3:
+            csr3.add(str(interaction.user.id))
+        csr3_check, log = save_csr3_users(csr3, log)
+        if csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    else:
+        logger.error(f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined")
+        log += f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined"
+        check = 0
+    return check
+
+def delete_user(scope: str, interaction: discord.Interaction):
+    csr2 = helpers.load_CSR2_announcement_users()
+    csr3 = helpers.load_CSR3_announcement_users()
+
+    csr2_check = 0
+    csr3_check = 0
+
+    if (scope == "Both"):
+        try:
+            csr2.remove(str(interaction.user.id))
+        except Exception as e:
+            log += f"User {interaction.user.id} not in CSR2 announcemt user list"
+        csr2_check, log = save_csr2_users(csr2, log)
+        try:
+            csr3.remove(str(interaction.user.id))
+        except Exception as e:
+            log += f"User {interaction.user.id} not in CSR3 announcemt user list"
+        csr3_check, log = save_csr3_users(csr3, log)
+        if csr2_check == 1 and csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    elif (scope == "CSR2"):
+        try:
+            csr2.remove(str(interaction.user.id))
+        except Exception as e:
+            log += f"User {interaction.user.id} not in CSR2 announcemt user list"
+        csr2_check, log = save_csr2_users(csr2, log)
+        if csr2_check == 1:
+            check = 1
+        else:
+             check = 0
+    elif (scope == "CSR3"):
+        try:
+            csr3.remove(str(interaction.user.id))
+        except Exception as e:
+            log += f"User {interaction.user.id} not in CSR3 announcemt user list"
+        csr3_check, log = save_csr3_users(csr3, log)
+        if csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    else:
+        logger.error(f"User {interaction.user.display_name} could not be removed from announcements lists because no scope was defined")
+        log += f"\nUser {interaction.user.display_name} could not be removed from announcements lists because no scope was defined"
+        check = 0
+    return check
 
 def save_csr2_users(csr2, log):
     CSR2_ANNOUNCEMENT_USER_FILE = helpers.load_CSR2_announcement_user_file()
