@@ -43,10 +43,10 @@ class AnnounceUpdatesCog(commands.Cog):
 
             try:
                 send_channel = self.bot.get_channel(int(channel.id))
-                send_channel.send(embed=embed)
+                await send_channel.send(embed=embed)
                 check = add_channel(channel, scope)
             except Exception as e:
-                interaction.channel.send(f"There was an error with trying to send a message")
+                await interaction.followup.send(f"There was an error with trying to send a message: {e}", ephemeral=True)
                 return
             
             if check == 1:

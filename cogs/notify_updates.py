@@ -31,10 +31,10 @@ class NotifyUpdatesCog(commands.Cog):
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
         try:
-            interaction.user.send(embed=embed)
+            await interaction.user.send(embed=embed)
             check = add_user(interaction.user.id, scope, interaction)
         except Exception as e:
-            interaction.channel.send(f"There was an error with trying to send a message")
+            await interaction.channel.send(f"There was an error with trying to send a message")
             return
 
         if check == 1:
