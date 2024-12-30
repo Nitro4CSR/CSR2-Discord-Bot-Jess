@@ -1,14 +1,15 @@
+import aiofiles
 import asyncio
 import json
 import logging
 import os
 import discord
+import pycountry
 from discord.ext import commands
 from datetime import datetime
 from google_play_scraper import app as google_play_app
-from itunes_app_scraper.scraper import AppStoreScraper  # Correct import for AppStoreScraper
-from concurrent.futures import ThreadPoolExecutor
-import pycountry
+from itunes_app_scraper.scraper import AppStoreScraper
+from asyncio import Semaphore, to_thread
 import helpers
 
 # Configure logging
@@ -28,8 +29,8 @@ APP_STORE_APP_ID = "887947640"  # App AppStore ID
 # File paths for storing data
 CSR2_DATA_FILE = helpers.load_CSR2versions_json()
 
-# Initialize the ThreadPoolExecutor for async computation
-executor = ThreadPoolExecutor(max_workers=10)
+# Semaphore to limit concurrency
+semaphore = Semaphore(10)
 
 # Function for fetching App Store data using `itunes_app_scraper`
 def fetch_app_store_data(app_id, country):
@@ -47,14 +48,14 @@ def fetch_app_store_data(app_id, country):
         return {"country": country, "error": str(e)}
 
 # Function to run blocking `fetch_app_store_data` in a separate thread
-def async_fetch_app_store_data(app_id, country):
-    loop = asyncio.get_event_loop()
-    return loop.run_in_executor(executor, fetch_app_store_data, app_id, country)
+async def async_fetch_app_store_data(app_id, country):
+    return await to_thread(fetch_app_store_data, app_id, country)
 
-# Google Play scraping logic (unchanged)
+# Google Play scraping logic
 async def fetch_google_play_data(package_name, country):
     try:
-        result = google_play_app(package_name, lang="en", country=country)
+        async with semaphore:
+            result = await to_thread(google_play_app, package_name, lang="en", country=country)
         return {
             "country": country,
             "version": result.get("version", "N/A"),
@@ -74,20 +75,20 @@ async def fetch_data():
     return {"Google Play": google_play_results, "App Store": app_store_results}
 
 # Helper functions for loading and saving data
-def load_previous_data():
+async def load_previous_data():
     """Load the previous data from the JSON file."""
     if os.path.exists(CSR2_DATA_FILE):
-        with open(CSR2_DATA_FILE, "r") as file:
-            return json.load(file)
+        async with aiofiles.open(CSR2_DATA_FILE, mode="r") as file:
+            return json.loads(await file.read())
     return {}
 
-def save_data(data):
+async def save_data(data):
     """Save the current data to the JSON file."""
-    with open(CSR2_DATA_FILE, "w") as file:
-        json.dump(data, file, indent=4)
+    async with aiofiles.open(CSR2_DATA_FILE, mode="w") as file:
+        await file.write(json.dumps(data, indent=4))
 
 # Detect changes between old and new data
-def detect_changes(old_data, new_data):
+async def detect_changes(old_data, new_data):
     """Compare old data with new data and detect changes."""
     changes = []
     
@@ -104,7 +105,6 @@ def detect_changes(old_data, new_data):
             
             # Check for changes
             if new_version != old_version or new_last_updated != old_last_updated:
-                # Store compactly as a list
                 changes.append([
                     platform,       # Platform (e.g., google_play, app_store)
                     country,        # Country code
@@ -113,33 +113,29 @@ def detect_changes(old_data, new_data):
                     old_last_updated,  # Old last updated date
                     new_last_updated,  # New last updated date
                 ])
-    
     return changes
 
 # Version check task
 async def version_check_task(bot: commands.Bot):
-    # Load previous data
-    previous_data = load_previous_data()
+    previous_data = await load_previous_data()
     logging.info("Starting CSR2 version check")
     new_data = await fetch_data()
-    # Detect changes
     logging.info("Comparing data")
-    changes = detect_changes(previous_data, new_data)
+    changes = await detect_changes(previous_data, new_data)
 
     logging.info("Overwriting old data with the new data")
-    save_data(new_data)
+    await save_data(new_data)
 
-    # Log or return detected changes
     if changes:
         logging.info("Sending detected Changes")
-        messages = announce_changes(changes)
+        messages = await announce_changes(changes)
         await send_changes(bot, messages)
     else:
         logging.info("No changes detected. Exiting...")
     logging.info("CSR2 version check completed")
 
 # Generate announcement messages
-def announce_changes(changes: list):
+async def announce_changes(changes: list):
     messages = []
     batch = []
 
@@ -158,7 +154,6 @@ def announce_changes(changes: list):
             messages.append(batch)
             batch = []
 
-    # Add remaining embeds if there are any
     if batch:
         messages.append(batch)
     return messages

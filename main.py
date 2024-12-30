@@ -116,8 +116,7 @@ async def schedule_db_updates():
 async def schedule_version_check():
     while True:
         try:
-            await version_check_manager_CSR2.version_check_task(bot)
-            await version_check_manager_CSR3.version_check_task(bot)
+            await asyncio.gather(version_check_manager_CSR2.version_check_task(bot), version_check_manager_CSR3.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
         await asyncio.sleep(1800)  # Sleep for 30 minutes
