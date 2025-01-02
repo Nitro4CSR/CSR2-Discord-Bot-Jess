@@ -87,24 +87,42 @@ async def save_data(data):
 
 # Detect changes between old and new data
 async def detect_changes(old_data, new_data):
+    """Compare old data with new data and detect changes."""
     changes = []
+    
     for platform in new_data:
         for new_entry in new_data[platform]:
             country = new_entry.get("country")
             new_version = new_entry.get("version")
             new_last_updated = new_entry.get("last_updated")
+            error = new_entry.get("error")
+            
+            # Ignore entries with specific error
+            if error and "Temporary failure in name resolution" in error:
+                continue
+            
+            # Find the corresponding old entry
             old_entry = next((entry for entry in old_data.get(platform, []) if entry.get("country") == country), {})
             old_version = old_entry.get("version")
             old_last_updated = old_entry.get("last_updated")
+            
+            # Check for changes
             if new_version != old_version or new_last_updated != old_last_updated:
-                changes.append([
-                    platform,
-                    country,
-                    old_version,
-                    new_version,
-                    old_last_updated,
-                    new_last_updated,
-                ])
+                if error:
+                    changes.append([
+                        platform,       # Platform (e.g., google_play, app_store)
+                        country,        # Country code
+                        error           # Error
+                    ])
+                else:    
+                    changes.append([
+                        platform,       # Platform (e.g., google_play, app_store)
+                        country,        # Country code
+                        old_version,    # Old version
+                        new_version,    # New version
+                        old_last_updated,  # Old last updated date
+                        new_last_updated,  # New last updated date
+                    ])
     return changes
 
 # Version check task
