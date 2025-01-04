@@ -44,7 +44,7 @@ class AnnounceUpdatesCog(commands.Cog):
             try:
                 send_channel = self.bot.get_channel(int(channel.id))
                 await send_channel.send(embed=embed)
-                check = add_channel(channel, scope)
+                check, log = add_channel(channel, scope, log)
             except Exception as e:
                 await interaction.followup.send(f"There was an error with trying to send a message: {e}", ephemeral=True)
                 return
@@ -76,7 +76,7 @@ class AnnounceUpdatesCog(commands.Cog):
             if (scope == None):
                 scope = "Both"
 
-            check = delete_channel(channel, scope)
+            check, log = delete_channel(channel, scope, log)
             
             if check == 1:
                  await interaction.followup.send(f"The channel {channel} has been removed from announcement channels list", ephemeral=True)
@@ -91,7 +91,7 @@ class AnnounceUpdatesCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, interaction)
 
 
-def add_channel(channel: discord.TextChannel, scope: str):
+def add_channel(channel: discord.TextChannel, scope: str, log: str):
     csr2 = helpers.load_CSR2_announcement_channels()
     csr3 = helpers.load_CSR3_announcement_channels()
 
@@ -129,9 +129,9 @@ def add_channel(channel: discord.TextChannel, scope: str):
         logger.error(f"Channel {channel} could not be added to announcements lists because no scope was defined")
         log += f"\nChannel {channel} could not be added to announcements lists because no scope was defined"
         check = 0
-    return check
+    return check, log
 
-def delete_channel(channel: discord.TextChannel, scope: str):
+def delete_channel(channel: discord.TextChannel, scope: str, log: str):
     csr2 = helpers.load_CSR2_announcement_channels()
     csr3 = helpers.load_CSR3_announcement_channels()
 
@@ -177,7 +177,7 @@ def delete_channel(channel: discord.TextChannel, scope: str):
         logger.error(f"Channel {channel.id} could not be removed from announcements lists because no scope was defined")
         log += f"\nChannel {channel.id} could not be removed from announcements lists because no scope was defined"
         check = 0
-    return check
+    return check, log
 
 def save_csr2_channels(csr2, log):
     CSR2_ANNOUNCEMENT_CHANNEL_FILE = helpers.load_CSR2_announcement_channel_file()

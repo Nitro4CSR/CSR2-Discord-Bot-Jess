@@ -80,7 +80,7 @@ async def load_previous_data():
     if os.path.exists(CSR2_DATA_FILE):
         async with aiofiles.open(CSR2_DATA_FILE, mode="r") as file:
             return json.loads(await file.read())
-    return {}
+    return {"Google Play": [],"App Store": []}
 
 async def save_data(data):
     """Save the current data to the JSON file."""
@@ -97,39 +97,40 @@ async def detect_changes(old_data, new_data):
             country = new_entry.get("country")
             new_version = new_entry.get("version")
             new_last_updated = new_entry.get("last_updated")
-            error = new_entry.get("error")
-            
+            new_error = new_entry.get("error")
+
             # Ignore entries with specific error
-            if error and "Temporary failure in name resolution" in error:
+            if new_error and "Temporary failure in name resolution" in new_error:
                 continue
 
             # Find the corresponding old entry
-            for old_entry in old_data[platform]:
-                old_version = old_entry.get("version")
-                old_last_updated = old_entry.get("last_updated")
-                old_error = old_entry.get("error")
+            old_entry = next((entry for entry in old_data[platform] if entry["country"] == country), None)
 
-                # Ignore entries with specific error
-                if old_error and "Temporary failure in name resolution" in old_error:
-                    continue
+            # If no corresponding old entry, treat it as a new addition
+            if not old_entry:
+                if new_error:
+                    changes.append([platform, country, new_error])
+                else:
+                    changes.append([
+                        platform, country, None, new_version, None, new_last_updated
+                    ])
+                continue
 
-            # Check for changes
-            if new_version != old_version or new_last_updated != old_last_updated:
-                if error:
-                    changes.append([
-                        platform,       # Platform (e.g., google_play, app_store)
-                        country,        # Country code
-                        error           # Error
-                    ])
-                else:    
-                    changes.append([
-                        platform,       # Platform (e.g., google_play, app_store)
-                        country,        # Country code
-                        old_version,    # Old version
-                        new_version,    # New version
-                        old_last_updated,  # Old last updated date
-                        new_last_updated,  # New last updated date
-                    ])
+            old_version = old_entry.get("version")
+            old_last_updated = old_entry.get("last_updated")
+
+            # Skip comparison if both `version` and `last_updated` are identical
+            if old_version == new_version and old_last_updated == new_last_updated:
+                continue
+
+            # Record change if there's a discrepancy
+            if new_error:
+                changes.append([platform, country, new_error])
+            else:
+                changes.append([
+                    platform, country, old_version, new_version, old_last_updated, new_last_updated
+                ])
+
     return changes
 
 # Version check task
@@ -158,9 +159,15 @@ async def announce_changes(changes: list):
 
     for change in changes:
         change[1] = pycountry.countries.get(alpha_2=change[1].upper())
+        
+        if len(change) == 6:
+            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nOld Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\n New Last Updated: <t:{change[5]}:F>"
+        else:
+            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nScrape Error: {change[2]}",
+
         embed = discord.Embed(
             title="New Store Update Found",
-            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nOld Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\n New Last Updated: <t:{change[5]}:F>",
+            description=description,
             color=discord.Color(0xff00ff)
         )
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
@@ -187,6 +194,7 @@ async def send_changes(bot: commands.Bot, messages: list):
 
             for message in messages:
                 await channel.send(embeds=message)
+                await asyncio.sleep(3)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
     user_ids = helpers.load_CSR2_announcement_users()

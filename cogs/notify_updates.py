@@ -32,7 +32,7 @@ class NotifyUpdatesCog(commands.Cog):
 
         try:
             await interaction.user.send(embed=embed)
-            check = add_user(interaction.user.id, scope, interaction)
+            check, log = add_user(scope, interaction, log)
         except Exception as e:
             await interaction.channel.send(f"There was an error with trying to send a message")
             return
@@ -60,7 +60,7 @@ class NotifyUpdatesCog(commands.Cog):
         if (scope == None):
              scope = "Both"
 
-        check = delete_user(scope, interaction)
+        check, log = delete_user(scope, interaction, log)
             
         if check == 1:
              await interaction.followup.send(f"You were removed from announcement channels list", ephemeral=True)
@@ -72,7 +72,7 @@ class NotifyUpdatesCog(commands.Cog):
 
 
 
-def add_user(scope: str, interaction: discord.Interaction):
+def add_user(scope: str, interaction: discord.Interaction, log: str):
     csr2 = helpers.load_CSR2_announcement_users()
     csr3 = helpers.load_CSR3_announcement_users()
 
@@ -110,9 +110,9 @@ def add_user(scope: str, interaction: discord.Interaction):
         logger.error(f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined")
         log += f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined"
         check = 0
-    return check
+    return check, log
 
-def delete_user(scope: str, interaction: discord.Interaction):
+def delete_user(scope: str, interaction: discord.Interaction, log: str):
     csr2 = helpers.load_CSR2_announcement_users()
     csr3 = helpers.load_CSR3_announcement_users()
 
@@ -158,7 +158,7 @@ def delete_user(scope: str, interaction: discord.Interaction):
         logger.error(f"User {interaction.user.display_name} could not be removed from announcements lists because no scope was defined")
         log += f"\nUser {interaction.user.display_name} could not be removed from announcements lists because no scope was defined"
         check = 0
-    return check
+    return check, log
 
 def save_csr2_users(csr2, log):
     CSR2_ANNOUNCEMENT_USER_FILE = helpers.load_CSR2_announcement_user_file()

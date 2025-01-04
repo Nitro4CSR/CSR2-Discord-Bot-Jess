@@ -76,12 +76,14 @@ async def fetch_data():
 
 # Helper functions for loading and saving data
 async def load_previous_data():
+    """Load the previous data from the JSON file."""
     if os.path.exists(CSR3_DATA_FILE):
         async with aiofiles.open(CSR3_DATA_FILE, mode="r") as file:
             return json.loads(await file.read())
-    return {}
+    return {"Google Play": [],"App Store": []}
 
 async def save_data(data):
+    """Save the current data to the JSON file."""
     async with aiofiles.open(CSR3_DATA_FILE, mode="w") as file:
         await file.write(json.dumps(data, indent=4))
 
@@ -95,39 +97,40 @@ async def detect_changes(old_data, new_data):
             country = new_entry.get("country")
             new_version = new_entry.get("version")
             new_last_updated = new_entry.get("last_updated")
-            error = new_entry.get("error")
+            new_error = new_entry.get("error")
 
             # Ignore entries with specific error
-            if error and "Temporary failure in name resolution" in error:
+            if new_error and "Temporary failure in name resolution" in new_error:
                 continue
 
             # Find the corresponding old entry
-            for old_entry in old_data[platform]:
-                old_version = old_entry.get("version")
-                old_last_updated = old_entry.get("last_updated")
-                old_error = old_entry.get("error")
+            old_entry = next((entry for entry in old_data[platform] if entry["country"] == country), None)
 
-                # Ignore entries with specific error
-                if old_error and "Temporary failure in name resolution" in old_error:
-                    continue
+            # If no corresponding old entry, treat it as a new addition
+            if not old_entry:
+                if new_error:
+                    changes.append([platform, country, new_error])
+                else:
+                    changes.append([
+                        platform, country, None, new_version, None, new_last_updated
+                    ])
+                continue
 
-            # Check for changes
-            if new_version != old_version or new_last_updated != old_last_updated:
-                if error:
-                    changes.append([
-                        platform,       # Platform (e.g., google_play, app_store)
-                        country,        # Country code
-                        error           # Error
-                    ])
-                else:    
-                    changes.append([
-                        platform,       # Platform (e.g., google_play, app_store)
-                        country,        # Country code
-                        old_version,    # Old version
-                        new_version,    # New version
-                        old_last_updated,  # Old last updated date
-                        new_last_updated,  # New last updated date
-                    ])
+            old_version = old_entry.get("version")
+            old_last_updated = old_entry.get("last_updated")
+
+            # Skip comparison if both `version` and `last_updated` are identical
+            if old_version == new_version and old_last_updated == new_last_updated:
+                continue
+
+            # Record change if there's a discrepancy
+            if new_error:
+                changes.append([platform, country, new_error])
+            else:
+                changes.append([
+                    platform, country, old_version, new_version, old_last_updated, new_last_updated
+                ])
+
     return changes
 
 # Version check task
@@ -137,6 +140,7 @@ async def version_check_task(bot: commands.Bot):
     new_data = await fetch_data()
     logging.info("Comparing data")
     changes = await detect_changes(previous_data, new_data)
+
     logging.info("Overwriting old data with the new data")
     await save_data(new_data)
 
@@ -149,39 +153,51 @@ async def version_check_task(bot: commands.Bot):
     logging.info("CSR3 version check completed")
 
 # Generate announcement messages
-async def announce_changes(changes):
+async def announce_changes(changes: list):
     messages = []
     batch = []
+
     for change in changes:
         change[1] = pycountry.countries.get(alpha_2=change[1].upper())
+        
+        if len(change) == 6:
+            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nOld Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\n New Last Updated: <t:{change[5]}:F>"
+        else:
+            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nScrape Error: {change[2]}",
+
         embed = discord.Embed(
             title="New Store Update Found",
-            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nOld Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\nNew Last Updated: <t:{change[5]}:F>",
+            description=description,
             color=discord.Color(0xff00ff)
         )
-        embed.set_thumbnail(url='https://i.imgur.com/szUv2T5.png')
+        embed.set_thumbnail(url='https://imgur.com/szUv2T5.png')
+
         batch.append(embed)
+
         if len(batch) == 10:
             messages.append(batch)
             batch = []
+
     if batch:
         messages.append(batch)
     return messages
 
 # Send announcements to Discord
-async def send_changes(bot, messages):
-    channel_ids = helpers.load_CSR3_announcement_channels()
+async def send_changes(bot: commands.Bot, messages: list):
+    channel_ids = helpers.load_CSR2_announcement_channels()
     for channel_id in channel_ids:
         try:
             channel = bot.get_channel(int(channel_id))
             if not channel:
                 logging.error(f"Channel {channel_id} not found.")
                 continue
+
             for message in messages:
                 await channel.send(embeds=message)
+                await asyncio.sleep(3)
         except Exception as e:
-            logging.error(f"Error sending changes to channel {channel_id}: {e}")
-    user_ids = helpers.load_CSR3_announcement_users()
+            logging.error(f"Error while trying to send changes to {channel_id}: {e}")
+    user_ids = helpers.load_CSR2_announcement_users()
     for user_id in user_ids:
         try:
             user = bot.get_user(int(user_id))
@@ -191,4 +207,4 @@ async def send_changes(bot, messages):
             for message in messages:
                 await user.send(embeds=message)
         except Exception as e:
-            logging.error(f"Error sending changes to user {user_id}: {e}")
+            logging.error(f"Error while trying to send changes to {user_id}: {e}")
