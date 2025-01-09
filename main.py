@@ -59,7 +59,6 @@ async def setup_hook():
 @bot.event
 async def on_ready():
     logging.info(f"Logged in as {bot.user.name} ({bot.user.id})")
-    # await bot.get_channel(1281701107999047814).send(f"Logged in as {bot.user.name} ({bot.user.id})")
 
     # Set a simple presence for the bot using discord.py
     activity = discord.Game(name="CSR Racing")
@@ -92,17 +91,17 @@ async def profile_update():
     else:
         await update_bot_profile(DEFAULT_PFP_PATH, DEFAULT_NAME)
 
-
-
 async def update_bot_profile(pfp_path, new_name):
     # Updates bot's profile picture and name based on given parameters.
     with open(pfp_path, 'rb') as pfp_file:
-        try:
-            # Update bot name and avatar
-            await bot.user.edit(username=new_name, avatar=pfp_file.read())
-            logging.info(f"Updated bot name to '{new_name}' and profile picture.")
-        except discord.HTTPException as e:
-            logging.info(f"Failed to update bot profile: {e}")
+        bot_pfp = bot.user.avatar
+        if bot_pfp != pfp_file:
+            try:
+                # Update bot name and avatar
+                await bot.user.edit(username=new_name, avatar=pfp_file.read())
+                logging.info(f"Updated bot name to '{new_name}' and profile picture.")
+            except discord.HTTPException as e:
+                logging.info(f"Failed to update bot profile: {e}")
 
 async def schedule_db_updates():
     tunes_manager.create_database()

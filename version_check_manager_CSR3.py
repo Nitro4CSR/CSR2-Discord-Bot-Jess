@@ -100,7 +100,7 @@ async def detect_changes(old_data, new_data):
             new_error = new_entry.get("error")
 
             # Ignore entries with specific error
-            if new_error and "Temporary failure in name resolution" in new_error:
+            if new_error and not "No app found with ID " in new_error:
                 continue
 
             # Find the corresponding old entry
@@ -111,9 +111,7 @@ async def detect_changes(old_data, new_data):
                 if new_error:
                     changes.append([platform, country, new_error])
                 else:
-                    changes.append([
-                        platform, country, None, new_version, None, new_last_updated
-                    ])
+                    changes.append([platform, country, None, new_version, None, new_last_updated])
                 continue
 
             old_version = old_entry.get("version")
@@ -127,9 +125,7 @@ async def detect_changes(old_data, new_data):
             if new_error:
                 changes.append([platform, country, new_error])
             else:
-                changes.append([
-                    platform, country, old_version, new_version, old_last_updated, new_last_updated
-                ])
+                changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated])
 
     return changes
 
@@ -163,7 +159,7 @@ async def announce_changes(changes: list):
         if len(change) == 6:
             description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nOld Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\n New Last Updated: <t:{change[5]}:F>"
         else:
-            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nScrape Error: {change[2]}",
+            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nScrape Error: {change[2]}"
 
         embed = discord.Embed(
             title="New Store Update Found",
