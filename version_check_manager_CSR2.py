@@ -132,21 +132,21 @@ async def detect_changes(old_data, new_data):
 # Version check task
 async def version_check_task(bot: commands.Bot):
     previous_data = await load_previous_data()
-    logging.info("Starting CSR2 version check")
+    logging.info("CSR2 - Starting CSR2 version check")
     new_data = await fetch_data()
-    logging.info("Comparing data")
+    logging.info("CSR2 - Comparing data")
     changes = await detect_changes(previous_data, new_data)
 
-    logging.info("Overwriting old data with the new data")
+    logging.info("CSR2 - Overwriting old data with the new data")
     await save_data(new_data)
 
     if changes:
-        logging.info("Sending detected Changes")
+        logging.info("CSR2 - Sending detected Changes")
         messages = await announce_changes(changes)
         await send_changes(bot, messages)
     else:
-        logging.info("No changes detected. Exiting...")
-    logging.info("CSR2 version check completed")
+        logging.info("CSR2 - No changes detected. Exiting...")
+    logging.info("CSR2 - CSR2 version check completed")
 
 # Generate announcement messages
 async def announce_changes(changes: list):
