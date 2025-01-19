@@ -8,6 +8,7 @@ import database_manager
 import tunes_manager
 import version_check_manager_CSR2
 import version_check_manager_CSR3
+import version_check_manager_blog
 import helpers
 
 # Configure logging
@@ -73,6 +74,8 @@ async def on_ready():
     asyncio.create_task(schedule_profile_update())
     await asyncio.sleep(3)
     asyncio.create_task(schedule_version_check())
+    await asyncio.sleep(3)
+    asyncio.create_task(schedule_blog_check())
 
 async def profile_update():
     # Runs daily at midnight to check if it's October 1st or November 1st.
@@ -110,7 +113,7 @@ async def schedule_db_updates():
             database_manager.recreate_database()
         except Exception as e:
             logging.error(f"Error during database update: {e}")
-        await asyncio.sleep(3600)  # Sleep for 1 hour
+        await asyncio.sleep(3570)  # Sleep for 59 hour 30 seconds
 
 async def schedule_version_check():
     while True:
@@ -118,7 +121,15 @@ async def schedule_version_check():
             await asyncio.gather(version_check_manager_CSR2.version_check_task(bot), version_check_manager_CSR3.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(1800)  # Sleep for 30 minutes
+        await asyncio.sleep(1140)  # Sleep for 19 minutes
+
+async def schedule_blog_check():
+    while True:
+        try:
+            await asyncio.gather(version_check_manager_blog.version_check_task(bot))
+        except Exception as e:
+            logging.error(f"Error during version check: {e}")
+        await asyncio.sleep(290)  # Sleep for 4 minutes 50 seconds
 
 async def schedule_profile_update():
     while True:

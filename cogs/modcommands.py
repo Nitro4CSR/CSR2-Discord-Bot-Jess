@@ -44,8 +44,8 @@ class ModcommandsCog(commands.Cog):
             descriptions = {
                 'default': '</csr2_limitresults:1266755136114659370>\n</csr2_announce_updates_add:1312451900288794666>\n</csr2_announce_updates_delete:1312451900288794667>\n',
                 'limitresults': '## </csr2_limitresults:1266755136114659370>\nAdditional operators:\n- limit: Accepts integers.\n',
-                'announce_updates_add': '## </csr2_announce_updates_add:1312451900288794666>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to "Both". Available: CSR2, CSR3 & Both (optional)\n',
-                'announce_updates_delete': '## </csr2_announce_updates_delete:1312451900288794667>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to "Both". Available: CSR2, CSR3 & Both (optional)\n',
+                'announce_updates_add': '## </csr2_announce_updates_add:1312451900288794666>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to "All". Available: CSR2, CSR3, Blog & All (optional)\n',
+                'announce_updates_delete': '## </csr2_announce_updates_delete:1312451900288794667>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to "All". Available: CSR2, CSR3, Blog & All (optional)\n',
             }
 
             description_text = descriptions[command]

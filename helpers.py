@@ -75,17 +75,26 @@ def load_CSR2_announcement_channel_file():
 def load_CSR3_announcement_channel_file():
     return os.path.join('resources/CSR3_announcement_channels.json')
 
+def load_blog_announcement_channel_file():
+    return os.path.join('resources/Blog_announcement_channels.json')
+
 def load_CSR2_announcement_user_file():
     return os.path.join('resources/CSR2_announcement_users.json')
 
 def load_CSR3_announcement_user_file():
     return os.path.join('resources/CSR3_announcement_users.json')
 
+def load_blog_announcement_user_file():
+    return os.path.join('resources/Blog_announcement_users.json')
+
 def load_CSR2versions_json():
     return os.path.join('resources/CSR2_versions.json')
 
 def load_CSR3versions_json():
     return os.path.join('resources/CSR3_versions.json')
+
+def load_blogversions_json():
+    return os.path.join('resources/Blog_versions.json')
 
 def load_server_limits():
     return os.path.join('resources/limits.json')
@@ -166,6 +175,29 @@ def load_CSR3_announcement_channels():
         logger.error(f"CSR3 announcement channel file '{CSR3_ANNOUNCEMENT_CHANNEL_FILE}' not found.")
     return set()
 
+BLOG_ANNOUNCEMENT_CHANNEL_FILE = load_blog_announcement_channel_file()
+
+def load_blog_announcement_channels():
+    # Load Channels to announce CSR2 Updates from a json file.
+    if os.path.exists(BLOG_ANNOUNCEMENT_CHANNEL_FILE):
+        try:
+            with open(BLOG_ANNOUNCEMENT_CHANNEL_FILE, 'r') as f:
+                data = json.load(f)
+                # Ensure data is a list of strings
+                if isinstance(data, list) and all(isinstance(i, str) for i in data):
+                    return set(data)  # Use a set to handle uniqueness
+                else:
+                    raise ValueError("JSON file is not in the expected format")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+        except Exception as e:
+            logger.error(f"Error loading CSR3 announcement channel file: {e}")
+    else:
+        logger.error(f"CSR3 announcement channel file '{BLOG_ANNOUNCEMENT_CHANNEL_FILE}' not found.")
+    return set()
+
 CSR2_ANNOUNCEMENT_USER_FILE = load_CSR2_announcement_user_file()
 
 def load_CSR2_announcement_users():
@@ -210,4 +242,27 @@ def load_CSR3_announcement_users():
             logger.error(f"Error loading CSR3 announcement user file: {e}")
     else:
         logger.error(f"Admin CSR3 announcement user '{CSR3_ANNOUNCEMENT_USER_FILE}' not found.")
+    return set()
+
+BLOG_ANNOUNCEMENT_USER_FILE = load_blog_announcement_user_file()
+
+def load_blog_announcement_users():
+    # Load Channels to announce CSR2 Updates from a json file.
+    if os.path.exists(BLOG_ANNOUNCEMENT_USER_FILE):
+        try:
+            with open(BLOG_ANNOUNCEMENT_USER_FILE, 'r') as f:
+                data = json.load(f)
+                # Ensure data is a list of strings
+                if isinstance(data, list) and all(isinstance(i, str) for i in data):
+                    return set(data)  # Use a set to handle uniqueness
+                else:
+                    raise ValueError("JSON file is not in the expected format")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+        except Exception as e:
+            logger.error(f"Error loading CSR3 announcement user file: {e}")
+    else:
+        logger.error(f"Admin CSR3 announcement user '{BLOG_ANNOUNCEMENT_USER_FILE}' not found.")
     return set()

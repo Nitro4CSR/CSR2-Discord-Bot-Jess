@@ -15,7 +15,7 @@ class NotifyUpdatesCog(commands.Cog):
         self.bot = bot
         
     @app_commands.command(name="csr2_notify_updates_add", description="Allow Jess to notify you about updates in DMs")
-    @app_commands.choices(scope=[app_commands.Choice(name="Both (CSR2 & CSR3)", value="Both"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3")])
+    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
     @app_commands.describe(scope="Which app updates to announce")
     async def notify_updates_add(self, interaction: discord.Interaction, scope: str = None):
         # Log the command usage and parameters
@@ -25,7 +25,7 @@ class NotifyUpdatesCog(commands.Cog):
         log += f"\nUser is Server Owner"
         await interaction.response.defer(ephemeral=True)
         if (scope == None):
-             scope = "Both"
+             scope = "All"
 
         embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} app update announcements.", color=discord.Color(0xff00ff))
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
@@ -48,7 +48,7 @@ class NotifyUpdatesCog(commands.Cog):
 
 
     @app_commands.command(name="csr2_notify_updates_delete", description="Allow Jess to notify you about updates in DMs")
-    @app_commands.choices(scope=[app_commands.Choice(name="Both (CSR2 & CSR3)", value="Both"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3")])
+    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
     @app_commands.describe(scope="Which app updates to announce")
     async def notify_updates_delete(self, interaction: discord.Interaction, scope: str = None):
         # Log the command usage and parameters
@@ -58,7 +58,7 @@ class NotifyUpdatesCog(commands.Cog):
         log += f"\nUser is Server Owner"
         await interaction.response.defer(ephemeral=True)
         if (scope == None):
-             scope = "Both"
+             scope = "All"
 
         check, log = delete_user(scope, interaction, log)
             
@@ -75,18 +75,23 @@ class NotifyUpdatesCog(commands.Cog):
 def add_user(scope: str, interaction: discord.Interaction, log: str):
     csr2 = helpers.load_CSR2_announcement_users()
     csr3 = helpers.load_CSR3_announcement_users()
+    blog = helpers.load_blog_announcement_users()
 
     csr2_check = 0
     csr3_check = 0
+    blog_check = 0
 
-    if (scope == "Both"):
+    if (scope == "All"):
         if interaction.user.id not in csr2:
             csr2.add(str(interaction.user.id))
         csr2_check, log = save_csr2_users(csr2, log)
         if interaction.user.id not in csr3:
             csr3.add(str(interaction.user.id))
         csr3_check, log = save_csr3_users(csr3, log)
-        if csr2_check == 1 and csr3_check == 1:
+        if interaction.user.id not in blog:
+            blog.add(str(interaction.user.id))
+        blog_check, log = save_blog_users(blog, log)
+        if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
             check = 1
         else:
             check = 0
@@ -103,6 +108,14 @@ def add_user(scope: str, interaction: discord.Interaction, log: str):
             csr3.add(str(interaction.user.id))
         csr3_check, log = save_csr3_users(csr3, log)
         if csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    elif (scope == "Blog"):
+        if interaction.user.id not in blog:
+            blog.add(str(interaction.user.id))
+        blog_check, log = save_blog_users(blog, log)
+        if blog_check == 1:
             check = 1
         else:
             check = 0
@@ -115,11 +128,13 @@ def add_user(scope: str, interaction: discord.Interaction, log: str):
 def delete_user(scope: str, interaction: discord.Interaction, log: str):
     csr2 = helpers.load_CSR2_announcement_users()
     csr3 = helpers.load_CSR3_announcement_users()
+    blog = helpers.load_blog_announcement_users()
 
     csr2_check = 0
     csr3_check = 0
+    blog_check = 0
 
-    if (scope == "Both"):
+    if (scope == "All"):
         try:
             csr2.remove(str(interaction.user.id))
         except Exception as e:
@@ -130,7 +145,12 @@ def delete_user(scope: str, interaction: discord.Interaction, log: str):
         except Exception as e:
             log += f"User {interaction.user.id} not in CSR3 announcemt user list"
         csr3_check, log = save_csr3_users(csr3, log)
-        if csr2_check == 1 and csr3_check == 1:
+        try:
+            blog.remove(str(interaction.user.id))
+        except Exception as e:
+            log += f"User {interaction.user.id} not in Blog announcemt user list"
+        blog_check, log = save_blog_users(blog, log)
+        if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
             check = 1
         else:
             check = 0
@@ -151,6 +171,16 @@ def delete_user(scope: str, interaction: discord.Interaction, log: str):
             log += f"User {interaction.user.id} not in CSR3 announcemt user list"
         csr3_check, log = save_csr3_users(csr3, log)
         if csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    elif (scope == "Blog"):
+        try:
+            blog.remove(str(interaction.user.id))
+        except Exception as e:
+            log += f"User {interaction.user.id} not in Blog announcemt user list"
+        blog_check, log = save_blog_users(blog, log)
+        if blog_check == 1:
             check = 1
         else:
             check = 0
@@ -180,6 +210,17 @@ def save_csr3_users(csr3, log):
     except Exception as e:
         logger.error(f"Error saving CSR3 announcement user file: {e}")
         log += f"\nError saving CSR3 announcement user file: {e}"
+    return check, log
+
+def save_blog_users(blog, log):
+    BLOG_ANNOUNCEMENT_USER_FILE = helpers.load_blog_announcement_user_file()
+    try:
+        with open(BLOG_ANNOUNCEMENT_USER_FILE, 'w') as f:
+            json.dump(list(blog), f)
+            check = 1
+    except Exception as e:
+        logger.error(f"Error saving Blog announcement user file: {e}")
+        log += f"\nError saving Blog announcement user file: {e}"
     return check, log
 
 async def setup(bot):

@@ -24,7 +24,7 @@ class AnnounceUpdatesCog(commands.Cog):
         self.bot = bot
         
     @app_commands.command(name="csr2_announce_updates_add", description="Set a text channel as Announcements channel for app updates")
-    @app_commands.choices(scope=[app_commands.Choice(name="Both (CSR2 & CSR3)", value="Both"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3")])
+    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
     @app_commands.check(is_server_owner)
     @app_commands.describe(channel="Channel to send announcements to", scope="Which app updates to announce")
     async def announce_updates_add(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: str = None):
@@ -36,7 +36,7 @@ class AnnounceUpdatesCog(commands.Cog):
             log += f"\nUser is Server Owner"
             await interaction.response.defer(ephemeral=True)
             if (scope == None):
-                scope = "Both"
+                scope = "All"
 
             embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} app update announcements.", color=discord.Color(0xff00ff))
             embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
@@ -62,7 +62,7 @@ class AnnounceUpdatesCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, interaction)
 
     @app_commands.command(name="csr2_announce_updates_delete", description="Set a text channel as Announcements channel for app updates")
-    @app_commands.choices(scope=[app_commands.Choice(name="Both (CSR2 & CSR3)", value="Both"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3")])
+    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
     @app_commands.check(is_server_owner)
     @app_commands.describe(channel="Channel to send announcements to", scope="Which app updates to announce")
     async def announce_updates_delete(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: str = None):
@@ -74,7 +74,7 @@ class AnnounceUpdatesCog(commands.Cog):
             log += f"\nUser is Server Owner"
             await interaction.response.defer(ephemeral=True)
             if (scope == None):
-                scope = "Both"
+                scope = "All"
 
             check, log = delete_channel(channel, scope, log)
             
@@ -94,18 +94,23 @@ class AnnounceUpdatesCog(commands.Cog):
 def add_channel(channel: discord.TextChannel, scope: str, log: str):
     csr2 = helpers.load_CSR2_announcement_channels()
     csr3 = helpers.load_CSR3_announcement_channels()
+    blog = helpers.load_blog_announcement_channels()
 
     csr2_check = 0
     csr3_check = 0
+    blog_check = 0
 
-    if (scope == "Both"):
+    if (scope == "All"):
         if channel.id not in csr2:
             csr2.add(str(channel.id))
         csr2_check, log = save_csr2_channels(csr2, log)
         if channel.id not in csr3:
             csr3.add(str(channel.id))
         csr3_check, log = save_csr3_channels(csr3, log)
-        if csr2_check == 1 and csr3_check == 1:
+        if channel.id not in blog:
+            blog.add(str(channel.id))
+        blog_check, log = save_blog_channels(blog, log)
+        if csr2_check == 1 and blog_check == 1 and blog_check == 1:
             check = 1
         else:
             check = 0
@@ -122,6 +127,14 @@ def add_channel(channel: discord.TextChannel, scope: str, log: str):
             csr3.add(str(channel.id))
         csr3_check, log = save_csr3_channels(csr3, log)
         if csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    elif (scope == "Blog"):
+        if channel.id not in blog:
+            blog.add(str(channel.id))
+        blog_check, log = save_blog_channels(blog, log)
+        if blog_check == 1:
             check = 1
         else:
             check = 0
@@ -134,11 +147,13 @@ def add_channel(channel: discord.TextChannel, scope: str, log: str):
 def delete_channel(channel: discord.TextChannel, scope: str, log: str):
     csr2 = helpers.load_CSR2_announcement_channels()
     csr3 = helpers.load_CSR3_announcement_channels()
+    blog = helpers.load_blog_announcement_channels()
 
     csr2_check = 0
     csr3_check = 0
+    blog_check = 0
 
-    if (scope == "Both"):
+    if (scope == "All"):
         try:
             csr2.remove(str(channel.id))
         except Exception as e:
@@ -149,7 +164,12 @@ def delete_channel(channel: discord.TextChannel, scope: str, log: str):
         except Exception as e:
             log += f"Channel {channel.id} not in CSR3 announcemt channel list"
         csr3_check, log = save_csr3_channels(csr3, log)
-        if csr2_check == 1 and csr3_check == 1:
+        try:
+            blog.remove(str(channel.id))
+        except Exception as e:
+            log += f"Channel {channel.id} not in Blog announcemt channel list"
+        blog_check, log = save_blog_channels(blog, log)
+        if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
             check = 1
         else:
             check = 0
@@ -170,6 +190,16 @@ def delete_channel(channel: discord.TextChannel, scope: str, log: str):
             log += f"Channel {channel.id} not in CSR3 announcemt channel list"
         csr3_check, log = save_csr3_channels(csr3, log)
         if csr3_check == 1:
+            check = 1
+        else:
+            check = 0
+    elif (scope == "Blog"):
+        try:
+            blog.remove(str(channel.id))
+        except Exception as e:
+            log += f"Channel {channel.id} not in Blog announcemt channel list"
+        blog_check, log = save_blog_channels(blog, log)
+        if blog_check == 1:
             check = 1
         else:
             check = 0
@@ -199,6 +229,17 @@ def save_csr3_channels(csr3, log):
     except Exception as e:
         logger.error(f"Error saving CSR3 announcement channels file: {e}")
         log += f"\nError saving CSR3 announcement channels file: {e}"
+    return check, log
+
+def save_blog_channels(blog, log):
+    BLOG_ANNOUNCEMENT_CHANNEL_FILE = helpers.load_blog_announcement_channel_file()
+    try:
+        with open(BLOG_ANNOUNCEMENT_CHANNEL_FILE, 'w') as f:
+            json.dump(list(blog), f)
+            check = 1
+    except Exception as e:
+        logger.error(f"Error saving Blog announcement channels file: {e}")
+        log += f"\nError saving Blog announcement channels file: {e}"
     return check, log
 
 async def setup(bot):
