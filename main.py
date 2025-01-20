@@ -44,6 +44,7 @@ if not TOKEN or not CLIENT_ID:
 
 # Create the bot object with intents
 intents = discord.Intents.default()
+intents.members = True
 intents.message_content = True
 intents.presences = True  # Enable presence intent
 bot = commands.Bot(command_prefix="?CSR2", intents=intents)
