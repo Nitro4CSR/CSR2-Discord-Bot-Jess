@@ -186,21 +186,21 @@ async def send_changes(bot: commands.Bot, messages: list):
             channel = bot.get_channel(int(channel_id))
             if not channel:
                 logging.error(f"Channel {channel_id} not found.")
-                continue
-
-            for message in messages:
-                await channel.send(embeds=message)
-                await asyncio.sleep(3)
+            else:
+                for message in messages:
+                    await channel.send(embeds=message)
+                    await asyncio.sleep(3)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
     user_ids = helpers.load_CSR2_announcement_users()
     for user_id in user_ids:
         try:
             user = bot.get_user(int(user_id))
+            print(f"{int(user_id)}")
             if not user:
                 logging.error(f"User {user_id} not found.")
-                continue
-            for message in messages:
-                await user.send(embeds=message)
+            else:
+                for message in messages:
+                    await user.send(embeds=message)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {user_id}: {e}")

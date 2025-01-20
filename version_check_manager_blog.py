@@ -91,9 +91,8 @@ async def send_changes(bot: commands.Bot, messages: discord.Embed):
             channel = bot.get_channel(int(channel_id))
             if not channel:
                 logging.error(f"Channel {channel_id} not found.")
-                continue
-
-            await channel.send(embed=messages)
+            else:
+                await channel.send(embed=messages)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
     user_ids = helpers.load_blog_announcement_users()
@@ -102,7 +101,7 @@ async def send_changes(bot: commands.Bot, messages: discord.Embed):
             user = bot.get_user(int(user_id))
             if not user:
                 logging.error(f"User {user_id} not found.")
-                continue
-            await user.send(embed=messages)
+            else:
+                await user.send(embed=messages)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {user_id}: {e}")
