@@ -122,7 +122,46 @@ class PaginatedView(discord.ui.View):
 
         # Handle None values for title
         car_display = self.car if self.car else "Any Car"
-        rarity_display = f"Rarity {self.rarity}" if self.rarity else "Any Rarity"
+        if self.rarity:
+            if "125" in self.rarity:
+                if "<:G" in self.rarity:
+                    self.rarity = "5 Gold Stars"
+                elif "<:P" in self.rarity:
+                    self.rarity = "5 Purple Stars"
+                else:
+                    self.rarity = "5 Stars"
+            if "100" in self.rarity:
+                if "<:G" in self.rarity:
+                    self.rarity = "4 Gold Stars"
+                elif "<:P" in self.rarity:
+                    self.rarity = "4 Purple Stars"
+                else:
+                    self.rarity = "4 Stars"
+            if "75" in self.rarity:
+                if "<:G" in self.rarity:
+                    self.rarity = "3 Gold Stars"
+                elif "<:P" in self.rarity:
+                    self.rarity = "3 Purple Stars"
+                else:
+                    self.rarity = "3 Stars"
+            if "50" in self.rarity:
+                if "<:G" in self.rarity:
+                    self.rarity = "2 Gold Stars"
+                elif "<:P" in self.rarity:
+                    self.rarity = "2 Purple Stars"
+                else:
+                    self.rarity = "2 Stars"
+            if "25" in self.rarity:
+                if "<:G" in self.rarity:
+                    self.rarity = "1 Gold Star"
+                elif "<:P" in self.rarity:
+                    self.rarity = "1 Purple Star"
+                else:
+                    self.rarity = "1 Star"
+            else:
+                self.rarity = "Any Rarity"
+
+            rarity_display = self.rarity
         tier_display = f"Tier {self.tier}" if self.tier else "Any Tier"
         version_display = f"CSR Version {self.csr2_version}" if self.csr2_version else "Any Version"
 
