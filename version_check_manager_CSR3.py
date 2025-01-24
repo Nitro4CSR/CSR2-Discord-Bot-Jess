@@ -91,6 +91,7 @@ async def save_data(data):
 async def detect_changes(old_data, new_data):
     """Compare old data with new data and detect changes."""
     changes = []
+    case = None
 
     for platform in new_data:
         for new_entry in new_data[platform]:
