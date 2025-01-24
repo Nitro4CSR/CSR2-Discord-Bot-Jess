@@ -99,35 +99,45 @@ async def detect_changes(old_data, new_data):
             new_last_updated = new_entry.get("last_updated")
             new_error = new_entry.get("error")
 
-            # Ignore entries with specific error
-            if new_error and not "No app found with ID " in new_error:
-                continue
-
             # Find the corresponding old entry
             old_entry = next((entry for entry in old_data[platform] if entry["country"] == country), None)
 
-            # If no corresponding old entry, treat it as a new addition
-            if not old_entry:
-                if new_error:
-                    changes.append([platform, country, new_error])
-                else:
-                    changes.append([platform, country, None, new_version, None, new_last_updated])
+            if old_entry:
+                old_version = old_entry.get("version")
+                old_last_updated = old_entry.get("last_updated")
+                old_error = old_entry.get("error")
+                if old_error and new_error:
+                    if "No app found with ID " in new_error:
+                        changes.append([platform, country, new_error]) # 3
+                        case = 1
+                    continue
+                if old_error and "No app found with ID " in old_error:
+                    changes.append([platform, country, old_error, new_version, new_last_updated]) # 5
+                    case = 2
+                    continue
+                if new_error and "No app found with ID " in new_error:
+                    changes.append([platform, country, old_version, old_last_updated, new_error]) # 5
+                    case = 3
+                    continue
+                if old_error or new_error:
+                    continue
+                if old_version >= new_version and old_last_updated >= new_last_updated:
+                    new_entry["version"] = old_version
+                    new_entry["last_updated"] = old_last_updated
+                if old_version < new_version or old_last_updated < new_last_updated:
+                    changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated]) # 6
+                    case = 4
                 continue
-
-            old_version = old_entry.get("version")
-            old_last_updated = old_entry.get("last_updated")
-
-            # Skip comparison if both `version` and `last_updated` are identical
-            if old_version == new_version and old_last_updated == new_last_updated:
+            if new_error and "No app found with ID " in new_error:
+                changes.append([platform, country, new_error]) # 3
+                case = 1
                 continue
+            if not new_error:
+                changes.append([platform, country, new_version, new_last_updated]) # 4
+                case = 5
+            continue
 
-            # Record change if there's a discrepancy
-            if new_error:
-                changes.append([platform, country, new_error])
-            else:
-                changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated])
-
-    return changes
+    return changes, new_data, case
 
 # Version check task
 async def version_check_task(bot: commands.Bot):
@@ -135,31 +145,45 @@ async def version_check_task(bot: commands.Bot):
     logging.info("CSR2 - Starting CSR2 version check")
     new_data = await fetch_data()
     logging.info("CSR2 - Comparing data")
-    changes = await detect_changes(previous_data, new_data)
+    changes, new_data, case = await detect_changes(previous_data, new_data)
 
     logging.info("CSR2 - Overwriting old data with the new data")
     await save_data(new_data)
 
     if changes:
         logging.info("CSR2 - Sending detected Changes")
-        messages = await announce_changes(changes)
+        messages = await announce_changes(changes, case)
         await send_changes(bot, messages)
     else:
         logging.info("CSR2 - No changes detected. Exiting...")
     logging.info("CSR2 - CSR2 version check completed")
 
 # Generate announcement messages
-async def announce_changes(changes: list):
+async def announce_changes(changes: list, case: int):
     messages = []
     batch = []
 
     for change in changes:
-        change[1] = pycountry.countries.get(alpha_2=change[1].upper())
-        
-        if len(change) == 6:
-            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nOld Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\n New Last Updated: <t:{change[5]}:F>"
+        if change[0] == "Google Play":
+            change[0] == "<:Google_Play:1332367175121502279> Google Play"
         else:
-            description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\nScrape Error: {change[2]}"
+            change[0] == "<:App_Store:1332367186031018004> App Store"
+
+        change[1] = pycountry.countries.get(alpha_2=change[1].upper())
+
+        description=f"Platform: {change[0]}\nCountry: {change[1].name}\n\n"
+        if case == 1:
+            description+=f"New:\nScrape Error: {change[2]}"
+        elif case == 2:
+            description+=f"Old:\nScrape Error: {change[2]}\n\nNew Version: {change[3]}\nNew Last Updated: <t:{change[4]}:F>"
+        elif case == 3:
+            description+=f"Old Version: {change[2]}\nOld Last Updated: <t:{change[3]}:F>\n\nNew:\nScrape Error: {change[4]}"
+        elif case == 4:
+            description+=f"Old Version: {change[2]}\nNew Version: {change[3]}\n\nOld Last Updated: <t:{change[4]}:F>\nNew Last Updated: <t:{change[5]}:F>"
+        elif case == 5:
+            description+=f"New Version: {change[2]}\nNew Last Updated: <t:{change[3]}:F>"
+        else:
+            description=f"There was an error processing the detected changes."
 
         embed = discord.Embed(
             title="New Store Update Found",
