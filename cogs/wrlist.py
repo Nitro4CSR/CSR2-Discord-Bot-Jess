@@ -17,8 +17,8 @@ class WRlistCog(commands.Cog):
 
     @app_commands.command(name="csr2_wrlist", description="❗Select one more variable from above❗ Compiles a custom list of WR times")
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
-    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="5 G"), app_commands.Choice(name="5 Purple Stars", value="5 P"), app_commands.Choice(name="5 Stars", value="5"), app_commands.Choice(name="4 Gold Stars", value="4 G"), app_commands.Choice(name="4 Purple Stars", value="4 P"), app_commands.Choice(name="4 Stars", value="4"), app_commands.Choice(name="3 Gold Stars", value="3 G"), app_commands.Choice(name="3 Purple Stars", value="3 P"), app_commands.Choice(name="3 Stars", value="3"), app_commands.Choice(name="2 Gold Stars", value="2 G"), app_commands.Choice(name="2 Purple Stars", value="2 P"), app_commands.Choice(name="2 Stars", value="2"), app_commands.Choice(name="1 Gold Stars", value="1 G"), app_commands.Choice(name="1 Purple Stars", value="1 P"), app_commands.Choice(name="1 Stars", value="1"), app_commands.Choice(name="Non Star", value="0")])
-    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5/T5", value="T5"), app_commands.Choice(name="Tier 4/T4", value="T4"), app_commands.Choice(name="Tier 3/T3", value="T3"), app_commands.Choice(name="Tier 2/T2", value="T2"), app_commands.Choice(name="Tier 1/T1", value="T1")])
+    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="(LENGTH(records.★) == 125 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="5 Purple Stars", value="(LENGTH(records.★) == 125 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="5 Stars", value="LENGTH(records.★) == 125"), app_commands.Choice(name="4 Gold Stars", value="LENGTH(records.★) == 100 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="4 Purple Stars", value="(LENGTH(records.★) == 100 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="4 Stars", value="LENGTH(records.★) == 100"), app_commands.Choice(name="3 Gold Stars", value="(LENGTH(records.★) == 75 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="3 Purple Stars", value="(LENGTH(records.★) == 75 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="3 Stars", value="LENGTH(records.★) == 75"), app_commands.Choice(name="2 Gold Stars", value="(LENGTH(records.★) == 50 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="2 Purple Stars", value="(LENGTH(records.★) == 50 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="2 Stars", value="LENGTH(records.★) == 50"), app_commands.Choice(name="1 Gold Stars", value="(LENGTH(records.★) == 25 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="1 Purple Stars", value="(LENGTH(records.★) == 25 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="1 Stars", value="LENGTH(records.★) == 25"), app_commands.Choice(name="Non Star", value="0 Stars")])
+    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5/T5", value="<:T5:1331668428318183467>"), app_commands.Choice(name="Tier 4/T4", value="<:T4:1331668411394035794>"), app_commands.Choice(name="Tier 3/T3", value="<:T3:1331668398567850126>"), app_commands.Choice(name="Tier 2/T2", value="<:T2:1331668383996838011>"), app_commands.Choice(name="Tier 1/T1", value="<:T1:1331668370902356039>")])
     async def wrlist_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
@@ -73,8 +73,7 @@ class WRlistCog(commands.Cog):
 
         # Add rarity and tier filter if provided
         if rarity:
-            query += """ AND records.★ LIKE ?"""
-            parameters.append(f"%{rarity}%")
+            query += f""" AND {rarity}"""
         if tier:
             query += """ AND records.Un LIKE ?"""
             parameters.append(f"%{tier}%")
@@ -131,7 +130,7 @@ class PaginatedView(discord.ui.View):
         embed = discord.Embed(
             title=f"WR List for {car_display}, {rarity_display}, {tier_display}, {version_display}",
             description="\n".join(
-                f"{start_index + i + 1}. {row[0]} ({row[2]}) - {float(row[1]):.3f}s"
+                f"{start_index + i + 1}. {row[0]} {row[2]} - {float(row[1]):.3f}s"
                 for i, row in enumerate(page_results)
             ),
             color=discord.Color(0xff00ff)

@@ -19,8 +19,8 @@ class InfoCommandCog(commands.Cog):
 
     @app_commands.command(name="csr2_info", description="❗Select one more variable from above❗ Searches for CSR2 info about cars")
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
-    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="5 G"), app_commands.Choice(name="5 Purple Stars", value="5 P"), app_commands.Choice(name="5 Stars", value="5"), app_commands.Choice(name="4 Gold Stars", value="4 G"), app_commands.Choice(name="4 Purple Stars", value="4 P"), app_commands.Choice(name="4 Stars", value="4"), app_commands.Choice(name="3 Gold Stars", value="3 G"), app_commands.Choice(name="3 Purple Stars", value="3 P"), app_commands.Choice(name="3 Stars", value="3"), app_commands.Choice(name="2 Gold Stars", value="2 G"), app_commands.Choice(name="2 Purple Stars", value="2 P"), app_commands.Choice(name="2 Stars", value="2"), app_commands.Choice(name="1 Gold Stars", value="1 G"), app_commands.Choice(name="1 Purple Stars", value="1 P"), app_commands.Choice(name="1 Stars", value="1"), app_commands.Choice(name="Non Star", value="0")])
-    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5/T5", value="T5"), app_commands.Choice(name="Tier 4/T4", value="T4"), app_commands.Choice(name="Tier 3/T3", value="T3"), app_commands.Choice(name="Tier 2/T2", value="T2"), app_commands.Choice(name="Tier 1/T1", value="T1")])
+    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="(LENGTH(★) == 125 AND ★ LIKE '<:G%')"), app_commands.Choice(name="5 Purple Stars", value="(LENGTH(★) == 125 AND ★ LIKE '<:P%')"), app_commands.Choice(name="5 Stars", value="LENGTH(★) == 125"), app_commands.Choice(name="4 Gold Stars", value="LENGTH(★) == 100 AND ★ LIKE '<:G%')"), app_commands.Choice(name="4 Purple Stars", value="(LENGTH(★) == 100 AND ★ LIKE '<:P%')"), app_commands.Choice(name="4 Stars", value="LENGTH(★) == 100"), app_commands.Choice(name="3 Gold Stars", value="(LENGTH(★) == 75 AND ★ LIKE '<:G%')"), app_commands.Choice(name="3 Purple Stars", value="(LENGTH(★) == 75 AND ★ LIKE '<:P%')"), app_commands.Choice(name="3 Stars", value="LENGTH(★) == 75"), app_commands.Choice(name="2 Gold Stars", value="(LENGTH(★) == 50 AND ★ LIKE '<:G%')"), app_commands.Choice(name="2 Purple Stars", value="(LENGTH(★) == 50 AND ★ LIKE '<:P%')"), app_commands.Choice(name="2 Stars", value="LENGTH(★) == 50"), app_commands.Choice(name="1 Gold Stars", value="(LENGTH(★) == 25 AND ★ LIKE '<:G%')"), app_commands.Choice(name="1 Purple Stars", value="(LENGTH(★) == 25 AND ★ LIKE '<:P%')"), app_commands.Choice(name="1 Stars", value="LENGTH(★) == 25"), app_commands.Choice(name="Non Star", value="0 Stars")])
+    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5/T5", value="<:T5:1331668428318183467>"), app_commands.Choice(name="Tier 4/T4", value="<:T4:1331668411394035794>"), app_commands.Choice(name="Tier 3/T3", value="<:T3:1331668398567850126>"), app_commands.Choice(name="Tier 2/T2", value="<:T2:1331668383996838011>"), app_commands.Choice(name="Tier 1/T1", value="<:T1:1331668370902356039>")])
     async def wr_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_info car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
@@ -71,8 +71,7 @@ class InfoCommandCog(commands.Cog):
         if rarity:
             if car:
                 query += """ AND"""
-            query += """ ★ LIKE ?"""
-            parameters.append(f"%{rarity}%")
+            query += f""" {rarity}"""
         if tier:
             if any([car, rarity]):
                 query += """ AND"""
@@ -130,8 +129,7 @@ class InfoCommandCog(commands.Cog):
             if rarity:
                 if car:
                     similar_entries_query += " AND"
-                similar_entries_query += """ ★ LIKE ?"""
-                parameters.append(f"%{rarity}%")
+                similar_entries_query += f""" {rarity}"""
             if tier:
                 if car or rarity:
                     similar_entries_query += " AND"
@@ -310,8 +308,7 @@ class InfoCommandCog(commands.Cog):
                 description="",
                 color=discord.Color(0xff00ff)
             )
-            embed.add_field(name=f"Tier: {row[3]}", value=f"**{row_list[7]}**", inline=True)
-            embed.add_field(name=f"Stars: {row_list[4]}", value="", inline=True)
+            embed.add_field(name=f"{row[3]}   {row_list[4]}", value=f"**{row_list[7]}**")
             embed.add_field(name="Info", value=f"{row_list[6]}\n\n**[View all Specs](https://discord.com/channels/683998568305917970/1122543660282695780/threads/{row_list[8]})**", inline=False)
             embed.set_footer(text=f"{row_list[0]} - {row_list[1]}")
             embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
