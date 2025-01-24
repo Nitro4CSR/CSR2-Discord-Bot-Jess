@@ -180,7 +180,7 @@ async def announce_changes(changes: list):
 
 # Send announcements to Discord
 async def send_changes(bot: commands.Bot, messages: list):
-    channel_ids = helpers.load_CSR2_announcement_channels()
+    channel_ids = helpers.load_CSR3_announcement_channels()
     for channel_id in channel_ids:
         try:
             channel = bot.get_channel(int(channel_id))
@@ -192,7 +192,7 @@ async def send_changes(bot: commands.Bot, messages: list):
                     await asyncio.sleep(3)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
-    user_ids = helpers.load_CSR2_announcement_users()
+    user_ids = helpers.load_CSR3_announcement_users()
     for user_id in user_ids:
         try:
             user = bot.get_user(int(user_id))
