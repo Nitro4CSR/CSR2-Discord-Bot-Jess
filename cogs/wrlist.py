@@ -130,28 +130,28 @@ class PaginatedView(discord.ui.View):
                     self.rarity = "5 Purple Stars"
                 else:
                     self.rarity = "5 Stars"
-            if "100" in self.rarity:
+            elif "100" in self.rarity:
                 if "<:G" in self.rarity:
                     self.rarity = "4 Gold Stars"
                 elif "<:P" in self.rarity:
                     self.rarity = "4 Purple Stars"
                 else:
                     self.rarity = "4 Stars"
-            if "75" in self.rarity:
+            elif "75" in self.rarity:
                 if "<:G" in self.rarity:
                     self.rarity = "3 Gold Stars"
                 elif "<:P" in self.rarity:
                     self.rarity = "3 Purple Stars"
                 else:
                     self.rarity = "3 Stars"
-            if "50" in self.rarity:
+            elif "50" in self.rarity:
                 if "<:G" in self.rarity:
                     self.rarity = "2 Gold Stars"
                 elif "<:P" in self.rarity:
                     self.rarity = "2 Purple Stars"
                 else:
                     self.rarity = "2 Stars"
-            if "25" in self.rarity:
+            elif "25" in self.rarity:
                 if "<:G" in self.rarity:
                     self.rarity = "1 Gold Star"
                 elif "<:P" in self.rarity:
