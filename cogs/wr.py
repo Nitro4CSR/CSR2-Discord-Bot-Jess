@@ -25,8 +25,9 @@ class WRCommandCog(commands.Cog):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_wr car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_wr car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
-        
         await interaction.response.defer()
+        asyncio.sleep(1)
+
         if any([car, rarity, tier, csr2_version]):
             try:
                 await self.fetch_and_send_records(interaction, car, rarity, tier, csr2_version, log)

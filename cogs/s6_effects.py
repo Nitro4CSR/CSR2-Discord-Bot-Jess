@@ -25,8 +25,9 @@ class S6ECog(commands.Cog):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_stage6_effects car: {car}, rarity: {rarity}, tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_stage6_effects car: {car}, rarity: {rarity}, tier: {tier} csr2_version: {csr2_version}"
-
         await interaction.response.defer()
+        asyncio.sleep(1)
+
         if any([car, rarity, tier, csr2_version]):
             try:
                 log = await self.fetch_and_send_s6e(interaction, car, rarity, tier, csr2_version, log)
