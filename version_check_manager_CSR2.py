@@ -108,6 +108,8 @@ async def detect_changes(old_data, new_data):
                 old_last_updated = old_entry.get("last_updated")
                 old_error = old_entry.get("error")
                 if old_error and new_error:
+                    if old_error == new_error:
+                        continue
                     if "No app found with ID " in new_error:
                         changes.append([platform, country, new_error]) # 3
                         case = 1
