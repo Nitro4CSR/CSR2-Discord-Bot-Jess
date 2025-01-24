@@ -114,7 +114,7 @@ async def schedule_db_updates():
             database_manager.recreate_database()
         except Exception as e:
             logging.error(f"Error during database update: {e}")
-        await asyncio.sleep(3570)  # Sleep for 59 hour 30 seconds
+        await asyncio.sleep(3597)  # Sleep for 59 hour 57 seconds
 
 async def schedule_version_check():
     while True:
@@ -122,7 +122,7 @@ async def schedule_version_check():
             await asyncio.gather(version_check_manager_CSR2.version_check_task(bot), version_check_manager_CSR3.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(1140)  # Sleep for 19 minutes
+        await asyncio.sleep(1188)  # Sleep for 19 minutes 48 seconds
 
 async def schedule_blog_check():
     while True:
@@ -130,7 +130,7 @@ async def schedule_blog_check():
             await asyncio.gather(version_check_manager_blog.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(290)  # Sleep for 4 minutes 50 seconds
+        await asyncio.sleep(299)  # Sleep for 4 minutes 59 seconds
 
 async def schedule_profile_update():
     while True:
