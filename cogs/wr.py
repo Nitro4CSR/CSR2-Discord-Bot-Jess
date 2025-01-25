@@ -24,8 +24,7 @@ class WRCommandCog(commands.Cog):
     async def wr_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"The following command has been used: /csr2_wr car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_wr car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
-        await asyncio.sleep(1)
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         if any([car, rarity, tier, csr2_version]):
             try:

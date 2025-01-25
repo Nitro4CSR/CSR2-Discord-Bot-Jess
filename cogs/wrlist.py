@@ -22,8 +22,7 @@ class WRlistCog(commands.Cog):
     async def wrlist_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
-        await asyncio.sleep(1)
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         
         # Use default tier "T5" only if car, rarity, and tier are all None
         if not any([car, rarity, tier, csr2_version]):
