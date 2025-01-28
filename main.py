@@ -66,9 +66,10 @@ async def on_ready():
     activity = discord.Game(name="CSR Racing")
     await bot.change_presence(activity=activity)
     try:
-        logging.info(f"Trying to sync commands to {ADMIN_SERVER}")
+        admin_guild = bot.get_guild(ADMIN_SERVER)
+        logging.info(f"Trying to sync commands to Admin Server ({admin_guild.name})")
         await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
-        logging.info(f"Commands synced to {ADMIN_SERVER}")
+        logging.info(f"Commands synced to to Admin Server ({admin_guild.name})")
     except Exception as e:
         logging.error(f"Failed to sync commands: {e}")
     logging.info("Basic presence set")
