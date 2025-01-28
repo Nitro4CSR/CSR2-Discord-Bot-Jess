@@ -113,7 +113,7 @@ class PaginatedView(discord.ui.View):
         self.page_number = 1
         self.max_pages = len(results) // 25 + (1 if len(results) % 25 != 0 else 0)
 
-    def get_embed_page(self):
+    async def get_embed_page(self):
         start_index = (self.page_number - 1) * 25
         end_index = start_index + 25
         page_results = self.results[start_index:end_index]
@@ -159,7 +159,7 @@ class PaginatedView(discord.ui.View):
             else:
                 self.rarity = "Any Rarity"
 
-            rarity_display = self.rarity
+        rarity_display = f"{self.rarity}" if self.rarity else "Any Rarity"
         tier_display = f"Tier {self.tier}" if self.tier else "Any Tier"
         version_display = f"CSR Version {self.csr2_version}" if self.csr2_version else "Any Version"
 
@@ -178,7 +178,7 @@ class PaginatedView(discord.ui.View):
 
     async def start(self, interaction: discord.Interaction):
         logger.info(f"Sending initial Embed with buttons")
-        embed = self.get_embed_page()
+        embed = await self.get_embed_page()
         await interaction.followup.send(embed=embed, view=self)
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
