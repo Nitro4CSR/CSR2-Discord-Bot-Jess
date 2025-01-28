@@ -307,7 +307,7 @@ class InfoCommandCog(commands.Cog):
                 description="",
                 color=discord.Color(0xff00ff)
             )
-            embed.add_field(name=f"{row[3]}   {row_list[4]}", value=f"**{row_list[7]}**")
+            embed.add_field(name=f"# {row[3]}   {row_list[4]}", value=f"**{row_list[7]}**")
             embed.add_field(name="Info", value=f"{row_list[6]}\n\n**[View all Specs](https://discord.com/channels/683998568305917970/1122543660282695780/threads/{row_list[8]})**", inline=False)
             embed.set_footer(text=f"{row_list[0]} - {row_list[1]}")
             embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')

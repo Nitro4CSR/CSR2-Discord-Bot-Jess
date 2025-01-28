@@ -329,7 +329,7 @@ class S6ECog(commands.Cog):
                 description=f"",
                 color=discord.Color(0xff00ff)
             )
-            embed.add_field(name=f"{row[3]}   {row[4]}", value=f"**S5-PP: {row[5]}\nS5-EVO: {row[6]}\n\n**", inline=False)
+            embed.add_field(name=f"# {row[3]}   {row[4]}", value=f"**S5-PP: {row[5]}\nS5-EVO: {row[6]}\n\n**", inline=False)
             embed.add_field(name=f"S5-Nos: {row[7]}", value=f"", inline=True)
             embed.add_field(name=f"S5-FD: {float(row[8]):.2f}", value="", inline=True)
             embed.add_field(name=f"S5-TP: {row[9]}", value="", inline=True)

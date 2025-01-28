@@ -167,7 +167,7 @@ class PaginatedView(discord.ui.View):
         embed = discord.Embed(
             title=f"WR List for {car_display}, {rarity_display}, {tier_display}, {version_display}",
             description="\n".join(
-                f"{start_index + i + 1}. {row[0]} {row[2]} - {float(row[1]):.3f}s"
+                f"{start_index + i + 1}. {row[0]} {row[2]} | {float(row[1]):.3f}s"
                 for i, row in enumerate(page_results)
             ),
             color=discord.Color(0xff00ff)
