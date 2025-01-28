@@ -26,9 +26,9 @@ class CustomSQLCog(commands.Cog):
     async def customsql(self, interaction: discord.Interaction, database: app_commands.Choice[str], select: str = None, update: str = None, create_table: str = None, insert_into: str = None, from_: app_commands.Choice[str] = None, set_: str = None, where: str = None):
         logger.info(f"The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}")
         log = f"The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}"
-
         await interaction.response.defer(ephemeral=True)
-        # await asyncio.sleep(1)
+        await asyncio.sleep(1)
+
         # Mapping database options to paths
         database_paths = {
             "WRs": helpers.load_external_db(),

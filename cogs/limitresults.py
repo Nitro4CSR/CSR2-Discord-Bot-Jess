@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -89,6 +90,7 @@ class LimitResultsCog(commands.Cog):
         logger.info(f"The following command has been used: /csr2_getlimit")
         log = f"The following command has been used: /csr2_getlimit"
         await interaction.response.defer(ephemeral=True)
+        await asyncio.sleep(1)
 
         # Check if the command is invoked in a guild (server) context
         if interaction.guild is None:

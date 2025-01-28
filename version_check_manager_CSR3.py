@@ -160,6 +160,8 @@ async def version_check_task(bot: commands.Bot):
     else:
         logging.info("CSR3 - No changes detected. Exiting...")
     logging.info("CSR3 - CSR3 version check completed")
+    previous_data = None
+    new_data = None
 
 # Generate announcement messages
 async def announce_changes(changes: list, case: int):
@@ -207,7 +209,7 @@ async def announce_changes(changes: list, case: int):
 
 # Send announcements to Discord
 async def send_changes(bot: commands.Bot, messages: list):
-    channel_ids = helpers.load_CSR3_announcement_channels()
+    channel_ids = await helpers.load_CSR3_announcement_channels()
     for channel_id in channel_ids:
         try:
             channel = bot.get_channel(int(channel_id))
@@ -219,7 +221,7 @@ async def send_changes(bot: commands.Bot, messages: list):
                     await asyncio.sleep(3)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
-    user_ids = helpers.load_CSR3_announcement_users()
+    user_ids = await helpers.load_CSR3_announcement_users()
     for user_id in user_ids:
         try:
             user = bot.get_user(int(user_id))

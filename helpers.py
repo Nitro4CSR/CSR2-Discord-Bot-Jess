@@ -108,7 +108,7 @@ def load_community_db():
 # File to store admin list
 ADMIN_FILE = load_admin_file()
 
-def load_admins():
+async def load_admins():
     # Load admin user IDs from a JSON file.
     if os.path.exists(ADMIN_FILE):
         try:
@@ -131,7 +131,7 @@ def load_admins():
 
 CSR2_ANNOUNCEMENT_CHANNEL_FILE = load_CSR2_announcement_channel_file()
 
-def load_CSR2_announcement_channels():
+async def load_CSR2_announcement_channels():
     # Load Channels to announce CSR2 Updates from a json file.
     if os.path.exists(CSR2_ANNOUNCEMENT_CHANNEL_FILE):
         try:
@@ -154,7 +154,7 @@ def load_CSR2_announcement_channels():
 
 CSR3_ANNOUNCEMENT_CHANNEL_FILE = load_CSR3_announcement_channel_file()
 
-def load_CSR3_announcement_channels():
+async def load_CSR3_announcement_channels():
     # Load Channels to announce CSR2 Updates from a json file.
     if os.path.exists(CSR3_ANNOUNCEMENT_CHANNEL_FILE):
         try:
@@ -177,7 +177,7 @@ def load_CSR3_announcement_channels():
 
 BLOG_ANNOUNCEMENT_CHANNEL_FILE = load_blog_announcement_channel_file()
 
-def load_blog_announcement_channels():
+async def load_blog_announcement_channels():
     # Load Channels to announce CSR2 Updates from a json file.
     if os.path.exists(BLOG_ANNOUNCEMENT_CHANNEL_FILE):
         try:
@@ -200,7 +200,7 @@ def load_blog_announcement_channels():
 
 CSR2_ANNOUNCEMENT_USER_FILE = load_CSR2_announcement_user_file()
 
-def load_CSR2_announcement_users():
+async def load_CSR2_announcement_users():
     # Load Channels to announce CSR2 Updates from a json file.
     if os.path.exists(CSR2_ANNOUNCEMENT_USER_FILE):
         try:
@@ -223,7 +223,7 @@ def load_CSR2_announcement_users():
 
 CSR3_ANNOUNCEMENT_USER_FILE = load_CSR3_announcement_user_file()
 
-def load_CSR3_announcement_users():
+async def load_CSR3_announcement_users():
     # Load Channels to announce CSR2 Updates from a json file.
     if os.path.exists(CSR3_ANNOUNCEMENT_USER_FILE):
         try:
@@ -246,7 +246,7 @@ def load_CSR3_announcement_users():
 
 BLOG_ANNOUNCEMENT_USER_FILE = load_blog_announcement_user_file()
 
-def load_blog_announcement_users():
+async def load_blog_announcement_users():
     # Load Channels to announce CSR2 Updates from a json file.
     if os.path.exists(BLOG_ANNOUNCEMENT_USER_FILE):
         try:

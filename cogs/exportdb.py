@@ -38,6 +38,7 @@ class ExportDBCog(commands.Cog):
         admins = helpers.load_admins()
         if str(interaction.user.id) in admins:
             await interaction.response.defer(ephemeral=True)
+
             files = []
             file = discord.File(DB_FILE, filename="CSR2_Data_SQLite3.db")
             files.append(file)

@@ -18,7 +18,6 @@ class CommandsCog(commands.Cog):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_commands command: {command}")
         log = f"The following command has been used: /csr2_commands command: {command}"
-
         await interaction.response.defer()
 
         if command is None:
@@ -30,7 +29,7 @@ class CommandsCog(commands.Cog):
             title_text = 'Command Usage'
 
         descriptions = {
-            'default': '</csr2_wr:1265025856539983889>\n</csr2_wrlist:1265025856539983890>\n</csr2_s6_effects:1265323078884266098>\n</csr2_info:1266821832519192696>\n</csr2_getlimit:1271416779469750389>\n</csr2_share_tune:1281314860952715285>\n</csr2_update_tune:1281314860952715286>\n</csr2_delete_tune:1281314860952715287>\n</csr2_community_tune:1281314860952715288>\n</csr2_customsql:1279346701986955296>\n</csr2_dbstructure:1279346701986955297>\n</csr2_notify_updates_add:1312451900288794668>\n</csr2_notify_updates_delete:1312451900288794669>\n</csr2_version_check:1330241205673529476>\n',
+            'default': '</csr2_wr:1265025856539983889>\n</csr2_wrlist:1265025856539983890>\n</csr2_s6_effects:1265323078884266098>\n</csr2_info:1266821832519192696>\n</csr2_getlimit:1271416779469750389>\n</csr2_share_tune:1281314860952715285>\n</csr2_update_tune:1281314860952715286>\n</csr2_delete_tune:1281314860952715287>\n</csr2_community_tune:1281314860952715288>\n</csr2_customsql:1279346701986955296>\n</csr2_dbstructure:1279346701986955297>\n</csr2_notify_updates_add:1312451900288794668>\n</csr2_notify_updates_delete:1312451900288794669>\n</csr2_version_check:1330272687779610756>\n',
             'wr': '## </csr2_wr:1265025856539983889>\nAvailable search operators:\n- car: Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car. (optional)\n- rarity: Dropdown with all imagineable combinations between star count and color (optional)\n- tier: Dropdown with options for T1-T5 (optional)\n- csr2_version: Accepts both OTA versions and game release versions seperate or combined split by a space (optional)\n',
             'wrlist': '## </csr2_wrlist:1265025856539983890>\nAvailable search operators:\n- car: Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car. (optional)\n- rarity: Dropdown with all imagineable combinations between star count and color (optional)\n- tier: Dropdown with options for T1-T5 (optional)\n- csr2_version: Accepts both OTA versions and game release versions seperate or combined split by a space (optional)\n',
             's6_effects': '## </csr2_s6_effects:1265323078884266098>\nAvailable search operators:\n- car: Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car. (optional)\n- rarity: Dropdown with all imagineable combinations between star count and color (optional)\n- tier: Dropdown with options for T1-T5 (optional)\n- csr2_version: Accepts both OTA versions and game release versions seperate or combined split by a space (optional)\n',

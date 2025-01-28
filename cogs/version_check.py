@@ -25,7 +25,6 @@ class VersionCheckCog(commands.Cog):
     async def version_check(self, interaction: discord.Interaction, app: str = None, store: str = None, version: str = None, country: str = None):
         logger.info(f"The following command has been used: /csr2_version_check app: {app} store: {store} version: {version} country: {country}")
         log = f"The following command has been used: /csr2_version_check app: {app} store: {store} version: {version} country: {country}"
-
         await interaction.response.defer()
 
         # Load data for both CSR2 and CSR3 if no app is specified

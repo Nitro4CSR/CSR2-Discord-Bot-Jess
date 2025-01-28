@@ -1,3 +1,4 @@
+import asyncio
 import json
 import discord
 from discord.ext import commands
@@ -24,6 +25,7 @@ class NotifyUpdatesCog(commands.Cog):
 
         log += f"\nUser is Server Owner"
         await interaction.response.defer(ephemeral=True)
+
         if (scope == None):
              scope = "All"
 
@@ -57,6 +59,8 @@ class NotifyUpdatesCog(commands.Cog):
 
         log += f"\nUser is Server Owner"
         await interaction.response.defer(ephemeral=True)
+        await asyncio.sleep(1)
+
         if (scope == None):
              scope = "All"
 

@@ -27,9 +27,9 @@ class ConnectedCog(commands.Cog):
     @app_commands.check(is_nitro)
     @app_commands.describe(mod="'y' if you want to see which servers exactly use the bot and not just the an integer for the amount of servers")
     async def connected(self, interaction: discord.Interaction, mod: str = None):
-        await interaction.response.defer(ephemeral=True)
         logger.info(f"The following command hs been used: /csr2_connected mod:{mod}")
         log = f"The following command hs been used: /csr2_connected mod:{mod}"
+        await interaction.response.defer(ephemeral=True)
         if str(interaction.user.id) == NITRO:
             guildlist = []
             for guild in self.bot.guilds:

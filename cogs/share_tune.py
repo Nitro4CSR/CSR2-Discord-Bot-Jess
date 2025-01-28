@@ -65,6 +65,7 @@ class ShareTuneCog(commands.Cog):
         logger.info(f"The following command has been used: /csr2_update_tune tune_id: {tune_id} pp: {pp} evo: {evo} engine_motor: {engine_motor} fusions_engine_motor: {fusions_engine_motor} turbo_battery: {turbo_battery} fusions_turbo_battery: {fusions_turbo_battery} intake_inverter: {intake_inverter} fusions_intake_inverter: {fusions_intake_inverter} nitrous_overboost: {nitrous_overboost} fusions_nitrous_overboost: {fusions_nitrous_overboost} body: {body} fusions_body: {fusions_body} tires: {tires} fusions_tires: {fusions_tires} transmission: {transmission} fusions_transmission: {fusions_transmission} nitrous: {nitrous} final_drive: {final_drive} tire_pressure: {tire_pressure} dyno: {dyno} purpose: {purpose} usage: {usage}")
         log = f"The following command has been used: /csr2_update_tune tune_id: {tune_id} pp: {pp} evo: {evo} engine_motor: {engine_motor} fusions_engine_motor: {fusions_engine_motor} turbo_battery: {turbo_battery} fusions_turbo_battery: {fusions_turbo_battery} intake_inverter: {intake_inverter} fusions_intake_inverter: {fusions_intake_inverter} nitrous_overboost: {nitrous_overboost} fusions_nitrous_overboost: {fusions_nitrous_overboost} body: {body} fusions_body: {fusions_body} tires: {tires} fusions_tires: {fusions_tires} transmission: {transmission} fusions_transmission: {fusions_transmission} nitrous: {nitrous} final_drive: {final_drive} tire_pressure: {tire_pressure} dyno: {dyno} purpose: {purpose} usage: {usage}"
         await interaction.response.defer()
+        await asyncio.sleep(1)
 
         user = str(f"{interaction.user.id}")
         owner = tunes_manager.get_creator_by_tune_id(tune_id)
@@ -368,6 +369,7 @@ class ShareTuneCog(commands.Cog):
         logger.info(f"The following command has been used: /csr2_delete_tune tune_id: {tune_id}")
         log = f"The following command has been used: /csr2_delete_tune tune_id: {tune_id}"
         await interaction.response.defer()
+        await asyncio.sleep(1)
 
         user = str(f"{interaction.user.id}")
         owner = tunes_manager.get_creator_by_tune_id(tune_id)
@@ -399,6 +401,8 @@ class ShareTuneCog(commands.Cog):
         logger.info(f"The following command has been used: /csr2_community_tune car: {car} tune_id: {tune_id} tier: {tier} rarity: {rarity} purpose: {purpose} creator: {creator}")
         log = f"The following command has been used: /csr2_community_tune car: {car} tune_id: {tune_id} tier: {tier} rarity: {rarity} purpose: {purpose} creator: {creator}"
         await interaction.response.defer()
+        await asyncio.sleep(1)
+
         if any([car, tune_id, tier, rarity, purpose, creator]):
             results = tunes_manager.query_tune(car, tune_id, tier, rarity, purpose, creator)
         else: 
@@ -767,6 +771,8 @@ class NavigationButton(ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        await asyncio.sleep(1)
+
         new_page = (self.page + self.direction) % len(self.chunks)
         new_embed = self.cog.create_car_embed(self.chunks, new_page)
         new_view = CarSelectionView(self.chunks, new_page, self.user, self.cog)

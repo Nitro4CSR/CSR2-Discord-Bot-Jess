@@ -99,8 +99,7 @@ class CollectForumDataCog(commands.Cog):
 
         # Re-archive the thread
         try:
-            await thread.edit(archived=True)
-            await asyncio.sleep(1)  # Slight delay to handle rate limiting
+            await thread.edit(archived=True)  # Slight delay to handle rate limiting
         except discord.errors.HTTPException as e:
             if e.status == 429:  # Rate limit exceeded
                 retry_after = int(e.response.headers.get("Retry-After", 1))

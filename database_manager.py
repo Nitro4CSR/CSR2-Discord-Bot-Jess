@@ -108,6 +108,7 @@ def recreate_database():
     json_data = fetch_json_data()
     create_database(json_data)
     logging.info("Database update completed")
+    json_data = None
 
 def initial_setup():
     recreate_database()

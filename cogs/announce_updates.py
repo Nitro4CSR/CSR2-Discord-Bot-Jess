@@ -35,6 +35,7 @@ class AnnounceUpdatesCog(commands.Cog):
         if interaction.user.id == interaction.guild.owner_id or str(interaction.user.id) == str(NITRO):
             log += f"\nUser is Server Owner"
             await interaction.response.defer(ephemeral=True)
+
             if (scope == None):
                 scope = "All"
 
@@ -73,6 +74,7 @@ class AnnounceUpdatesCog(commands.Cog):
         if interaction.user.id == interaction.guild.owner_id or str(interaction.user.id) == str(NITRO):
             log += f"\nUser is Server Owner"
             await interaction.response.defer(ephemeral=True)
+
             if (scope == None):
                 scope = "All"
 

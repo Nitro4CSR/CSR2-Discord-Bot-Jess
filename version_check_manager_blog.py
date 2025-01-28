@@ -73,6 +73,8 @@ async def version_check_task(bot: commands.Bot):
         else:
             logging.info("Blog - No changes detected. Exiting...")
         logging.info("Blog - Blog check completed")
+        last_data = None
+        latest_data = None
     except Exception as e:
         logging.info(f"An error occurred: {e}")
 
@@ -85,7 +87,7 @@ async def announce_changes(changes: list):
     return embed
 
 async def send_changes(bot: commands.Bot, messages: discord.Embed):
-    channel_ids = helpers.load_blog_announcement_channels()
+    channel_ids = await helpers.load_blog_announcement_channels()
     for channel_id in channel_ids:
         try:
             channel = bot.get_channel(int(channel_id))
@@ -95,7 +97,7 @@ async def send_changes(bot: commands.Bot, messages: discord.Embed):
                 await channel.send(embed=messages)
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
-    user_ids = helpers.load_blog_announcement_users()
+    user_ids = await helpers.load_blog_announcement_users()
     for user_id in user_ids:
         try:
             user = bot.get_user(int(user_id))
