@@ -21,16 +21,16 @@ def load_client_id():
     return CLIENT_ID
 
 def load_default_pfp():
-     return os.path.join('assets/PfP.png')
+     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/PfP.png')
 
 def load_halloween_pfp():
-    return os.path.join('assets/PfP_Halloween.png')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/PfP_Halloween.png')
 
 def load_xmas_pfp():
-    return os.path.join('assets/PfP_Christmas.png')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/PfP_Christmas.png')
 
 def load_bday_pfp():
-    return os.path.join('assets/PfP_Birthday.png')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/PfP_Birthday.png')
 
 def load_default_name():
     CLIENT_DEFAULT_NAME = os.getenv('CLIENT_DEFAULT_NAME')
@@ -67,43 +67,43 @@ def load_log_channel():
     return LOG_CHANNEL
 
 def load_admin_file():
-    return os.path.join('resources/admins.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/admins.json')
 
 def load_CSR2_announcement_channel_file():
-    return os.path.join('resources/CSR2_announcement_channels.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/CSR2_announcement_channels.json')
 
 def load_CSR3_announcement_channel_file():
-    return os.path.join('resources/CSR3_announcement_channels.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/CSR3_announcement_channels.json')
 
 def load_blog_announcement_channel_file():
-    return os.path.join('resources/Blog_announcement_channels.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/Blog_announcement_channels.json')
 
 def load_CSR2_announcement_user_file():
-    return os.path.join('resources/CSR2_announcement_users.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/CSR2_announcement_users.json')
 
 def load_CSR3_announcement_user_file():
-    return os.path.join('resources/CSR3_announcement_users.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/CSR3_announcement_users.json')
 
 def load_blog_announcement_user_file():
-    return os.path.join('resources/Blog_announcement_users.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/Blog_announcement_users.json')
 
 def load_CSR2versions_json():
-    return os.path.join('resources/CSR2_versions.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/CSR2_versions.json')
 
 def load_CSR3versions_json():
-    return os.path.join('resources/CSR3_versions.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/CSR3_versions.json')
 
 def load_blogversions_json():
-    return os.path.join('resources/Blog_versions.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/Blog_versions.json')
 
 def load_server_limits():
-    return os.path.join('resources/limits.json')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/limits.json')
 
 def load_external_db():
-    return os.path.join('resources/EDB.db')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/EDB.db')
 
 def load_community_db():
-    return os.path.join('resources/tunes.db')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/tunes.db')
 
 # File to store admin list
 ADMIN_FILE = load_admin_file()

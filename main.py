@@ -50,7 +50,7 @@ intents.presences = True  # Enable presence intent
 bot = commands.Bot(command_prefix="?CSR2", intents=intents)
 
 async def load_cogs():
-    for filename in os.listdir('./cogs'):
+    for filename in os.path.join(os.path.dirname(os.path.abspath(__file__)), '/cogs'):
         if filename.endswith('.py'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
 
@@ -65,14 +65,16 @@ async def on_ready():
     # Set a simple presence for the bot using discord.py
     activity = discord.Game(name="CSR Racing")
     await bot.change_presence(activity=activity)
+    logging.info("Basic presence set")
+
     try:
-        admin_guild = bot.get_guild(ADMIN_SERVER)
+        admin_guild = bot.get_guild(int(ADMIN_SERVER))
         logging.info(f"Trying to sync commands to Admin Server ({admin_guild.name})")
         await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
         logging.info(f"Commands synced to to Admin Server ({admin_guild.name})")
     except Exception as e:
         logging.error(f"Failed to sync commands: {e}")
-    logging.info("Basic presence set")
+
     asyncio.create_task(schedule_profile_update())
     await asyncio.sleep(3)
     asyncio.create_task(schedule_version_check())
