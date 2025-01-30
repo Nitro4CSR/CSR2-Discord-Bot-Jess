@@ -16,12 +16,6 @@ NITRO = helpers.load_super_admin()
 ADMIN_FILE = helpers.load_admin_file()
 
 ADMIN_SERVER = helpers.load_admin_server()
-
-admins = helpers.load_admins()
-
-def is_admin(interaction: discord.Interaction):
-    if str(interaction.user.id) in admins:
-        return interaction.user.id
     
 class AdminCommandsCog(commands.Cog):
     def __init__(self, bot):
@@ -29,13 +23,12 @@ class AdminCommandsCog(commands.Cog):
 
     @app_commands.command(name="csr2_admincommands", description="List of all available commands")
     @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_scrape", value="scrape")])
-    @app_commands.check(is_admin)
     async def admincommands(self, interaction: discord.Interaction, command: str = None):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_admincommands commad: {command}")
         log = f"The following command has been used: /csr2_admincommands commad: {command}"
 
-        admins = helpers.load_admins()
+        admins = await helpers.load_admins()
         if str(interaction.user.id) in admins:
             await interaction.response.defer(ephemeral=True)
 
@@ -71,11 +64,6 @@ class AdminCommandsCog(commands.Cog):
             await interaction.response.send_message("You don't have permission to use this command because you are not an Admin of this bot!", ephemeral=True)
             log += f"\nUser is not Admin"
         await in_app_logging.send_log(self.bot, log, interaction)
-
-    @admincommands.error
-    async def admincommands_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.CheckFailure):
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)

@@ -24,7 +24,6 @@ def is_admin(interaction: discord.Interaction):
 class ScrapeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.admins = helpers.load_admins()
 
     @app_commands.command(name="csr2_scrape", description="Manually scrape for Store Updates")
     @app_commands.check(is_admin)
@@ -34,7 +33,8 @@ class ScrapeCog(commands.Cog):
         log = f"The following command has been used: /scrape"
         await interaction.response.defer(ephemeral=True)
 
-        if str(interaction.user.id) in self.admins:
+        admins = await helpers.load_admins()
+        if str(interaction.user.id) in admins:
             logger.info(f"User has permission to run command")
             log += f"\nUser has permission to run command"
             logger.info(f"Starting Scrape...")

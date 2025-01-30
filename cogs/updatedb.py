@@ -14,26 +14,19 @@ logger = logging.getLogger(__name__)
 ADMIN_FILE = helpers.load_super_admin
 ADMIN_SERVER = helpers.load_admin_server()
 
-admins = helpers.load_admins()
-
-def is_admin(interaction: discord.Interaction):
-    if str(interaction.user.id) in admins:
-        return interaction.user.id
-
 class DatabaseUpdateCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.admins = helpers.load_admins()
 
     @app_commands.command(name="csr2_updatedb", description="Manually update the database")
-    @app_commands.check(is_admin)
     async def update_db(self, interaction: discord.Interaction):
         # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_updatedb")
         log = f"The following command has been used: /csr2_updatedb"
         await interaction.response.defer(ephemeral=True)
 
-        if str(interaction.user.id) in self.admins:
+        admins = await helpers.load_admins()
+        if str(interaction.user.id) in admins:
             logger.info(f"User has permission to run command")
             log += f"\nUser has permission to run command"
             logger.info(f"Starting DB update...")
@@ -46,11 +39,6 @@ class DatabaseUpdateCog(commands.Cog):
             log += f"\nInteraction canceled, user lacks permissions..."
             await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
         await in_app_logging.send_log(self.bot, log, interaction)
-
-    @update_db.error
-    async def update_db_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.CheckFailure):
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(DatabaseUpdateCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)

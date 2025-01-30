@@ -24,20 +24,14 @@ class CollectForumDataCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def is_nitro(interaction: discord.Interaction):
-        return int(interaction.user.id) == int(NITRO)
-
     @app_commands.command(name="csr2_collect_forum_data", description="[Admin Command] Collect all posts in a forum channel with their tags and save to a CSV file.")
-    @app_commands.check(is_nitro)
     @app_commands.describe(channel="The forum channel to collect posts from.")
     async def collect_forum_posts(self, interaction: discord.Interaction, channel: discord.ForumChannel):
         logger.info(f"The following command has been used: /csr2_collect_forum_data")
         log = f"The following command has been used: /csr2_collect_forum_data"
-        # Defer the interaction response to give more time to process
         await interaction.response.defer(ephemeral=True)
 
         if int(interaction.user.id) == int(NITRO):
-        
             # Collect posts and tags from the specified forum channel
             posts_data = []
 
@@ -70,11 +64,6 @@ class CollectForumDataCog(commands.Cog):
             await interaction.followup.send(f"You don't have permission to run this command", ephemeral=True)
             log += f"\nUser is not NITRO"
         await in_app_logging.send_log(self.bot, log, interaction)
-
-    @collect_forum_posts.error
-    async def collect_forum_posts_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.CheckFailure):
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
     async def process_thread(self, thread, posts_data):
         if thread.archived:

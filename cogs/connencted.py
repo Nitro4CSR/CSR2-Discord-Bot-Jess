@@ -19,12 +19,7 @@ class ConnectedCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def is_nitro(interaction: discord.Interaction):
-        if str(interaction.user.id) == str(NITRO):
-            return interaction.user.id
-
     @app_commands.command(name="csr2_connected", description="Get the amount of Servers this bot is used in")
-    @app_commands.check(is_nitro)
     @app_commands.describe(mod="'y' if you want to see which servers exactly use the bot and not just the an integer for the amount of servers")
     async def connected(self, interaction: discord.Interaction, mod: str = None):
         logger.info(f"The following command hs been used: /csr2_connected mod:{mod}")
@@ -45,11 +40,6 @@ class ConnectedCog(commands.Cog):
             await interaction.followup.send(f"You don't have permission to run this command", ephemeral=True)
             log += f"\nUser is not NITRO"
         await in_app_logging.send_log(self.bot, log, interaction)
-
-    @connected.error
-    async def connected_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.CheckFailure):
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(ConnectedCog(bot), guilds=[discord.Object(id=ADMIN_SERVER)], override=True)
