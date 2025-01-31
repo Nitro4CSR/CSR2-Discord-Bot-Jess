@@ -50,7 +50,7 @@ intents.presences = True  # Enable presence intent
 bot = commands.Bot(command_prefix="?CSR2", intents=intents)
 
 async def load_cogs():
-    for filename in os.path.join(os.path.dirname(os.path.abspath(__file__)), '/cogs'):
+    for filename in os.listdir(f'{os.path.dirname(os.path.abspath(__file__))}/cogs'):
         if filename.endswith('.py'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
 
