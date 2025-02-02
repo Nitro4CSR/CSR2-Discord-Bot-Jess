@@ -125,7 +125,7 @@ async def schedule_version_check():
             await asyncio.gather(version_check_manager_CSR2.version_check_task(bot), version_check_manager_CSR3.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(1188)  # Sleep for 19 minutes 48 seconds
+        await asyncio.sleep(1788)  # Sleep for 29 minutes 48 seconds
 
 async def schedule_blog_check():
     while True:
@@ -133,7 +133,7 @@ async def schedule_blog_check():
             await asyncio.gather(version_check_manager_blog.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(299)  # Sleep for 4 minutes 59 seconds
+        await asyncio.sleep(599)  # Sleep for 9 minutes 59 seconds
 
 async def schedule_profile_update():
     while True:
