@@ -134,6 +134,7 @@ class S6ECog(commands.Cog):
                 similar_entries_query += """\nWHERE"""""
 
             if rarity:
+                rarity = rarity.replace("s6_effects", "records")
                 similar_entries_query += f""" {rarity}"""
             if tier:
                 if rarity:
