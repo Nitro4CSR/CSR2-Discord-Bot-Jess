@@ -34,7 +34,7 @@ class NotifyUpdatesCog(commands.Cog):
 
         try:
             await interaction.user.send(embed=embed)
-            check, log = add_user(scope, interaction, log)
+            check, log = await add_user( interaction, scope,log)
         except Exception as e:
             await interaction.channel.send(f"There was an error with trying to send a message")
             return
@@ -64,7 +64,7 @@ class NotifyUpdatesCog(commands.Cog):
         if (scope == None):
              scope = "All"
 
-        check, log = delete_user(scope, interaction, log)
+        check, log = await delete_user(interaction.user.id, scope, log)
             
         if check == 1:
              await interaction.followup.send(f"You were removed from announcement channels list", ephemeral=True)
@@ -76,10 +76,10 @@ class NotifyUpdatesCog(commands.Cog):
 
 
 
-def add_user(scope: str, interaction: discord.Interaction, log: str):
-    csr2 = helpers.load_CSR2_announcement_users()
-    csr3 = helpers.load_CSR3_announcement_users()
-    blog = helpers.load_blog_announcement_users()
+async def add_user(interaction: discord.Interaction, scope: str, log: str):
+    csr2 = await helpers.load_CSR2_announcement_users()
+    csr3 = await helpers.load_CSR3_announcement_users()
+    blog = await helpers.load_blog_announcement_users()
 
     csr2_check = 0
     csr3_check = 0
@@ -129,10 +129,10 @@ def add_user(scope: str, interaction: discord.Interaction, log: str):
         check = 0
     return check, log
 
-def delete_user(scope: str, interaction: discord.Interaction, log: str):
-    csr2 = helpers.load_CSR2_announcement_users()
-    csr3 = helpers.load_CSR3_announcement_users()
-    blog = helpers.load_blog_announcement_users()
+async def delete_user(user: str, scope: str, log: str = None):
+    csr2 = await helpers.load_CSR2_announcement_users()
+    csr3 = await helpers.load_CSR3_announcement_users()
+    blog = await helpers.load_blog_announcement_users()
 
     csr2_check = 0
     csr3_check = 0
@@ -140,19 +140,19 @@ def delete_user(scope: str, interaction: discord.Interaction, log: str):
 
     if (scope == "All"):
         try:
-            csr2.remove(str(interaction.user.id))
+            csr2.remove(str(user))
         except Exception as e:
-            log += f"User {interaction.user.id} not in CSR2 announcemt user list"
+            log += f"User {user} not in CSR2 announcemt user list"
         csr2_check, log = save_csr2_users(csr2, log)
         try:
-            csr3.remove(str(interaction.user.id))
+            csr3.remove(str(user))
         except Exception as e:
-            log += f"User {interaction.user.id} not in CSR3 announcemt user list"
+            log += f"User {user} not in CSR3 announcemt user list"
         csr3_check, log = save_csr3_users(csr3, log)
         try:
-            blog.remove(str(interaction.user.id))
+            blog.remove(str(user))
         except Exception as e:
-            log += f"User {interaction.user.id} not in Blog announcemt user list"
+            log += f"User {user} not in Blog announcemt user list"
         blog_check, log = save_blog_users(blog, log)
         if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
             check = 1
@@ -160,9 +160,9 @@ def delete_user(scope: str, interaction: discord.Interaction, log: str):
             check = 0
     elif (scope == "CSR2"):
         try:
-            csr2.remove(str(interaction.user.id))
+            csr2.remove(str(user))
         except Exception as e:
-            log += f"User {interaction.user.id} not in CSR2 announcemt user list"
+            log += f"User {user} not in CSR2 announcemt user list"
         csr2_check, log = save_csr2_users(csr2, log)
         if csr2_check == 1:
             check = 1
@@ -170,9 +170,9 @@ def delete_user(scope: str, interaction: discord.Interaction, log: str):
              check = 0
     elif (scope == "CSR3"):
         try:
-            csr3.remove(str(interaction.user.id))
+            csr3.remove(str(user))
         except Exception as e:
-            log += f"User {interaction.user.id} not in CSR3 announcemt user list"
+            log += f"User {user} not in CSR3 announcemt user list"
         csr3_check, log = save_csr3_users(csr3, log)
         if csr3_check == 1:
             check = 1
@@ -180,17 +180,17 @@ def delete_user(scope: str, interaction: discord.Interaction, log: str):
             check = 0
     elif (scope == "Blog"):
         try:
-            blog.remove(str(interaction.user.id))
+            blog.remove(str(user))
         except Exception as e:
-            log += f"User {interaction.user.id} not in Blog announcemt user list"
+            log += f"User {user} not in Blog announcemt user list"
         blog_check, log = save_blog_users(blog, log)
         if blog_check == 1:
             check = 1
         else:
             check = 0
     else:
-        logger.error(f"User {interaction.user.display_name} could not be removed from announcements lists because no scope was defined")
-        log += f"\nUser {interaction.user.display_name} could not be removed from announcements lists because no scope was defined"
+        logger.error(f"User {user} could not be removed from announcements lists because no scope was defined")
+        log += f"\nUser {user} could not be removed from announcements lists because no scope was defined"
         check = 0
     return check, log
 

@@ -45,7 +45,7 @@ class AnnounceUpdatesCog(commands.Cog):
             try:
                 send_channel = self.bot.get_channel(int(channel.id))
                 await send_channel.send(embed=embed)
-                check, log = add_channel(channel, scope, log)
+                check, log = await add_channel(channel, scope, log)
             except Exception as e:
                 await interaction.followup.send(f"There was an error with trying to send a message: {e}", ephemeral=True)
                 return
@@ -78,7 +78,7 @@ class AnnounceUpdatesCog(commands.Cog):
             if (scope == None):
                 scope = "All"
 
-            check, log = delete_channel(channel, scope, log)
+            check, log = await delete_channel(channel.id, scope, log)
             
             if check == 1:
                  await interaction.followup.send(f"The channel {channel} has been removed from announcement channels list", ephemeral=True)
@@ -93,10 +93,10 @@ class AnnounceUpdatesCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, interaction)
 
 
-def add_channel(channel: discord.TextChannel, scope: str, log: str):
-    csr2 = helpers.load_CSR2_announcement_channels()
-    csr3 = helpers.load_CSR3_announcement_channels()
-    blog = helpers.load_blog_announcement_channels()
+async def add_channel(channel: discord.TextChannel, scope: str, log: str):
+    csr2 = await helpers.load_CSR2_announcement_channels()
+    csr3 = await helpers.load_CSR3_announcement_channels()
+    blog = await helpers.load_blog_announcement_channels()
 
     csr2_check = 0
     csr3_check = 0
@@ -146,10 +146,10 @@ def add_channel(channel: discord.TextChannel, scope: str, log: str):
         check = 0
     return check, log
 
-def delete_channel(channel: discord.TextChannel, scope: str, log: str):
-    csr2 = helpers.load_CSR2_announcement_channels()
-    csr3 = helpers.load_CSR3_announcement_channels()
-    blog = helpers.load_blog_announcement_channels()
+async def delete_channel(channel: str, scope: str, log: str = None):
+    csr2 = await helpers.load_CSR2_announcement_channels()
+    csr3 = await helpers.load_CSR3_announcement_channels()
+    blog = await helpers.load_blog_announcement_channels()
 
     csr2_check = 0
     csr3_check = 0
@@ -157,19 +157,19 @@ def delete_channel(channel: discord.TextChannel, scope: str, log: str):
 
     if (scope == "All"):
         try:
-            csr2.remove(str(channel.id))
+            csr2.remove(str(channel))
         except Exception as e:
-            log += f"Channel {channel.id} not in CSR2 announcemt channel list"
+            log += f"Channel {channel} not in CSR2 announcemt channel list"
         csr2_check, log = save_csr2_channels(csr2, log)
         try:
-            csr3.remove(str(channel.id))
+            csr3.remove(str(channel))
         except Exception as e:
-            log += f"Channel {channel.id} not in CSR3 announcemt channel list"
+            log += f"Channel {channel} not in CSR3 announcemt channel list"
         csr3_check, log = save_csr3_channels(csr3, log)
         try:
-            blog.remove(str(channel.id))
+            blog.remove(str(channel))
         except Exception as e:
-            log += f"Channel {channel.id} not in Blog announcemt channel list"
+            log += f"Channel {channel} not in Blog announcemt channel list"
         blog_check, log = save_blog_channels(blog, log)
         if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
             check = 1
@@ -177,9 +177,9 @@ def delete_channel(channel: discord.TextChannel, scope: str, log: str):
             check = 0
     elif (scope == "CSR2"):
         try:
-            csr2.remove(str(channel.id))
+            csr2.remove(str(channel))
         except Exception as e:
-            log += f"Channel {channel.id} not in CSR2 announcemt channel list"
+            log += f"Channel {channel} not in CSR2 announcemt channel list"
         csr2_check, log = save_csr2_channels(csr2, log)
         if csr2_check == 1:
             check = 1
@@ -187,9 +187,9 @@ def delete_channel(channel: discord.TextChannel, scope: str, log: str):
             check = 0
     elif (scope == "CSR3"):
         try:
-            csr3.remove(str(channel.id))
+            csr3.remove(str(channel))
         except Exception as e:
-            log += f"Channel {channel.id} not in CSR3 announcemt channel list"
+            log += f"Channel {channel} not in CSR3 announcemt channel list"
         csr3_check, log = save_csr3_channels(csr3, log)
         if csr3_check == 1:
             check = 1
@@ -197,17 +197,17 @@ def delete_channel(channel: discord.TextChannel, scope: str, log: str):
             check = 0
     elif (scope == "Blog"):
         try:
-            blog.remove(str(channel.id))
+            blog.remove(str(channel))
         except Exception as e:
-            log += f"Channel {channel.id} not in Blog announcemt channel list"
+            log += f"Channel {channel} not in Blog announcemt channel list"
         blog_check, log = save_blog_channels(blog, log)
         if blog_check == 1:
             check = 1
         else:
             check = 0
     else:
-        logger.error(f"Channel {channel.id} could not be removed from announcements lists because no scope was defined")
-        log += f"\nChannel {channel.id} could not be removed from announcements lists because no scope was defined"
+        logger.error(f"Channel {channel} could not be removed from announcements lists because no scope was defined")
+        log += f"\nChannel {channel} could not be removed from announcements lists because no scope was defined"
         check = 0
     return check, log
 

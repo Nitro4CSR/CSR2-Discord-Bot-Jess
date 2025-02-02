@@ -5,6 +5,8 @@ import logging
 import os
 import discord
 import pycountry
+import re
+from cogs import announce_updates, notify_updates
 from discord.ext import commands
 from datetime import datetime
 from google_play_scraper import app as google_play_app
@@ -219,6 +221,23 @@ async def send_changes(bot: commands.Bot, messages: list):
                 for message in messages:
                     await channel.send(embeds=message)
                     await asyncio.sleep(3)
+        except discord.Forbidden as e:
+            logging.error(f"Error while trying to send changes to {channel_id}: {e}")
+            permission_ids = re.findall(r"\b\d{15,}\b", e)
+            discord_permissions = helpers.load_perms_dic()
+            if permission_ids:
+                for permission_id in permission_ids:
+                    permissions = [perm for perm, value in discord_permissions.items() if permission_id & value]
+            guild = channel.guild
+            admins = [member for member in guild.members if member.guild_permissions.administrator]
+            if admins:
+                for admin in admins:
+                    try:
+                        admin.send(f"I detected missing permissions on the server {guild.name} in the channel {channel.name} for me to be able to send Blog updates.\nThe following permissions are missing: {permissions}")
+                    except Exception as e:
+                        logging.error(f"Error while trying to send permissions notice to {admin.name} from {guild.name}: {e}")
+        except discord.NotFound as e:
+            announce_updates.delete_channel(channel_id, scope="CSR3")
         except Exception as e:
             logging.error(f"Error while trying to send changes to {channel_id}: {e}")
     user_ids = await helpers.load_CSR3_announcement_users()
@@ -231,5 +250,10 @@ async def send_changes(bot: commands.Bot, messages: list):
             else:
                 for message in messages:
                     await user.send(embeds=message)
+                    await asyncio.sleep(3)
+        except discord.Forbidden as e:
+            notify_updates.delete_user(user_id, scope="CSR3")
+        except discord.NotFound as e:
+            notify_updates.delete_user(user_id, scope="CSR3")
         except Exception as e:
             logging.error(f"Error while trying to send changes to {user_id}: {e}")

@@ -18,6 +18,7 @@ This Bot is brought to you by TheMaintainers.<br>
  - pycountry
  - pypresence
  - python-dotenv
+ - re
  - requests
  - schedule
  - six
