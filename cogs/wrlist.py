@@ -111,11 +111,12 @@ class PaginatedView(discord.ui.View):
         self.tier = tier
         self.csr2_version = csr2_version
         self.page_number = 1
-        self.max_pages = len(results) // 25 + (1 if len(results) % 25 != 0 else 0)
+        self.page_size = 10
+        self.max_pages = len(results) // self.page_size + (1 if len(results) % self.page_size != 0 else 0)
 
     async def get_embed_page(self):
-        start_index = (self.page_number - 1) * 25
-        end_index = start_index + 25
+        start_index = (self.page_number - 1) * self.page_size
+        end_index = start_index + self.page_size
         page_results = self.results[start_index:end_index]
 
         # Handle None values for title
