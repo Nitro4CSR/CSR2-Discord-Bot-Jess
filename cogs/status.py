@@ -48,5 +48,4 @@ class StatusCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, interaction)
 
 async def setup(bot):
-    await bot.add_cog(StatusCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))])
-    await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
+    await bot.add_cog(StatusCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
