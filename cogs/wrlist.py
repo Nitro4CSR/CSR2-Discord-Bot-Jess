@@ -136,6 +136,7 @@ class PaginatedView(discord.ui.View):
         self.page_number = 1
         self.page_size = 10
         self.max_pages = len(results) // self.page_size + (1 if len(results) % self.page_size != 0 else 0)
+        self.message = None
 
     async def get_embed_page(self):
         start_index = (self.page_number - 1) * self.page_size
@@ -203,7 +204,7 @@ class PaginatedView(discord.ui.View):
     async def start(self, interaction: discord.Interaction):
         logger.info(f"Sending initial Embed with buttons")
         embed = await self.get_embed_page()
-        await interaction.followup.send(embed=embed, view=self)
+        self.message = await interaction.followup.send(embed=embed, view=self)
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
     async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -243,7 +244,8 @@ class PaginatedView(discord.ui.View):
         logger.info("Button view timed out, restarting pagination.")
         new_view = PaginatedView(self.results, self.user, self.car, self.rarity, self.tier, self.csr2_version)
         embed = await new_view.get_embed_page()
-        await self.message.edit(embed=embed, view=new_view)
+        if self.message:
+            await self.message.edit(embed=embed, view=new_view)
         self.stop()
 
 async def setup(bot):
