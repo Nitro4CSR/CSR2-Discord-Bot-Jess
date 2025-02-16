@@ -33,12 +33,32 @@ class WRlistCog(commands.Cog):
         log += f"\n{len(results)} results found"
         
         if len(results) > 0:
-            view = PaginatedView(results, interaction.user, car, rarity, tier, csr2_version)
-            await view.start(interaction)
-            await in_app_logging.send_log(self.bot, log, interaction)
+            # Determine if we need to split into two embeds
+            t1_t3_results = []
+            t4_t5_results = []
+
+            for row in results:
+                if any(tier in row[3] for tier in ["T1", "T2", "T3"]):
+                    t1_t3_results.append(row)
+                if any(tier in row[3] for tier in ["T4", "T5"]):
+                    t4_t5_results.append(row)
+
+            if t1_t3_results and t4_t5_results:
+                logger.info("2 embeds")
+                view1 = PaginatedView(t1_t3_results, interaction.user, car, rarity, "T1-T3", csr2_version)
+                view2 = PaginatedView(t4_t5_results, interaction.user, car, rarity, "T4-T5", csr2_version)
+                
+                await interaction.followup.send("**T1 - T3 Results**", embed=await view1.get_embed_page(), view=view1)
+                await interaction.followup.send("**T4 - T5 Results**", embed=await view2.get_embed_page(), view=view2)
+                await in_app_logging.send_log(self.bot, log, interaction)
+            else:
+                logger.info("1 embed")
+                view = PaginatedView(results, interaction.user, car, rarity, tier, csr2_version)
+                await view.start(interaction)
+                await in_app_logging.send_log(self.bot, log, interaction)
         else:
-            logger.info(f"Sending message...")
-            log += f"Sending message..."
+            logger.info("Sending message...")
+            log += "Sending message..."
             await in_app_logging.send_log(self.bot, log, interaction)
             await interaction.followup.send("No results found.")
 
@@ -50,7 +70,7 @@ class WRlistCog(commands.Cog):
 
         # Construct the query with optional filters
         parameters = []
-        query = """\nSELECT records."Ingame Name Clarification", records."WR-BEST ET", records."★"\nFROM records"""
+        query = """\nSELECT records."Ingame Name Clarification", records."WR-BEST ET", records."★", records.UniqueID\nFROM records"""
         
         if csr2_version:
             query += """\nJOIN info ON records.UniqueID = info.UniqueID"""
