@@ -316,10 +316,10 @@ class WRCommandCog(commands.Cog):
 
             embed = discord.Embed(
                 title=row[2],  # Ingame Name Clarification
-                description="",
+                description=f"# {row[3]}   {row[4]}",
                 color=discord.Color(0xff00ff)
             )
-            embed.add_field(name=f"# {row[3]}   {row[4]}", value=f"**PP: {row[5]}\nEVO: {row[6]}\n\n**", inline=False)
+            embed.add_field(name=f"PP: {row[5]}\nEVO: {row[6]}\n", value=f"", inline=False)
             embed.add_field(name=f"Nos: {row[7]}", value=f"", inline=True)
             embed.add_field(name=f"FD: {float(row[8]):.2f}", value="", inline=True)
             embed.add_field(name=f"TP: {row[9]}", value="", inline=True)
