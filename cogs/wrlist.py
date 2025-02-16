@@ -100,6 +100,29 @@ class WRlistCog(commands.Cog):
         finally:
             conn.close()
 
+class PageJumpModal(discord.ui.Modal, title="Jump to Page"):
+    page_number = discord.ui.TextInput(label="Enter Page Number or +/- Offset", required=True)
+
+    def __init__(self, view: "PaginatedView"):
+        super().__init__()
+        self.view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            input_text = self.page_number.value.strip()
+            if input_text.startswith(('+', '-')):
+                offset = int(input_text)
+                new_page = (self.view.page_number + offset - 1) % self.view.max_pages + 1
+            else:
+                new_page = int(input_text)
+                if new_page < 1 or new_page > self.view.max_pages:
+                    new_page = (new_page - 1) % self.view.max_pages + 1
+
+            self.view.page_number = new_page
+            embed = await self.view.get_embed_page()
+            await interaction.response.edit_message(embed=embed, view=self.view)
+        except ValueError:
+            await interaction.response.send_message("Invalid input. Please enter a number.", ephemeral=True)
 
 class PaginatedView(discord.ui.View):
     def __init__(self, results, user, car, rarity, tier, csr2_version):
@@ -193,7 +216,7 @@ class PaginatedView(discord.ui.View):
             self.page_number = self.max_pages
         
         logger.info(f"Going to previous page: {self.page_number}")
-        embed = self.get_embed_page()
+        embed = await self.get_embed_page()
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.primary)
@@ -207,16 +230,21 @@ class PaginatedView(discord.ui.View):
             self.page_number = 1
 
         logger.info(f"Going to next page: {self.page_number}")
-        embed = self.get_embed_page()
+        embed = await self.get_embed_page()
         await interaction.response.edit_message(embed=embed, view=self)
 
-    async def on_timeout(self):
-        logger.info("Button view timed out, disabling buttons.")
-        for child in self.children:
-            child.disabled = True
-        # Assuming you keep a reference to the original message (e.g., `self.message`), you can edit it to disable buttons:
-        await self.message.edit(view=self)
+    @discord.ui.button(label="Jump to Page", style=discord.ButtonStyle.secondary)
+    async def jump_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.user:
+            return await interaction.response.send_message("You can't interact with this!", ephemeral=True)
+        await interaction.response.send_modal(PageJumpModal(self))
 
+    async def on_timeout(self):
+        logger.info("Button view timed out, restarting pagination.")
+        new_view = PaginatedView(self.results, self.user, self.car, self.rarity, self.tier, self.csr2_version)
+        embed = await new_view.get_embed_page()
+        await self.message.edit(embed=embed, view=new_view)
+        self.stop()
 
 async def setup(bot):
     await bot.add_cog(WRlistCog(bot))
