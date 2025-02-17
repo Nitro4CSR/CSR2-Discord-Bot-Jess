@@ -8,6 +8,7 @@ This Bot is brought to you by TheMaintainers.<br>
  - discord.py
  - aiohttp
  - aiosignal
+ - aiosqlite
  - bs4
  - discord
  - discord-py-interactions
