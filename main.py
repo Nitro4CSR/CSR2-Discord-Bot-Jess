@@ -114,7 +114,7 @@ async def schedule_db_updates():
     tunes_manager.create_database()
     while True:
         try:
-            database_manager.recreate_database()
+            await database_manager.recreate_database()
         except Exception as e:
             logging.error(f"Error during database update: {e}")
         await asyncio.sleep(3597)  # Sleep for 59 hour 57 seconds
