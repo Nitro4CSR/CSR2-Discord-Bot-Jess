@@ -17,24 +17,62 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# File to store the last scraped data
 BLOG_DATA_FILE = helpers.load_blogversions_json()
 
+async def load_headers():
+    if not os.path.exists(BLOG_DATA_FILE):
+        return {}
+
+    async with aiofiles.open(BLOG_DATA_FILE, "r") as file:
+        content = await file.read()
+        data = json.loads(content)
+        return data.get("headers", {})  # Get the headers part of the data (or empty dict if not present)
+
+async def save_headers(headers):
+    if os.path.exists(BLOG_DATA_FILE):
+        # Load existing data first to preserve other parts of the JSON
+        async with aiofiles.open(BLOG_DATA_FILE, "r") as file:
+            content = await file.read()
+            data = json.loads(content)
+    else:
+        data = {}
+
+    # Update or set the headers part of the data
+    data["headers"] = headers
+
+    # Save the updated data back to the file
+    async with aiofiles.open(BLOG_DATA_FILE, "w") as file:
+        await file.write(json.dumps(data, indent=4))
+
 async def fetch_latest_blog_post():
-    """Fetch the latest blog post's URL and title from the CSR2 news page asynchronously."""
+    """Fetch the latest blog post's URL and title from the CSR2 news page asynchronously, using ETag caching."""
     url = "https://www.csr-racing.com/csr2/csr-news"
+    headers = await load_headers()  # Load headers (ETag) from BLOG_DATA_FILE
+    request_headers = {}
+
+    if "ETag" in headers:
+        request_headers["If-None-Match"] = headers["ETag"]
+
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(url, headers=request_headers) as response:
+            if response.status == 304:
+                logging.info("Blog - No new updates (304 Not Modified)")
+                return None  # No changes, return None
+
             if response.status != 200:
                 raise Exception(f"Failed to fetch page: {response.status}")
 
             html = await response.text()
             soup = BeautifulSoup(html, 'html.parser')
 
-            # Iterate through all <a> tags until one with '/news/' in href is found
+            # Save ETag if present
+            new_headers = {}
+            if "ETag" in response.headers:
+                new_headers["ETag"] = response.headers["ETag"]
+            await save_headers(new_headers)  # Save ETag in BLOG_DATA_FILE
+
             for link in soup.find_all('a', href=True):
                 if "/news/" in link['href']:
-                    # Look for the <header> tag inside the <a> tag
                     header = link.find('header')
                     title = header.get_text(strip=True) if header else None
                     href = link['href']
@@ -49,12 +87,25 @@ async def load_last_scrape():
 
     async with aiofiles.open(BLOG_DATA_FILE, "r") as file:
         content = await file.read()
-        return json.loads(content)
+        data = json.loads(content)
+        return data.get("blog_data", None)  # Get the actual blog data part (or None if not present)
 
 async def save_current_scrape(data):
     """Save the current scrape data to the JSON file asynchronously."""
+    if os.path.exists(BLOG_DATA_FILE):
+        # Load existing data first to preserve other parts of the JSON
+        async with aiofiles.open(BLOG_DATA_FILE, "r") as file:
+            content = await file.read()
+            saved_data = json.loads(content)
+    else:
+        saved_data = {}
+
+    # Update or set the blog data part of the file
+    saved_data["blog_data"] = data
+
+    # Save the updated data back to the file
     async with aiofiles.open(BLOG_DATA_FILE, "w") as file:
-        await file.write(json.dumps(data, indent=4))
+        await file.write(json.dumps(saved_data, indent=4))
 
 async def version_check_task(bot: commands.Bot):
     """Main function to check for changes and update the JSON file asynchronously."""
@@ -62,26 +113,27 @@ async def version_check_task(bot: commands.Bot):
         last_data = await load_last_scrape()
         logging.info("Blog - Starting Blog check")
         latest_data = await fetch_latest_blog_post()
-        logging.info("Blog - Comparing data")
+        if latest_data is not None:
+            logging.info("Blog - Comparing data")
 
-        if last_data != latest_data:
-            # Log the change to the console
-            logging.info("Blog - Sending detected Changes")
-            messages = await announce_changes(latest_data)
-            await send_changes(bot, messages)
+            if last_data != latest_data and latest_data is not None:
+                # Log the change to the console
+                logging.info("Blog - Sending detected Changes")
+                messages = await announce_changes(latest_data)
+                await send_changes(bot, messages)
 
-            # Save the new data
-            logging.info("Blog - Overwriting old data with the new data")
-            await save_current_scrape(latest_data)
-        else:
-            logging.info("Blog - No changes detected. Exiting...")
+                # Save the new data
+                logging.info("Blog - Overwriting old data with the new data")
+                await save_current_scrape(latest_data)
+            else:
+                logging.info("Blog - No changes detected. Exiting...")
         logging.info("Blog - Blog check completed")
         last_data = None
         latest_data = None
     except Exception as e:
-        logging.info(f"An error occurred: {e}")
+        logging.info(f"Blog - An error occurred: {e}")
 
-async def announce_changes(changes: list):
+async def announce_changes(changes: dict):
     embed = discord.Embed(
         title="A new Blog Post was posted!",
         description=f"{changes['title']}\nhttps://www.csr-racing.com{changes['url']}",
