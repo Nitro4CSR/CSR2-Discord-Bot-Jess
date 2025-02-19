@@ -1,9 +1,9 @@
 import asyncio
 import aiohttp
 import aiosqlite
+import json
 import os
 import logging
-import time
 import helpers
 
 # Configure logging
@@ -71,19 +71,21 @@ def check_and_create_database():
     else:
         logging.info("No existing database found. Creating a new one.")
 
-async def fetch_data_with_aiohttp(session, url):
-    async with session.get(url) as response:
-        return await response.json()
-
 async def fetch_json_data():
     json_data = {}
     async with aiohttp.ClientSession() as session:
-        tasks = [fetch_data_with_aiohttp(session, url) for _, url in JSON_URL.items()]
-        results = await asyncio.gather(*tasks)
-        for (table_name, _), data in zip(JSON_URL.items(), results):
-            json_data[table_name] = data
-            logging.info(f"Fetched data for {table_name}: {json_data[table_name][:2]}... (showing first 2 records)")
+        for table_name, url in JSON_URL.items():
+            async with session.get(url) as response:
+                if response.status == 200:
+                    json_data[table_name] = json.loads(await response.text())
+                    logging.info(f"Fetched {table_name}: {json_data[table_name][:2]}... (showing first 2 records)")
+                else:
+                    logging.error(f"Failed to fetch {table_name} (HTTP {response.status})")
+                    json_data[table_name] = []
+                    continue
+
     return json_data
+
 
 async def create_tables(cursor):
     for table_name, schema in table_schemas.items():
