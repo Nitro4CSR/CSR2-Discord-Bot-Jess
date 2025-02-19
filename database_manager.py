@@ -36,32 +36,33 @@ table_schemas = {
     ]
 }
 
-async def get_github_last_modified(session, url):
+etag_cache = {}  # Store previous ETag values in memory
+
+async def get_github_etag(session, url):
     async with session.head(url) as response:
+        headers = response.headers
+        logging.info(f"Headers for {url}: {headers}")
+        
         if response.status == 200:
-            return response.headers.get('Last-Modified')
+            return headers.get('ETag')  # Get the ETag if available
     return None
 
-def get_local_file_creation_date(file_path):
-    if os.path.exists(DATABASE_PATH):
-        if os.name == 'nt':  # Windows
-            return os.path.getctime(file_path)
-        else:  # Unix-based
-            stat = os.stat(file_path)
-            return getattr(stat, 'st_birthtime', stat.st_mtime)
-    else:
-        return 0
-
 async def should_update_database():
+    global etag_cache
     async with aiohttp.ClientSession() as session:
         for url in JSON_URL.values():
-            github_last_modified = await get_github_last_modified(session, url)
-            if github_last_modified:
-                github_time = time.mktime(time.strptime(github_last_modified, "%a, %d %b %Y %H:%M:%S GMT"))
-                local_time = get_local_file_creation_date(DATABASE_PATH)
-                if github_time > local_time:
-                    return True
-    return False
+            github_etag = await get_github_etag(session, url)
+            if github_etag is None:
+                logging.warning(f"No ETag received for {url}")
+                continue  # Skip this file if ETag is unavailable
+            
+            # Compare stored ETag with the new one
+            if url not in etag_cache or etag_cache[url] != github_etag:
+                logging.info(f"Database update needed. New ETag for {url}: {github_etag}")
+                etag_cache[url] = github_etag  # Update stored ETag
+                return True  # An update is required
+        
+    return False  # No changes detected
 
 def check_and_create_database():
     if os.path.exists(DATABASE_PATH):
@@ -124,8 +125,8 @@ async def recreate_database():
     if await should_update_database():
         logging.info("Starting database update")
         check_and_create_database()
-        json_data = await fetch_json_data()
-        await create_database(json_data)
+        json_data = await fetch_json_data()  # Fetch data here
+        await create_database(json_data)  # Pass json_data
         logging.info("Database update completed")
     else:
         logging.info("No updates required. Database is up to date.")
