@@ -41,7 +41,6 @@ etag_cache = {}  # Store previous ETag values in memory
 async def get_github_etag(session, url):
     async with session.head(url) as response:
         headers = response.headers
-        logging.info(f"Headers for {url}: {headers}")
         
         if response.status == 200:
             return headers.get('ETag')  # Get the ETag if available
