@@ -21,6 +21,8 @@ logging.basicConfig(
 TOKEN = helpers.load_token()
 CLIENT_ID = helpers.load_client_id()
 ADMIN_SERVER = helpers.load_admin_server()
+LOG_CHANNEL = helpers.load_log_channel()
+FIRST_SETUP_DONE = helpers.load_setup_status()
 
 # Paths to the profile images
 DEFAULT_PFP_PATH = helpers.load_default_pfp()
@@ -46,6 +48,7 @@ if not TOKEN or not CLIENT_ID:
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
+intents.emojis_and_stickers = True
 intents.presences = True  # Enable presence intent
 bot = commands.Bot(command_prefix="?CSR2", intents=intents)
 
@@ -62,9 +65,41 @@ async def setup_hook():
 async def on_ready():
     logging.info(f"Logged in as {bot.user.name} ({bot.user.id})")
 
+    if not FIRST_SETUP_DONE:
+        logging.info(f"First time setup detected! Running tasks for initial setup...")
+        emojis = {}
+        for file in os.listdir(f'{os.path.dirname(os.path.abspath(__file__))}/bot-emojis'):
+            if file.endswith((".png", ".gif")):
+                try:
+                    with open(f"{os.path.dirname(os.path.abspath(__file__))}/bot-emojis/{file}", "rb") as image:
+                        emoji_name = os.path.splitext(file)[0]
+                        emoji = await bot.create_application_emoji(name=emoji_name, image=image.read())
+                        emojis[emoji_name] = str(emoji)
+                        logging.info(f"Uploaded emoji: {emoji.name} (ID: {emoji.id})")
+                except Exception as e:
+                    logging.error(f"Failed to upload {emoji_name}: {e}")
+        if emojis:
+            logging.info("Emoji markdowns:")
+            dotenv = helpers.load_dotenv()
+            with open(dotenv, "a") as f:
+                for name, markdown in emojis.items():
+                    f.write(f"\n{name.upper()}_EMOJI={markdown}")
+                    logging.info(f"{name}: {markdown}")
+            with open(dotenv, "r") as f:
+                lines = f.readlines()
+            with open(dotenv, "w") as f:
+                found = False
+                for line in lines:
+                    if line.startswith("FIRST_SETUP_DONE="):
+                        f.write("FIRST_SETUP_DONE=True\n")
+                        found = True
+                    else:
+                        f.write(line)
+                if not found:
+                    f.write("\nFIRST_SETUP_DONE=True\n")
+
     # Set a simple presence for the bot using discord.py
-    activity = discord.Game(name="CSR Racing")
-    await bot.change_presence(activity=activity)
+    await bot.change_presence(activity=discord.Game(name="CSR Racing"))
     logging.info("Basic presence set")
 
     try:
@@ -117,7 +152,7 @@ async def schedule_db_updates():
             await database_manager.recreate_database()
         except Exception as e:
             logging.error(f"Error during database update: {e}")
-        await asyncio.sleep(3597)  # Sleep for 59 hour 57 seconds
+        await asyncio.sleep(300)  # Sleep for 5 minutes
 
 async def schedule_version_check():
     while True:
@@ -133,7 +168,7 @@ async def schedule_blog_check():
             await asyncio.gather(version_check_manager_blog.version_check_task(bot))
         except Exception as e:
             logging.error(f"Error during version check: {e}")
-        await asyncio.sleep(599)  # Sleep for 9 minutes 59 seconds
+        await asyncio.sleep(60)  # Sleep for 1 minute
 
 async def schedule_profile_update():
     while True:

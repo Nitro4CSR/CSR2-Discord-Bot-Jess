@@ -12,6 +12,9 @@ load_dotenv()
 def load_base_dir():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+def load_dotenv():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+
 def load_token():
     TOKEN = os.getenv('TOKEN')
     return TOKEN
@@ -19,6 +22,10 @@ def load_token():
 def load_client_id():
     CLIENT_ID = os.getenv('CLIENT_ID')
     return CLIENT_ID
+
+def load_setup_status():
+    FIRST_SETUP_DONE = os.getenv("FIRST_SETUP_DONE", "False").lower() == "true"
+    return FIRST_SETUP_DONE
 
 def load_default_pfp():
      return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/PfP.png')
@@ -266,3 +273,40 @@ async def load_blog_announcement_users():
     else:
         logger.error(f"Admin CSR3 announcement user '{BLOG_ANNOUNCEMENT_USER_FILE}' not found.")
     return set()
+
+async def emojify_tier(db_value):
+    conversion = {
+        '': '',
+        'T1': f'{os.getenv('T1_EMOJI')}',
+        'T2': f'{os.getenv('T2_EMOJI')}',
+        'T3': f'{os.getenv('T3_EMOJI')}',
+        'T4': f'{os.getenv('T4_EMOJI')}',
+        'T5': f'{os.getenv('T5_EMOJI')}'
+    }
+
+    emoji = conversion.get(db_value)
+
+    return emoji
+
+async def emojify_rarity(db_value):
+    conversion = {
+        '': '',
+        '0': f'{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}',
+        'G1': f'{os.getenv('GS_EMOJI')}',
+        'G2': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
+        'G3': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
+        'G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
+        'G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
+        'P1': f'{os.getenv('PS1_EMOJI')}',
+        'P2': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}',
+        'P3': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}',
+        'P4': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}',
+        'P5': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}{os.getenv('PS5_EMOJI')}',
+    }
+
+    emoji = conversion.get(db_value)
+
+    return emoji
+
+# async def emojify_store():
+

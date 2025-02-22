@@ -5,7 +5,7 @@ This Bot is brought to you by TheMaintainers.<br>
 ## Requirements
 1. Python
 2. Python packages
- - discord.py
+ - discord.py==2.5
  - aiohttp
  - aiosignal
  - aiosqlite
