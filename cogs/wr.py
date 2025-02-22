@@ -19,8 +19,8 @@ class WRCommandCog(commands.Cog):
 
     @app_commands.command(name="csr2_wr", description="❗Select one more variable from above❗ Searches for CSR2 World Records and setups")
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
-    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="(LENGTH(records.★) == 125 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="5 Purple Stars", value="(LENGTH(records.★) == 125 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="5 Stars", value="LENGTH(records.★) == 125"), app_commands.Choice(name="4 Gold Stars", value="(LENGTH(records.★) == 100 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="4 Purple Stars", value="(LENGTH(records.★) == 100 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="4 Stars", value="LENGTH(records.★) == 100"), app_commands.Choice(name="3 Gold Stars", value="(LENGTH(records.★) == 75 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="3 Purple Stars", value="(LENGTH(records.★) == 75 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="3 Stars", value="LENGTH(records.★) == 75"), app_commands.Choice(name="2 Gold Stars", value="(LENGTH(records.★) == 50 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="2 Purple Stars", value="(LENGTH(records.★) == 50 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="2 Stars", value="LENGTH(records.★) == 50"), app_commands.Choice(name="1 Gold Stars", value="(LENGTH(records.★) == 25 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="1 Purple Stars", value="(LENGTH(records.★) == 25 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="1 Stars", value="LENGTH(records.★) == 25"), app_commands.Choice(name="Gold Stars", value="records.★ LIKE '%:GS:%'"), app_commands.Choice(name="Purple Stars", value="records.★ LIKE '%:PS:%'"), app_commands.Choice(name="Non Star", value="records.★ LIKE '%0 Stars%'")])
-    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5/T5", value="<:T5:1331668428318183467>"), app_commands.Choice(name="Tier 4/T4", value="<:T4:1331668411394035794>"), app_commands.Choice(name="Tier 3/T3", value="<:T3:1331668398567850126>"), app_commands.Choice(name="Tier 2/T2", value="<:T2:1331668383996838011>"), app_commands.Choice(name="Tier 1/T1", value="<:T1:1331668370902356039>")])
+    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="G5"), app_commands.Choice(name="5 Purple Stars", value="P5"), app_commands.Choice(name="5 Stars", value="5"), app_commands.Choice(name="4 Gold Stars", value="G4"), app_commands.Choice(name="4 Purple Stars", value="P4"), app_commands.Choice(name="4 Stars", value="4"), app_commands.Choice(name="3 Gold Stars", value="G3"), app_commands.Choice(name="3 Purple Stars", value="P3"), app_commands.Choice(name="3 Stars", value="3"), app_commands.Choice(name="2 Gold Stars", value="G2"), app_commands.Choice(name="2 Purple Stars", value="P2"), app_commands.Choice(name="2 Stars", value="2"), app_commands.Choice(name="1 Gold Stars", value="G1"), app_commands.Choice(name="1 Purple Stars", value="P1"), app_commands.Choice(name="1 Stars", value="1"), app_commands.Choice(name="Gold Star", value="G"), app_commands.Choice(name="Purple Star", value="P"), app_commands.Choice(name="Non Star", value="0")])
+    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5 (T5|K5|L5)", value="T5"), app_commands.Choice(name="Tier 4 (T4|K4|L4)", value="T4"), app_commands.Choice(name="Tier 3 (T3|K3|L3)", value="T3"), app_commands.Choice(name="Tier 2 (T2|K2|L2)", value="T2"), app_commands.Choice(name="Tier 1 (T1|K1|L1)", value="T1")])
     async def wr_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"The following command has been used: /csr2_wr car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_wr car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
@@ -73,7 +73,8 @@ class WRCommandCog(commands.Cog):
         if rarity:
             if car:
                 query += """ AND"""
-            query += f""" {rarity}"""
+            query += """ records.★ LIKE ?"""
+            parameters.append(f"%{rarity}%")
         if tier:
             if any([car, rarity]):
                 query += """ AND"""
@@ -134,7 +135,8 @@ class WRCommandCog(commands.Cog):
                 similar_entries_query += """\nWHERE"""
 
             if rarity:
-                similar_entries_query += f""" {rarity}"""
+                similar_entries_query += """ records.★ LIKE ?"""
+                parameters.append(f"%{rarity}%")
             if tier:
                 if rarity:
                     similar_entries_query += """ AND"""
@@ -243,7 +245,7 @@ class WRCommandCog(commands.Cog):
         else:
             await interaction.response.send_message("Fetching records, please wait...", ephemeral=True)
 
-        messages, log = self.construct_results(rows, log)
+        messages, log = await self.construct_results(rows, log)
 
         if messages:
             for batch in messages:
@@ -267,7 +269,7 @@ class WRCommandCog(commands.Cog):
             try:
                 await user.send("Fetching records, please wait...")
 
-                messages, log = self.construct_results(rows, log)
+                messages, log = await self.construct_results(rows, log)
 
                 if messages:
                     for batch in messages:
@@ -302,13 +304,16 @@ class WRCommandCog(commands.Cog):
             await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
             await in_app_logging.send_log(self.bot, log, interaction)
 
-    def construct_results(self, rows: list, log: str):
+    async def construct_results(self, rows: list, log: str):
         logger.info(f"Constructing Embeds")
         log += f"\nConstructing Embeds"
         messages = []
         batch = []
         
         for row in rows:
+            row = list(row)
+            row[3] = await helpers.emojify_tier(row[3])
+            row[4] = await helpers.emojify_rarity(row[4])
             markdown_characters = ['*', '_', '~', '#']
             escaped_text = ''
             if row[14][0] in markdown_characters:

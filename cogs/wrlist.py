@@ -16,8 +16,8 @@ class WRlistCog(commands.Cog):
 
     @app_commands.command(name="csr2_wrlist", description="❗Select one more variable from above❗ Compiles a custom list of WR times")
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
-    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="(LENGTH(records.★) == 125 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="5 Purple Stars", value="(LENGTH(records.★) == 125 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="5 Stars", value="LENGTH(records.★) == 125"), app_commands.Choice(name="4 Gold Stars", value="(LENGTH(records.★) == 100 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="4 Purple Stars", value="(LENGTH(records.★) == 100 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="4 Stars", value="LENGTH(records.★) == 100"), app_commands.Choice(name="3 Gold Stars", value="(LENGTH(records.★) == 75 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="3 Purple Stars", value="(LENGTH(records.★) == 75 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="3 Stars", value="LENGTH(records.★) == 75"), app_commands.Choice(name="2 Gold Stars", value="(LENGTH(records.★) == 50 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="2 Purple Stars", value="(LENGTH(records.★) == 50 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="2 Stars", value="LENGTH(records.★) == 50"), app_commands.Choice(name="1 Gold Stars", value="(LENGTH(records.★) == 25 AND records.★ LIKE '<:G%')"), app_commands.Choice(name="1 Purple Stars", value="(LENGTH(records.★) == 25 AND records.★ LIKE '<:P%')"), app_commands.Choice(name="1 Stars", value="LENGTH(records.★) == 25"), app_commands.Choice(name="Gold Stars", value="records.★ LIKE '%:GS:%'"), app_commands.Choice(name="Purple Stars", value="records.★ LIKE '%:PS:%'"), app_commands.Choice(name="Non Star", value="records.★ LIKE '%0 Stars%'")])
-    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5/T5", value="<:T5:1331668428318183467>"), app_commands.Choice(name="Tier 4/T4", value="<:T4:1331668411394035794>"), app_commands.Choice(name="Tier 3/T3", value="<:T3:1331668398567850126>"), app_commands.Choice(name="Tier 2/T2", value="<:T2:1331668383996838011>"), app_commands.Choice(name="Tier 1/T1", value="<:T1:1331668370902356039>")])
+    @app_commands.choices(rarity=[app_commands.Choice(name="5 Gold Stars", value="G5"), app_commands.Choice(name="5 Purple Stars", value="P5"), app_commands.Choice(name="5 Stars", value="5"), app_commands.Choice(name="4 Gold Stars", value="G4"), app_commands.Choice(name="4 Purple Stars", value="P4"), app_commands.Choice(name="4 Stars", value="4"), app_commands.Choice(name="3 Gold Stars", value="G3"), app_commands.Choice(name="3 Purple Stars", value="P3"), app_commands.Choice(name="3 Stars", value="3"), app_commands.Choice(name="2 Gold Stars", value="G2"), app_commands.Choice(name="2 Purple Stars", value="P2"), app_commands.Choice(name="2 Stars", value="2"), app_commands.Choice(name="1 Gold Stars", value="G1"), app_commands.Choice(name="1 Purple Stars", value="P1"), app_commands.Choice(name="1 Stars", value="1"), app_commands.Choice(name="Gold Star", value="G"), app_commands.Choice(name="Purple Star", value="P"), app_commands.Choice(name="Non Star", value="0")])
+    @app_commands.choices(tier=[app_commands.Choice(name="Tier 5 (T5|K5|L5)", value="T5"), app_commands.Choice(name="Tier 4 (T4|K4|L4)", value="T4"), app_commands.Choice(name="Tier 3 (T3|K3|L3)", value="T3"), app_commands.Choice(name="Tier 2 (T2|K2|L2)", value="T2"), app_commands.Choice(name="Tier 1 (T1|K1|L1)", value="T1")])
     async def wrlist_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
@@ -44,7 +44,6 @@ class WRlistCog(commands.Cog):
                     t4_t5_results.append(row)
 
             if t1_t3_results and t4_t5_results:
-                logger.info("2 embeds")
                 view1 = PaginatedView(t1_t3_results, interaction.user, car, rarity, "T1-T3", csr2_version)
                 view2 = PaginatedView(t4_t5_results, interaction.user, car, rarity, "T4-T5", csr2_version)
                 
@@ -52,7 +51,6 @@ class WRlistCog(commands.Cog):
                 await interaction.followup.send("**T4 - T5 Results**", embed=await view2.get_embed_page(), view=view2)
                 await in_app_logging.send_log(self.bot, log, interaction)
             else:
-                logger.info("1 embed")
                 view = PaginatedView(results, interaction.user, car, rarity, tier, csr2_version)
                 await view.start(interaction)
                 await in_app_logging.send_log(self.bot, log, interaction)
@@ -91,7 +89,8 @@ class WRlistCog(commands.Cog):
 
         # Add rarity and tier filter if provided
         if rarity:
-            query += f""" AND {rarity}"""
+            query += """ AND records.★ LIKE ?"""
+            parameters.append(f"%{rarity}%")
         if tier:
             query += """ AND records.Un LIKE ?"""
             parameters.append(f"%{tier}%")
@@ -161,49 +160,11 @@ class PaginatedView(discord.ui.View):
     async def get_embed_page(self):
         start_index = (self.page_number - 1) * self.page_size
         end_index = start_index + self.page_size
+        self.results = [[row[0], row[1], await helpers.emojify_rarity(row[2]), row[3]] for row in self.results]
         page_results = self.results[start_index:end_index]
 
         # Handle None values for title
         car_display = self.car if self.car else "Any Car"
-        if self.rarity:
-            if "125" in self.rarity:
-                if "<:G" in self.rarity:
-                    self.rarity = "5 Gold Stars"
-                elif "<:P" in self.rarity:
-                    self.rarity = "5 Purple Stars"
-                else:
-                    self.rarity = "5 Stars"
-            elif "100" in self.rarity:
-                if "<:G" in self.rarity:
-                    self.rarity = "4 Gold Stars"
-                elif "<:P" in self.rarity:
-                    self.rarity = "4 Purple Stars"
-                else:
-                    self.rarity = "4 Stars"
-            elif "75" in self.rarity:
-                if "<:G" in self.rarity:
-                    self.rarity = "3 Gold Stars"
-                elif "<:P" in self.rarity:
-                    self.rarity = "3 Purple Stars"
-                else:
-                    self.rarity = "3 Stars"
-            elif "50" in self.rarity:
-                if "<:G" in self.rarity:
-                    self.rarity = "2 Gold Stars"
-                elif "<:P" in self.rarity:
-                    self.rarity = "2 Purple Stars"
-                else:
-                    self.rarity = "2 Stars"
-            elif "25" in self.rarity:
-                if "<:G" in self.rarity:
-                    self.rarity = "1 Gold Star"
-                elif "<:P" in self.rarity:
-                    self.rarity = "1 Purple Star"
-                else:
-                    self.rarity = "1 Star"
-            else:
-                self.rarity = "Any Rarity"
-
         rarity_display = f"{self.rarity}" if self.rarity else "Any Rarity"
         tier_display = f"Tier {self.tier}" if self.tier else "Any Tier"
         version_display = f"CSR Version {self.csr2_version}" if self.csr2_version else "Any Version"
