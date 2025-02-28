@@ -83,11 +83,12 @@ class VersionCheckCog(commands.Cog):
                 game_icon = (
                     "https://i.imgur.com/1VWi2Di.png" if result["app"] == "CSR2" else "https://imgur.com/szUv2T5.png"
                 )
+                result['store'] = await helpers.emojify_store(result['store'])
 
                 embed = discord.Embed(
                     title=f"Query Result",
                     description=(
-                        f"Store: {result['store']}      App: {result['app']}\n"
+                        f"## Store: {result['store']}      App: {result['app']}\n"
                         f"Version: {result['version']}\n"
                         f"Last Updated: <t:{result['last_updated']}:F>\n"
                         f"Countries: {', '.join(result['countries'])}"
