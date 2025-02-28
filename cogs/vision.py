@@ -355,7 +355,7 @@ class VisionCommandCog(commands.Cog):
             batch.append(embed)
 
             # Send batch when it reaches 10 embeds
-            if len(batch) == 10:
+            if len(batch) == 2:
                 messages.append(batch)
                 batch = []
 
