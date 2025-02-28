@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import version_check_manager_blog
 import version_check_manager_CSR2
 import version_check_manager_CSR3
 import logging
@@ -33,6 +34,7 @@ class ScrapeCog(commands.Cog):
             logger.info(f"Starting Scrape...")
             log += f"\nStarting Scrape..."
             await interaction.followup.send("Starting Scrape...", ephemeral=True)
+            await version_check_manager_blog.version_check_task(self.bot)
             await version_check_manager_CSR2.version_check_task(self.bot)
             await version_check_manager_CSR3.version_check_task(self.bot)
             log += f"\nScrape Success"
