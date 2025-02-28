@@ -10,6 +10,7 @@ This Bot is brought to you by TheMaintainers.<br>
  - aiosignal
  - aiosqlite
  - bs4
+ - cogs
  - discord
  - discord-py-interactions
  - discord-py-slash-command
