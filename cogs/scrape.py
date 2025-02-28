@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 ADMIN_FILE = helpers.load_super_admin()
 ADMIN_SERVER = helpers.load_admin_server()
 
-admins = helpers.load_admins()
-
 class ScrapeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
