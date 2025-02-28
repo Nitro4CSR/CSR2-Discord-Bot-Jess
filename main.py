@@ -80,11 +80,12 @@ async def on_ready():
                     logging.error(f"Failed to upload {emoji_name}: {e}")
         if emojis:
             logging.info("Emoji markdowns:")
-            dotenv = helpers.load_dotenv()
+            dotenv = helpers.load_dotenv_dir()
             with open(dotenv, "a") as f:
                 for name, markdown in emojis.items():
                     f.write(f"\n{name.upper()}_EMOJI={markdown}")
                     logging.info(f"{name}: {markdown}")
+                    asyncio.sleep(0.1)
             with open(dotenv, "r") as f:
                 lines = f.readlines()
             with open(dotenv, "w") as f:
@@ -97,6 +98,9 @@ async def on_ready():
                         f.write(line)
                 if not found:
                     f.write("\nFIRST_SETUP_DONE=True\n")
+
+            logging.info("Reloading environment variables...")
+            helpers.load_dotenv_data()
 
     # Set a simple presence for the bot using discord.py
     await bot.change_presence(activity=discord.Game(name="CSR Racing"))

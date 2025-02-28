@@ -12,8 +12,11 @@ load_dotenv()
 def load_base_dir():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-def load_dotenv():
+def load_dotenv_dir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+
+def load_dotenv_data():
+    load_dotenv()
 
 def load_token():
     TOKEN = os.getenv('TOKEN')
@@ -308,5 +311,13 @@ async def emojify_rarity(db_value):
 
     return emoji
 
-# async def emojify_store():
+async def emojify_store(store):
+    conversion = {
+        '': '',
+        'App Store': f'{os.getenv('APP_STORE_EMOJI')}',
+        'Google Play': f'{os.getenv('GOOGLE_PLAY_EMOJI')}'
+    }
 
+    emoji = conversion.get(store)
+
+    return emoji
