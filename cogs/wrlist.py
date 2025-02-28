@@ -165,13 +165,13 @@ class PaginatedView(discord.ui.View):
 
         # Handle None values for title
         car_display = self.car if self.car else "Any Car"
-        rarity_display = f"{self.rarity}" if self.rarity else "Any Rarity"
-        tier_display = f"Tier {self.tier}" if self.tier else "Any Tier"
+        rarity_display = f"{await helpers.emojify_rarity(self.rarity)}" if self.rarity else "Any Rarity"
+        tier_display = f"{await helpers.emojify_tier(self.tier)}" if self.tier else "Any Tier"
         version_display = f"CSR Version {self.csr2_version}" if self.csr2_version else "Any Version"
 
         logger.info(f"Constructing Embed for page {self.page_number}")
         embed = discord.Embed(
-            title=f"WR List for {car_display}, {rarity_display}, {tier_display}, {version_display}",
+            title=f"WR List for {tier_display} {car_display}'s {rarity_display} | {version_display}",
             description="\n".join(
                 f"{start_index + i + 1}. {row[0]}\n{row[2]} | {float(row[1]):.3f}s"
                 for i, row in enumerate(page_results)
