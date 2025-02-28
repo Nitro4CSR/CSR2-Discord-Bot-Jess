@@ -68,18 +68,18 @@ class PaginatedView(discord.ui.View):
         self.results = results
         self.user = user
         self.page_number = 1
-        self.max_pages = len(results) // 10 + (1 if len(results) % 10 != 0 else 0)
+        self.max_pages = len(results) // 25 + (1 if len(results) % 25 != 0 else 0)
 
     def get_embed_page(self):
-        start_index = (self.page_number - 1) * 10
-        end_index = start_index + 10
+        start_index = (self.page_number - 1) * 25
+        end_index = start_index + 25
         page_results = self.results[start_index:end_index]
 
         logger.info(f"Constructing Embed for page {self.page_number}")
         embed = discord.Embed(
             title=f"Database Changes",
             description="\n".join(
-                f"{row[0][:10]} - {row[1]}"  # Truncate row[0] to the first 10 characters
+                f"{row[0][:25]} - {row[1]}"  # Truncate row[0] to the first 25 characters
                 for row in page_results
             ),
             color=discord.Color(0xff00ff)
