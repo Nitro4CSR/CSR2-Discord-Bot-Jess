@@ -315,6 +315,8 @@ class S6ECog(commands.Cog):
             row = list(row)
             row[3] = await helpers.emojify_tier(row[3])
             row[4] = await helpers.emojify_rarity(row[4])
+            if isinstance(row[8], float) or row[8].replace('.', '', 1).isdigit():
+                row[8] = f"{float(row[8]):.2f}"
             if row[18] == 'false':
                 categories = ["Engine      ", "Turbo       ", "Intake      ", "NOS         ", "Body        ", "Tires       ", "Transmission"]
             else:

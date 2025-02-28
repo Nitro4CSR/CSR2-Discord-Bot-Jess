@@ -318,6 +318,8 @@ class WRCommandCog(commands.Cog):
             escaped_text = ''
             if row[14][0] in markdown_characters:
                 escaped_text = '\\'
+            if isinstance(row[8], float) or row[8].replace('.', '', 1).isdigit():
+                row[8] = f"{float(row[8]):.2f}"
 
             embed = discord.Embed(
                 title=row[2],  # Ingame Name Clarification
