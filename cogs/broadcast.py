@@ -12,6 +12,7 @@ class BroadcastCommandCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="csr2_broadcast", description="Send a message to all moderators of joined servers")
+    @app_commands.describe(message_title="The title of your broadcast message")
     async def broadcast_command(self, interaction: discord.Interaction, message_title: str):
         logger.info(f"BROADCAST - The following command has been used: /csr2_broadcast message_title: {message_title}")
         log = f"BROADCAST - The following command has been used: /csr2_broadcast message_title: {message_title}"
