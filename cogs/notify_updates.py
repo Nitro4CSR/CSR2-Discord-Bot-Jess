@@ -1,231 +1,141 @@
-import asyncio
-import json
 import discord
 from discord.ext import commands
 from discord import app_commands
-import logging
+import aiofiles
+import json
 import in_app_logging
 import helpers
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger = helpers.load_logging()
 
 class NotifyUpdatesCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
+
     @app_commands.command(name="csr2_notify_updates_add", description="Allow Jess to notify you about updates in DMs")
     @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
     @app_commands.describe(scope="Which app updates to announce")
     async def notify_updates_add(self, interaction: discord.Interaction, scope: str = None):
-        # Log the command usage and parameters
-        logger.info(f"The following command has been used: /csr2_announce_updates_add scope: {scope}")
-        log = f"The following command has been used: /csr2_announce_updates_add scope: {scope}"
+        logger.info(f"NOTIFY_UPDATES_ADD - The following command has been used: /csr2_notify_updates_add scope: {scope}")
+        log = f"NOTIFY_UPDATES_ADD - The following command has been used: /csr2_notify_updates_add scope: {scope}"
+        await interaction.response.defer()
 
         log += f"\nUser is Server Owner"
-        await interaction.response.defer(ephemeral=True)
 
         if (scope == None):
-             scope = "All"
+             scope = ["CSR2", "CSR3", "Blog"]
+        else:
+            scope = await str_to_list(scope)
 
-        embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} app update announcements.", color=discord.Color(0xff00ff))
+        embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} update announcements.", color=discord.Color(0xff00ff))
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
+        checks = []
+        status_list = []
         try:
-            await interaction.user.send(embed=embed)
-            check, log = await add_user( interaction, scope,log)
+            message = await interaction.user.send(embed=embed, silent=True)
+            for scope in scope:
+                check, log, status = await process_request(interaction.user.id, scope, 1, log)
+                checks.append(check)
+                status_list.append(status)
+            await message.delete()
         except Exception as e:
-            await interaction.channel.send(f"There was an error with trying to send a message")
+            await interaction.channel.send(f"There was an error with trying to send a message: {e}")
             return
 
-        if check == 1:
-             await interaction.followup.send(f"The user {interaction.user.display_name} has been added to announcement users list", ephemeral=True)
-             log += f"The user {interaction.user.display_name} has been added to announcement users list"
+        if max(checks) == 1:
+             await interaction.followup.send(f"The user {interaction.user.display_name} has been added to announcement users list(s)", ephemeral=True)
+             log += f"NOTIFY_UPDATES_ADD - The user {interaction.user.display_name} has been added to announcement users list(s)"
         else:
-             await interaction.followup.send(f"There was an error adding the user {interaction.user.display_name} to announcement users list", ephemeral=True)
-             log += f"There was an error adding the user {interaction.user.display_name} to announcement users list"
+             await interaction.followup.send(f"There was an error adding the user {interaction.user.display_name} to announcement users list(s)", ephemeral=True)
+             log += f"NOTIFY_UPDATES_ADD - There was an error adding the user {interaction.user.display_name} to announcement users list(s)"
 
-        await in_app_logging.send_log(self.bot, log, interaction)
-
+        await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
 
     @app_commands.command(name="csr2_notify_updates_delete", description="Allow Jess to notify you about updates in DMs")
     @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
     @app_commands.describe(scope="Which app updates to announce")
     async def notify_updates_delete(self, interaction: discord.Interaction, scope: str = None):
-        # Log the command usage and parameters
-        logger.info(f"The following command has been used: /csr2_announce_updates_delete scope: {scope}")
-        log = f"The following command has been used: /csr2_announce_updates_delete scope: {scope}"
+        logger.info(f"NOTIFY_UPDATES_DELETE - The following command has been used: /csr2_notify_updates_delete scope: {scope}")
+        log = f"NOTIFY_UPDATES_DELETE - The following command has been used: /csr2_notify_updates_delete scope: {scope}"
 
         log += f"\nUser is Server Owner"
         await interaction.response.defer(ephemeral=True)
-        await asyncio.sleep(1)
 
         if (scope == None):
-             scope = "All"
-
-        check, log = await delete_user(interaction.user.id, scope, log)
-            
-        if check == 1:
-             await interaction.followup.send(f"You were removed from announcement channels list", ephemeral=True)
-             log += f"\nYou were removed from announcement channels list"
+            scope = ["CSR2", "CSR3", "Blog"]
         else:
-             await interaction.followup.send(f"There was an error removing you from announcement channels list", ephemeral=True)
-             log += f"\nThere was an error removing you from announcement channels list"
-        await in_app_logging.send_log(self.bot, log, interaction)
+            scope = await str_to_list(scope)
 
+        checks = []
+        status_list = []
+        for scope in scope:
+            check, log, status = await process_request(interaction.user.id, scope, 0, log)
+            checks.append(check)
+            status_list.append(status)
 
-
-async def add_user(interaction: discord.Interaction, scope: str, log: str):
-    csr2 = await helpers.load_CSR2_announcement_users()
-    csr3 = await helpers.load_CSR3_announcement_users()
-    blog = await helpers.load_blog_announcement_users()
-
-    csr2_check = 0
-    csr3_check = 0
-    blog_check = 0
-
-    if (scope == "All"):
-        if interaction.user.id not in csr2:
-            csr2.add(str(interaction.user.id))
-        csr2_check, log = save_csr2_users(csr2, log)
-        if interaction.user.id not in csr3:
-            csr3.add(str(interaction.user.id))
-        csr3_check, log = save_csr3_users(csr3, log)
-        if interaction.user.id not in blog:
-            blog.add(str(interaction.user.id))
-        blog_check, log = save_blog_users(blog, log)
-        if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
-            check = 1
+        if max(checks) == 1:
+             await interaction.followup.send(f"You were removed from announcement channels list(s)", ephemeral=True)
+             log += f"\nNOTIFY_UPDATES_DELETE - You were removed from announcement channels list(s)"
         else:
-            check = 0
-    elif (scope == "CSR2"):
-        if interaction.user.id not in csr2:
-            csr2.add(str(interaction.user.id))
-        csr2_check, log = save_csr2_users(csr2, log)
-        if csr2_check == 1:
-            check = 1
-        else:
-             check = 0
-    elif (scope == "CSR3"):
-        if interaction.user.id not in csr3:
-            csr3.add(str(interaction.user.id))
-        csr3_check, log = save_csr3_users(csr3, log)
-        if csr3_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "Blog"):
-        if interaction.user.id not in blog:
-            blog.add(str(interaction.user.id))
-        blog_check, log = save_blog_users(blog, log)
-        if blog_check == 1:
-            check = 1
-        else:
-            check = 0
+             await interaction.followup.send(f"There was an error removing you from announcement channels list(s)", ephemeral=True)
+             log += f"\nNOTIFY_UPDATES_DELETE - There was an error removing you from announcement channels list(s)"
+        await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
+
+async def str_to_list(scope: str):
+    scope_list = []
+    if scope == "CSR2" or scope == "All":
+        scope_list.append("CSR2")
+
+    if scope == "CSR3" or scope == "All":
+        scope_list.append("CSR3")
+
+    if scope == "Blog" or scope == "All":
+        scope_list.append("Blog")
+
+    return scope_list
+
+async def process_request(id: str, scope: str, request: int, log: str):
+    list = await helpers.load_file(f'{scope} announcement user file')
+    if request == 1:
+        check, log, status = await add_id(list, scope, id, log)
+    elif request == 0:
+        check, log, status = await del_id(list, scope, id, log)
     else:
-        logger.error(f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined")
-        log += f"User {interaction.user.display_name} could not be added to announcements lists because no scope was defined"
         check = 0
-    return check, log
+        log += f"NOTIFY_UPDATES - There was an error processing the request"
+        status = 0
 
-async def delete_user(user: str, scope: str, log: str = None):
-    csr2 = await helpers.load_CSR2_announcement_users()
-    csr3 = await helpers.load_CSR3_announcement_users()
-    blog = await helpers.load_blog_announcement_users()
+    return check, log, status
 
-    csr2_check = 0
-    csr3_check = 0
-    blog_check = 0
+async def add_id(list: set, scope: str, id: str, log: str):
+    if str(id) not in list:
+        list.add(str(id))
+    check, log, status = await save_list(list, scope, log)
 
-    if (scope == "All"):
-        try:
-            csr2.remove(str(user))
-        except Exception as e:
-            log += f"User {user} not in CSR2 announcemt user list"
-        csr2_check, log = save_csr2_users(csr2, log)
-        try:
-            csr3.remove(str(user))
-        except Exception as e:
-            log += f"User {user} not in CSR3 announcemt user list"
-        csr3_check, log = save_csr3_users(csr3, log)
-        try:
-            blog.remove(str(user))
-        except Exception as e:
-            log += f"User {user} not in Blog announcemt user list"
-        blog_check, log = save_blog_users(blog, log)
-        if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
+    return check, log, status
+
+async def del_id(list: set, scope: str, id: str, log: str):
+    if str(id) in list:
+        list.remove(str(id))
+    check, log, status = await save_list(list, scope, log)
+
+    return check, log, status
+
+async def save_list(id_list: set, scope: str, log: str):
+    FILE = await helpers.load_file_path(f'{scope}_announcement_users')
+    try:
+        async with aiofiles.open(FILE, 'w') as f:
+            await f.write(json.dumps(list(id_list)))
             check = 1
-        else:
-            check = 0
-    elif (scope == "CSR2"):
-        try:
-            csr2.remove(str(user))
-        except Exception as e:
-            log += f"User {user} not in CSR2 announcemt user list"
-        csr2_check, log = save_csr2_users(csr2, log)
-        if csr2_check == 1:
-            check = 1
-        else:
-             check = 0
-    elif (scope == "CSR3"):
-        try:
-            csr3.remove(str(user))
-        except Exception as e:
-            log += f"User {user} not in CSR3 announcemt user list"
-        csr3_check, log = save_csr3_users(csr3, log)
-        if csr3_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "Blog"):
-        try:
-            blog.remove(str(user))
-        except Exception as e:
-            log += f"User {user} not in Blog announcemt user list"
-        blog_check, log = save_blog_users(blog, log)
-        if blog_check == 1:
-            check = 1
-        else:
-            check = 0
-    else:
-        logger.error(f"User {user} could not be removed from announcements lists because no scope was defined")
-        log += f"\nUser {user} could not be removed from announcements lists because no scope was defined"
+            status = 2
+    except Exception as e:
+        logger.error(f"NOTIFY_UPDATES - Error saving {scope} announcement user file: {e}")
+        log += f"\nNOTIFY_UPDATES - Error saving {scope} announcement user file: {e}"
         check = 0
-    return check, log
+        status = 0
 
-def save_csr2_users(csr2, log):
-    CSR2_ANNOUNCEMENT_USER_FILE = helpers.load_CSR2_announcement_user_file()
-    try:
-        with open(CSR2_ANNOUNCEMENT_USER_FILE, 'w') as f:
-            json.dump(list(csr2), f)
-            check = 1
-    except Exception as e:
-        logger.error(f"Error saving CSR2 announcement user file: {e}")
-        log += f"\nError saving CSR2 announcement user file: {e}"
-    return check, log
-
-def save_csr3_users(csr3, log):
-    CSR3_ANNOUNCEMENT_USER_FILE = helpers.load_CSR3_announcement_user_file()
-    try:
-        with open(CSR3_ANNOUNCEMENT_USER_FILE, 'w') as f:
-            json.dump(list(csr3), f)
-            check = 1
-    except Exception as e:
-        logger.error(f"Error saving CSR3 announcement user file: {e}")
-        log += f"\nError saving CSR3 announcement user file: {e}"
-    return check, log
-
-def save_blog_users(blog, log):
-    BLOG_ANNOUNCEMENT_USER_FILE = helpers.load_blog_announcement_user_file()
-    try:
-        with open(BLOG_ANNOUNCEMENT_USER_FILE, 'w') as f:
-            json.dump(list(blog), f)
-            check = 1
-    except Exception as e:
-        logger.error(f"Error saving Blog announcement user file: {e}")
-        log += f"\nError saving Blog announcement user file: {e}"
-    return check, log
+    return check, log, status
 
 async def setup(bot):
     await bot.add_cog(NotifyUpdatesCog(bot))

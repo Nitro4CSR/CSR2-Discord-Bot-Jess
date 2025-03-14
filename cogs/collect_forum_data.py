@@ -1,24 +1,15 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from dotenv import load_dotenv
+import aiofiles
 import os
 import csv
 import os
 import asyncio
-import logging
 import in_app_logging
 import helpers
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Load environment variables from .env file
-load_dotenv()
-TOKEN = helpers.load_token()
-CLIENT_ID = helpers.load_client_id()
-NITRO = helpers.load_super_admin()
+logger = helpers.load_logging()
 
 class CollectForumDataCog(commands.Cog):
     def __init__(self, bot):
@@ -27,28 +18,24 @@ class CollectForumDataCog(commands.Cog):
     @app_commands.command(name="csr2_collect_forum_data", description="[Admin Command] Collect all posts in a forum channel with their tags and save to a CSV file.")
     @app_commands.describe(channel="The forum channel to collect posts from.")
     async def collect_forum_posts(self, interaction: discord.Interaction, channel: discord.ForumChannel):
-        logger.info(f"The following command has been used: /csr2_collect_forum_data")
-        log = f"The following command has been used: /csr2_collect_forum_data"
+        logger.info(f"COLLECT_FORUM_DATA - The following command has been used: /csr2_collect_forum_data")
+        log = f"COLLECT_FORUM_DATA - The following command has been used: /csr2_collect_forum_data"
         await interaction.response.defer(ephemeral=True)
 
+        NITRO = await helpers.load_super_admin()
         if int(interaction.user.id) == int(NITRO):
-            # Collect posts and tags from the specified forum channel
             posts_data = []
 
-            # Fetch and unarchive archived threads
             async for thread in channel.archived_threads(limit=None):
                 await self.process_thread(thread, posts_data)
 
-            # Fetch active threads
             for thread in channel.threads:
                 await self.process_thread(thread, posts_data)
 
-            # Define CSV file path
             csv_file_path = os.path.join(os.getcwd(), 'resources/forum_data.csv')
 
-            # Write collected data to CSV file
             try:
-                with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+                async with aiofiles.open(csv_file_path, mode='w', newline='', encoding='utf-8') as csvfile:
                     fieldnames = ['thread_id', 'thread_title', 'tags']
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -59,38 +46,35 @@ class CollectForumDataCog(commands.Cog):
                 await interaction.followup.send(f"Collected {len(posts_data)} threads from {channel.name} and saved to {csv_file_path}.", ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(f"An error occurred while writing to the CSV file: {e}", ephemeral=True)
-            log += f"\nUser is NITRO"
+            log += f"\nCOLLECT_FORUM_DATA - User is NITRO"
         else:
             await interaction.followup.send(f"You don't have permission to run this command", ephemeral=True)
-            log += f"\nUser is not NITRO"
-        await in_app_logging.send_log(self.bot, log, interaction)
+            log += f"\nCOLLECT_FORUM_DATA - User is not NITRO"
+        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
 
     async def process_thread(self, thread, posts_data):
         if thread.archived:
             try:
                 await thread.edit(archived=False)
-                await asyncio.sleep(1)  # Slight delay to handle rate limiting
+                await asyncio.sleep(1)
             except discord.errors.HTTPException as e:
-                if e.status == 429:  # Rate limit exceeded
+                if e.status == 429:
                     retry_after = int(e.response.headers.get("Retry-After", 1))
                     await asyncio.sleep(retry_after)
 
-        # Extract and format tags for each thread
-        tags = [tag.name for tag in thread.applied_tags]  # Extract tag names
-        tags_str = ', '.join(tags) if tags else 'N/A'  # Join tag names into a string
+        tags = [tag.name for tag in thread.applied_tags]
+        tags_str = ', '.join(tags) if tags else 'N/A'
 
-        # Collect relevant data for each thread
         posts_data.append({
             'thread_id': thread.id,
             'thread_title': thread.name,
-            'tags': tags_str  # Include tags as a string
+            'tags': tags_str
         })
 
-        # Re-archive the thread
         try:
-            await thread.edit(archived=True)  # Slight delay to handle rate limiting
+            await thread.edit(archived=True)
         except discord.errors.HTTPException as e:
-            if e.status == 429:  # Rate limit exceeded
+            if e.status == 429:
                 retry_after = int(e.response.headers.get("Retry-After", 1))
                 await asyncio.sleep(retry_after)
 

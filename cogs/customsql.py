@@ -2,18 +2,14 @@ import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
+import aiofiles
 import sqlite3
-from cogs import admin
-import logging
 import json
+from cogs import admin
 import in_app_logging
 import helpers
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-LIMIT_FILE = helpers.load_server_limits()
+logger = helpers.load_logging()
 
 class CustomSQLCog(commands.Cog):
     def __init__(self, bot):
@@ -24,34 +20,29 @@ class CustomSQLCog(commands.Cog):
     @app_commands.choices(database=[app_commands.Choice(name="WRs", value="EDB"), app_commands.Choice(name="tunes", value="tunes")])
     @app_commands.choices(from_=[app_commands.Choice(name="records", value="records"), app_commands.Choice(name="s6_effects", value="s6_effects"), app_commands.Choice(name="info", value="info"), app_commands.Choice(name="updates", value="updates"), app_commands.Choice(name="community_tunes", value="community_tunes")])
     async def customsql(self, interaction: discord.Interaction, database: app_commands.Choice[str], select: str = None, update: str = None, create_table: str = None, insert_into: str = None, from_: app_commands.Choice[str] = None, set_: str = None, where: str = None):
-        logger.info(f"The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}")
-        log = f"The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}"
+        logger.info(f"CUSTOMSQL - The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}")
+        log = f"CUSTOMSQL - The following command has been used: /csr2_customsql database: {database} select: {select} update: {update} create_table: {create_table} insert_into: {insert_into} from_: {from_} set_: {set_} where: {where}"
         await interaction.response.defer(ephemeral=True)
-        await asyncio.sleep(1)
 
-        # Mapping database options to paths
         database_paths = {
-            "WRs": helpers.load_external_db(),
-            "tunes": helpers.load_community_db()
+            "WRs": await helpers.load_file_path('EDB'),
+            "tunes": await helpers.load_file_path('tunes')
         }
 
-        # Get the database path from the selected choice
         db_path = database_paths[database.value]
 
-        # Check for admin privileges if necessary
         if any([update, create_table, insert_into, set_]):
             logger.info(f"update, create_table, insert_into or set_ was used. Checking user permissions...")
             log += f"\nupdate, create_table, insert_into or set_ was used. Checking user permissions..."
             admin_list = await admin.load_admins()
             if interaction.user.id not in admin_list:
-                logger.info(f"User is not bot admin. Exiting...")
-                log += f"\nUser is not bot admin. Exiting..."
-                await in_app_logging.send_log(self.bot, log, interaction)
+                logger.info(f"CUSTOMSQL - User is not bot admin. Exiting...")
+                log += f"\nCUSTOMSQL - User is not bot admin. Exiting..."
                 await interaction.response.send_message("You do not have the necessary permissions to execute this command.", ephemeral=True)
-                await in_app_logging.send_log(self.bot, log, interaction)
+                await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
                 return
-        logger.info(f"User is bot admin. Proceeding to run command...")
-        log += f"\nUser is bot admin. Proceeding to run command..."
+        logger.info(f"CUSTOMSQL - User is bot admin. Proceeding to run command...")
+        log += f"\nCUSTOMSQL - User is bot admin. Proceeding to run command..."
 
         if select == "*":
             table_columns = {
@@ -63,7 +54,6 @@ class CustomSQLCog(commands.Cog):
             }
             select = table_columns[from_.value]
 
-        # Constructing the SQL statement
         sql_parts = []
         if select:
             sql_parts.append(f"SELECT {select}")
@@ -82,35 +72,35 @@ class CustomSQLCog(commands.Cog):
 
         sql_statement = " ".join(sql_parts)
 
-        # Execute the SQL statement
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
             if select:
-                logger.info(f"running query for collecting results...")
-                log += f"\nrunning query for collecting results..."
+                logger.info(f"CUSTOMSQL - running query for collecting results...")
+                log += f"\nCUSTOMSQL - running query for collecting results..."
                 cursor.execute(sql_statement)
                 results = cursor.fetchall()
                 selections = select.split(',')
                 if results:
-                    logger.info(f"{len(results)} results found")
-                    log += f"\n{len(results)} results found"
+                    logger.info(f"CUSTOMSQL - {len(results)} results found")
+                    log += f"\nCUSTOMSQL - {len(results)} results found"
                     server_id = str(interaction.guild.id) if interaction.guild else None
-                    with open(LIMIT_FILE, 'r') as file:
-                        limits = json.load(file)
-                    limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]  # Default to 0 if server_id is not found
-                    logger.info(f"Limit on {interaction.guild.name} ({server_id}): {limit}")
-                    log += f"\nLimit on {interaction.guild.name} ({server_id}): {limit}"
+                    LIMIT_FILE = await helpers.load_file_path('limits')
+                    async with aiofiles.open(LIMIT_FILE, 'r') as file:
+                        limits = json.loads(file)
+                    limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]
+                    logger.info(f"CUSTOMSQL - Limit on {interaction.guild.name} ({server_id}): {limit}")
+                    log += f"\nCUSTOMSQL - Limit on {interaction.guild.name} ({server_id}): {limit}"
 
                     if limit == 0 or len(results) <= limit:
-                        logger.info(f"Sending in Channel")
-                        log += f"\nSending in Channel"
-                        log = await self.send_query_in_channel(interaction, results, selections, log)
+                        logger.info(f"CUSTOMSQL - Sending in Channel")
+                        log += f"\nCUSTOMSQL - Sending in Channel"
+                        log = await send_query_in_channel(interaction, results, selections, log)
                     else:
-                        logger.info(f"Sending in DMs")
-                        log += f"\nSending in DMs"
-                        log = await self.send_query_in_dm(interaction, results, selections, log)
+                        logger.info(f"CUSTOMSQL - Sending in DMs")
+                        log += f"\nCUSTOMSQL - Sending in DMs"
+                        log = await send_query_in_dm(interaction, results, selections, log)
                 await interaction.followup.send("Query executed successfully")
             else:
                 cursor.execute(sql_statement)
@@ -119,15 +109,15 @@ class CustomSQLCog(commands.Cog):
 
         except sqlite3.Error as e:
             await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-            log += f"\nAn error occurred: {e}"
+            log += f"\nCUSTOMSQL - An error occurred: {e}"
         finally:
-            await in_app_logging.send_log(self.bot, log, interaction)
+            await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
             conn.close()
 
     @app_commands.command(name="csr2_dbstructure", description="Displays the Database structure so you can use /csr2_customsql appropriately")
     async def csr2_dbstructure(self, interaction: discord.Interaction):
-        logger.info(f"The following command has been used: /csr2_dbstructure")
-        log = f"The following command has been used: /csr2_dbstructure"
+        logger.info(f"DBSTRUCURE - The following command has been used: /csr2_dbstructure")
+        log = f"DBSTRUCURE - The following command has been used: /csr2_dbstructure"
 
         embed = discord.Embed(
             title="Database Structure",
@@ -137,127 +127,126 @@ class CustomSQLCog(commands.Cog):
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
         await interaction.response.send_message(embed=embed)
-        await in_app_logging.send_log(self.bot, log, interaction)
-        
-    async def send_query_in_channel(self, interaction: discord.Interaction, results: list, selections: list, log: str):
-        messages, log = self.construct_results(results, selections, log)
+        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
 
-        if messages:
-            for batch in messages:
-                try:
-                    await interaction.followup.send(embeds=batch)
-                    await asyncio.sleep(0.5)
-                except:
-                    logger.error("Follow-up interaction expired.")
-                    log += f"\nFollow-up interaction expired."
-                    await in_app_logging.send_log(self.bot, log, interaction)
-                    return
-            logger.info(f"Results sent in Channel.")
-            log += f"\nResults sent in Channel."
-            return log
-    
-    async def send_query_in_dm(self, interaction: discord.Interaction, results: list, selections: list, log: str):
-        try:
-            await interaction.followup.send("Sending results via DMs because the amount of results exceeds the maximum allowed results on this server.", ephemeral=True)
-            user = interaction.user
+async def send_query_in_channel(self, interaction: discord.Interaction, results: list, selections: list, log: str):
+    messages, log = await construct_results(results, selections, log)
 
+    if messages:
+        for batch in messages:
             try:
-                await user.send("Fetching records, please wait...")
-
-                messages, log = self.construct_results(results, selections, log)
-
-                if messages:
-                    for batch in messages:
-                        try:
-                            await user.send(embeds=batch)
-                            await asyncio.sleep(0.5)
-                        except:
-                            logger.info("DMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again.")
-                            log += f"\nDMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again."
-                            return
-                    logger.info(f"Results sent in DMs.")
-                    log += f"\nResults sent in DMs."
-
+                await interaction.followup.send(embeds=batch)
                 await asyncio.sleep(0.5)
-                try:
-                    await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
-                except discord.HTTPException as e:
-                    if e.status == 429:
-                        logger.warning(f"Rate Limited caught (HTTP 429)")
-                        retry_after = int(e.response.headers.get('Retry-After', 5))
-                        await asyncio.sleep(retry_after)
-                        await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
-            except discord.Forbidden:
-                await interaction.followup.send("Unable to send DMs. Please ensure your DMs are open and try again.", ephemeral=True)
-        except discord.errors.NotFound:
-            await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
-            return log
-
-    def construct_results(self, results: list, selections: list, log: str):
-        logger.info(f"Constructing Embeds")
-        log += f"\nConstructing Embeds"
-        messages = []
-        batch = []
-        idx = 1
-        for result in results:
-            values = result
-            desc_lines = [f"- **{selection}**: {value}" for selection, value in zip(selections, values)]
-            desc = "\n".join(desc_lines)
-            if len(desc) > 4096:
-                next_new_line = desc.find("\n", 4000)
-                if next_new_line:
-                    desc1 = desc[:next_new_line + 1]
-                    desc2 = desc[next_new_line + 1:]
-                else:
-                    next_new_line = desc.find("\n", 3800)
-                    desc1 = desc[:next_new_line + 1]
-                    desc2 = desc[next_new_line + 1:]
-                    if len(desc2) > 1024:
-                        next_new_line = desc2.find("\n", 900)
-                        if next_new_line:
-                            desc2 = desc2[:next_new_line + 1]
-                            desc3 = desc2[next_new_line + 1:]
-                        else:
-                            next_new_line = desc2.find("\n", 800)
-                            desc2 = desc2[:next_new_line + 1]
-                            desc3 = desc2[next_new_line + 1:]
-            else:
-                desc1 = desc
-
-            embed = discord.Embed(
-                title=f"Your Query Results",
-                description=desc1,
-                color=discord.Color(0xff00ff)
-            )
-            try:
-                embed.add_field(name="", value=f"{desc2}")
-                try:
-                    embed.add_field(name="", value=f"{desc3}")
-                except:
-                    logger.info(f"Description 2 not longer than 1024 characters. skipping add_field...")
-                    log += f"\nDescription 2 not longer than 1024 characters. skipping add_field..."
             except:
-                logger.info(f"Description not longer than 4096 characters. skipping add_field...")
-                log += f"\nDescription not longer than 4096 characters. skipping add_field..."
-            embed.set_footer(text=f"row: {idx}")
-            embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+                logger.error("CUSTOMSQL - Follow-up interaction expired.")
+                log += f"\nCUSTOMSQL - Follow-up interaction expired."
+                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
+                return
+        logger.info(f"CUSTOMSQL - Results sent in Channel.")
+        log += f"\nCUSTOMSQL - Results sent in Channel."
 
-            batch.append(embed)
+    return log
 
-            # Send batch when it reaches 10 embeds
-            if len(batch) == 10:
-                messages.append(batch)
-                batch = []
+async def send_query_in_dm(self, interaction: discord.Interaction, results: list, selections: list, log: str):
+    try:
+        await interaction.followup.send("Sending results via DMs because the amount of results exceeds the maximum allowed results on this server.", ephemeral=True)
+        user = interaction.user
 
-        # Add remaining embeds if there are any
-        if batch:
+        try:
+            await user.send("Fetching records, please wait...")
+
+            messages, log = await construct_results(results, selections, log)
+
+            if messages:
+                for batch in messages:
+                    try:
+                        await user.send(embeds=batch)
+                        await asyncio.sleep(0.5)
+                    except:
+                        logger.info("CUSTOMSQL - DMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again.")
+                        log += f"\nCUSTOMSQL - DMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again."
+                        return
+                logger.info(f"CUSTOMSQL - Results sent in DMs.")
+                log += f"\nCUSTOMSQL - Results sent in DMs."
+
+            await asyncio.sleep(0.5)
+            try:
+                await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
+            except discord.HTTPException as e:
+                if e.status == 429:
+                    logger.warning(f"CUSTOMSQL - Rate Limited caught (HTTP 429)")
+                    retry_after = int(e.response.headers.get('Retry-After', 5))
+                    await asyncio.sleep(retry_after)
+                    await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.followup.send("Unable to send DMs. Please ensure your DMs are open and try again.", ephemeral=True)
+    except discord.errors.NotFound:
+        await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
+
+    return log
+
+async def construct_results(self, results: list, selections: list, log: str):
+    logger.info(f"CUSTOMSQL - Constructing Embeds")
+    log += f"\nCUSTOMSQL - Constructing Embeds"
+    messages = []
+    batch = []
+    idx = 1
+    for result in results:
+        values = result
+        desc_lines = [f"- **{selection}**: {value}" for selection, value in zip(selections, values)]
+        desc = "\n".join(desc_lines)
+        if len(desc) > 4096:
+            next_new_line = desc.find("\n", 4000)
+            if next_new_line:
+                desc1 = desc[:next_new_line + 1]
+                desc2 = desc[next_new_line + 1:]
+            else:
+                next_new_line = desc.find("\n", 3800)
+                desc1 = desc[:next_new_line + 1]
+                desc2 = desc[next_new_line + 1:]
+                if len(desc2) > 1024:
+                    next_new_line = desc2.find("\n", 900)
+                    if next_new_line:
+                        desc2 = desc2[:next_new_line + 1]
+                        desc3 = desc2[next_new_line + 1:]
+                    else:
+                        next_new_line = desc2.find("\n", 800)
+                        desc2 = desc2[:next_new_line + 1]
+                        desc3 = desc2[next_new_line + 1:]
+        else:
+            desc1 = desc
+
+        embed = discord.Embed(
+            title=f"Your Query Results",
+            description=desc1,
+            color=discord.Color(0xff00ff)
+        )
+        try:
+            embed.add_field(name="", value=f"{desc2}")
+            try:
+                embed.add_field(name="", value=f"{desc3}")
+            except:
+                logger.info(f"CUSTOMSQL - Description 2 not longer than 1024 characters. skipping add_field...")
+                log += f"\nCUSTOMSQL - Description 2 not longer than 1024 characters. skipping add_field..."
+        except:
+            logger.info(f"CUSTOMSQL - Description not longer than 4096 characters. skipping add_field...")
+            log += f"\nCUSTOMSQL - Description not longer than 4096 characters. skipping add_field..."
+        embed.set_footer(text=f"row: {idx}")
+        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+
+        batch.append(embed)
+        if len(batch) == 10:
             messages.append(batch)
-            idx = idx + 1
+            batch = []
 
-        logger.info(f"Embeds constructed")
-        log += f"\nEmbeds constructed"
-        return messages, log
+    if batch:
+        messages.append(batch)
+        idx = idx + 1
 
-# Setup function to add this cog to the bot
+    logger.info(f"CUSTOMSQL - Embeds constructed")
+    log += f"\nCUSTOMSQL - Embeds constructed"
+
+    return messages, log
+
 async def setup(bot):
     await bot.add_cog(CustomSQLCog(bot))

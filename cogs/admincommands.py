@@ -1,34 +1,24 @@
 import discord
+import os
 from discord.ext import commands
 from discord import app_commands
-import logging
 import in_app_logging
 import helpers
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger = helpers.load_logging()
 
-# Load environment variables from .env file
-NITRO = helpers.load_super_admin()
-
-# Define the path to the JSON file
-ADMIN_FILE = helpers.load_admin_file()
-
-ADMIN_SERVER = helpers.load_admin_server()
-    
 class AdminCommandsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @app_commands.command(name="csr2_admincommands", description="List of all available commands")
-    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_scrape", value="scrape")])
+    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_connected", value="connected"), app_commands.Choice(name="csr2_scrape", value="scrape")])
     async def admincommands(self, interaction: discord.Interaction, command: str = None):
-        # Log the command usage and parameters
-        logger.info(f"The following command has been used: /csr2_admincommands commad: {command}")
-        log = f"The following command has been used: /csr2_admincommands commad: {command}"
+        logger.info(f"ADMINCOMMANDS - The following command has been used: /csr2_admincommands commad: {command}")
+        log = f"ADMINCOMMANDS - The following command has been used: /csr2_admincommands commad: {command}"
 
-        admins = await helpers.load_admins()
+        admins = await helpers.load_file('Admin file')
+        helpers.load_dotenv
         if str(interaction.user.id) in admins:
             await interaction.response.defer(ephemeral=True)
 
@@ -41,12 +31,13 @@ class AdminCommandsCog(commands.Cog):
                 title_text = 'Command Usage'
 
             descriptions = {
-                'default': '</csr2_updatedb:1296765246958207017>\n</csr2_addadmin:1296764993974439999>\n</csr2_removeadmin:1296764993974440000>\n</csr2_listadmins:1296764993974439998>\n</csr2_scrape:1316279353436409892>\n',
-                'updatedb': '## </csr2_updatedb:1296765246958207017>\nUpdates the internal DataBase\n',
-                'addadmin': '## </csr2_addadmin:1296764993974439999>\nAdditional Operators:\n - user: ping a user and add him to the Bot Admin team\n',
-                'removeadmin': '## </csr2_removeadmin:1296764993974440000>\nAdditional Operators:\n - user: ping a user and remove him from the Bot Admin team\n',
-                'listadmins': '"## </csr2_listadmins:1296764993974439998>\nAdditional Operators:\n - List all Bot Admins\n',
-                'scrape': '## </csr2_scrape:1316279353436409892>\nScrape the appstores for CSR2 and CSR3 app updates\n'
+                'default': f'</csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\n</csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\n</csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\n</csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\n</csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\n</csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\n',
+                'updatedb': f'## </csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\nUpdates the internal DataBase\n',
+                'addadmin': f'## </csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\nAdditional Operators:\n - user: ping a user and add him to the Bot Admin team\n',
+                'removeadmin': f'## </csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\nAdditional Operators:\n - user: ping a user and remove him from the Bot Admin team\n',
+                'listadmins': f'## </csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\nAdditional Operators:\n - List all Bot Admins\n',
+                'connected': f'## </csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\nAdditional Operators:\n - mod: `y` to see all server names and IDs\n',
+                'scrape': f'## </csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\nScrape the appstores for CSR2 and CSR3 app updates\n'
             }
 
             description_text = descriptions[command]
@@ -57,13 +48,14 @@ class AdminCommandsCog(commands.Cog):
                 color=discord.Color(0xff00ff)
             )
             embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-        
+
             await interaction.followup.send(embed=embed, ephemeral=True)
-            log += f"\nUser is Admin"
+            log += f"\nADMINCOMMANDS - User is Admin"
         else:
             await interaction.response.send_message("You don't have permission to use this command because you are not an Admin of this bot!", ephemeral=True)
-            log += f"\nUser is not Admin"
-        await in_app_logging.send_log(self.bot, log, interaction)
+            log += f"\nADMINCOMMANDS - User is not Admin"
+        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
 
 async def setup(bot):
+    ADMIN_SERVER = await helpers.load_admin_server()
     await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)

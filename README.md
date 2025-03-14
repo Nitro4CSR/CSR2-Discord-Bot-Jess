@@ -5,7 +5,8 @@ This Bot is brought to you by TheMaintainers.<br>
 ## Requirements
 1. Python
 2. Python packages
- - discord.py==2.5
+ - discord.py
+ - aiofiles
  - aiohttp
  - aiosignal
  - aiosqlite
@@ -18,6 +19,7 @@ This Bot is brought to you by TheMaintainers.<br>
  - google_play_scraper
  - itunes-app-scraper-dmi
  - pycountry
+ - pycountry_convert
  - pypresence
  - python-dotenv
  - regex

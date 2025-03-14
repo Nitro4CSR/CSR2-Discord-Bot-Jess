@@ -1,248 +1,154 @@
-import json
 import discord
 from discord.ext import commands
 from discord import app_commands
-import logging
+import aiofiles
+import json
 import in_app_logging
 import helpers
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Load environment variables from .env file
-NITRO = helpers.load_super_admin()
-
-def is_server_owner(interaction: discord.Interaction):
-    if ((interaction.user.id == interaction.guild.owner_id) or (str(interaction.user.id) == str(NITRO))):
-        return interaction.user.id
-    else:
-        return None
+logger = helpers.load_logging()
 
 class AnnounceUpdatesCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
+
     @app_commands.command(name="csr2_announce_updates_add", description="Set a text channel as Announcements channel for app updates")
     @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
-    @app_commands.check(is_server_owner)
     @app_commands.describe(channel="Channel to send announcements to", scope="Which app updates to announce")
     async def announce_updates_add(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: str = None):
-        # Log the command usage and parameters
-        logger.info(f"The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}")
-        log = f"The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}"
-        
-        if interaction.user.id == interaction.guild.owner_id or str(interaction.user.id) == str(NITRO):
-            log += f"\nUser is Server Owner"
+        logger.info(f"ANNOUNCE_UPDATES_ADD - The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}")
+        log = f"ANNOUNCE_UPDATES_ADD - The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}"
+
+        NITRO = await helpers.load_super_admin()
+        if interaction.user.id == interaction.guild.owner or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
+            log += f"\nANNOUNCE_UPDATES_ADD - User has required permissions"
             await interaction.response.defer(ephemeral=True)
 
             if (scope == None):
-                scope = "All"
+                scope = ["CSR2", "CSR3", "Blog"]
+            else:
+                scope = await str_to_list(scope)
 
-            embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} app update announcements.", color=discord.Color(0xff00ff))
+            embed = discord.Embed(title="Test Message", description=f"This channel will be used for {scope} update announcements.", color=discord.Color(0xff00ff))
             embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
+            checks = []
+            status_list = []
             try:
                 send_channel = self.bot.get_channel(int(channel.id))
-                await send_channel.send(embed=embed)
-                check, log = await add_channel(channel, scope, log)
+                message = await send_channel.send(embed=embed)
+                for scope in scope:
+                    check, log, status = await process_request(channel.id, scope, 1, log)
+                    checks.append(check)
+                    status_list.append(status)
+                await message.delete()
             except Exception as e:
                 await interaction.followup.send(f"There was an error with trying to send a message: {e}", ephemeral=True)
+                status = 0
                 return
-            
-            if check == 1:
-                 await interaction.followup.send(f"The channel {channel} has been added to announcement channels list", ephemeral=True)
-                 log += f"\nThe channel {channel} has been added to announcement channels list"
+
+            if max(checks) == 1:
+                 await interaction.followup.send(f"The channel {channel} has been added to announcement channels list(s)", ephemeral=True)
+                 log += f"\nANNOUNCE_UPDATES_ADD - The channel {channel} has been added to announcement channels list(s)"
             else:
-                 await interaction.followup.send(f"There was an error adding the channel {channel} to announcement channels list", ephemeral=True)
-                 log += f"\nThere was an error adding the channel {channel} to announcement channels list"
+                 await interaction.followup.send(f"There was an error adding the channel {channel} to announcement channels list(s)", ephemeral=True)
+                 log += f"\nANNOUNCE_UPDATES_ADD - There was an error adding the channel {channel} to announcement channels list(s)"
 
         else:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            log += f"\nUser is not Server Owner"
-        await in_app_logging.send_log(self.bot, log, interaction)
+            log += f"\nANNOUNCE_UPDATES_ADD - User lacks required permissions"
+        await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
 
     @app_commands.command(name="csr2_announce_updates_delete", description="Set a text channel as Announcements channel for app updates")
     @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
-    @app_commands.check(is_server_owner)
     @app_commands.describe(channel="Channel to send announcements to", scope="Which app updates to announce")
     async def announce_updates_delete(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: str = None):
-        # Log the command usage and parameters
         logger.info(f"The following command has been used: /csr2_announce_updates_delete channel: {channel} scope: {scope}")
         log = f"The following command has been used: /csr2_announce_updates_delete channel: {channel} scope: {scope}"
-        
-        if interaction.user.id == interaction.guild.owner_id or str(interaction.user.id) == str(NITRO):
-            log += f"\nUser is Server Owner"
+
+        NITRO = await helpers.load_super_admin()
+        if interaction.user.id == interaction.guild.owner or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
+            log += f"\nANNOUNCE_UPDATES_DELETE - User has required permissions"
             await interaction.response.defer(ephemeral=True)
 
             if (scope == None):
-                scope = "All"
-
-            check, log = await delete_channel(channel.id, scope, log)
-            
-            if check == 1:
-                 await interaction.followup.send(f"The channel {channel} has been removed from announcement channels list", ephemeral=True)
-                 log += f"\nThe channel {channel} has been removed from announcement channels list"
+                scope = ["CSR2", "CSR3", "Blog"]
             else:
-                 await interaction.followup.send(f"There was an error removing the channel {channel} from announcement channels list", ephemeral=True)
-                 log += f"\nThere was an error removing the channel {channel} from announcement channels list"
+                scope = await str_to_list(scope)
+
+            checks = []
+            status_list = []
+            for scope in scope:
+                check, log, status = await process_request(channel.id, scope, 0, log)
+                checks.append(check)
+                status_list.append(status)
+
+            if max(checks) == 1:
+                 await interaction.followup.send(f"The channel {channel} has been removed from announcement channels list(s)", ephemeral=True)
+                 log += f"\nANNOUNCE_UPDATES_DELETE - The channel {channel} has been removed from announcement channels list(s)"
+            else:
+                 await interaction.followup.send(f"There was an error removing the channel {channel} from announcement channels list(s)", ephemeral=True)
+                 log += f"\nANNOUNCE_UPDATES_DELETE - There was an error removing the channel {channel} from announcement channels list(s)"
 
         else:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            log += f"\nUser is not Server Owner"
-        await in_app_logging.send_log(self.bot, log, interaction)
+            log += f"\nANNOUNCE_UPDATES_DELETE - User lacks required permissions"
+        await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
 
+async def str_to_list(scope: str):
+    scope_list = []
+    if scope == "CSR2" or scope == "All":
+        scope_list.append("CSR2")
 
-async def add_channel(channel: discord.TextChannel, scope: str, log: str):
-    csr2 = await helpers.load_CSR2_announcement_channels()
-    csr3 = await helpers.load_CSR3_announcement_channels()
-    blog = await helpers.load_blog_announcement_channels()
+    if scope == "CSR3" or scope == "All":
+        scope_list.append("CSR3")
 
-    csr2_check = 0
-    csr3_check = 0
-    blog_check = 0
+    if scope == "Blog" or scope == "All":
+        scope_list.append("Blog")
 
-    if (scope == "All"):
-        if channel.id not in csr2:
-            csr2.add(str(channel.id))
-        csr2_check, log = save_csr2_channels(csr2, log)
-        if channel.id not in csr3:
-            csr3.add(str(channel.id))
-        csr3_check, log = save_csr3_channels(csr3, log)
-        if channel.id not in blog:
-            blog.add(str(channel.id))
-        blog_check, log = save_blog_channels(blog, log)
-        if csr2_check == 1 and blog_check == 1 and blog_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "CSR2"):
-        if channel.id not in csr2:
-            csr2.add(str(channel.id))
-        csr2_check, log = save_csr2_channels(csr2, log)
-        if csr2_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "CSR3"):
-        if channel.id not in csr3:
-            csr3.add(str(channel.id))
-        csr3_check, log = save_csr3_channels(csr3, log)
-        if csr3_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "Blog"):
-        if channel.id not in blog:
-            blog.add(str(channel.id))
-        blog_check, log = save_blog_channels(blog, log)
-        if blog_check == 1:
-            check = 1
-        else:
-            check = 0
+    return scope_list
+
+async def process_request(id: str, scope: str, request: int, log: str):
+    list = await helpers.load_file(f'{scope} announcement channel file')
+    if request == 1:
+        check, log, status = await add_id(list, scope, id, log)
+    elif request == 0:
+        check, log, status = await del_id(list, scope, id, log)
     else:
-        logger.error(f"Channel {channel} could not be added to announcements lists because no scope was defined")
-        log += f"\nChannel {channel} could not be added to announcements lists because no scope was defined"
         check = 0
-    return check, log
+        log += f"ANNOUNCE_UPDATES - There was an error processing the request"
+        status = 0
 
-async def delete_channel(channel: str, scope: str, log: str = None):
-    csr2 = await helpers.load_CSR2_announcement_channels()
-    csr3 = await helpers.load_CSR3_announcement_channels()
-    blog = await helpers.load_blog_announcement_channels()
+    return check, log, status
 
-    csr2_check = 0
-    csr3_check = 0
-    blog_check = 0
+async def add_id(list: set, scope: str, id: str, log: str):
+    if str(id) not in list:
+        list.add(str(id))
+    check, log, status = await save_list(list, scope, log)
 
-    if (scope == "All"):
-        try:
-            csr2.remove(str(channel))
-        except Exception as e:
-            log += f"Channel {channel} not in CSR2 announcemt channel list"
-        csr2_check, log = save_csr2_channels(csr2, log)
-        try:
-            csr3.remove(str(channel))
-        except Exception as e:
-            log += f"Channel {channel} not in CSR3 announcemt channel list"
-        csr3_check, log = save_csr3_channels(csr3, log)
-        try:
-            blog.remove(str(channel))
-        except Exception as e:
-            log += f"Channel {channel} not in Blog announcemt channel list"
-        blog_check, log = save_blog_channels(blog, log)
-        if csr2_check == 1 and csr3_check == 1 and blog_check == 1:
+    return check, log, status
+
+async def del_id(list: set, scope: str, id: str, log: str):
+    if str(id) in list:
+        list.remove(str(id))
+    check, log, status = await save_list(list, scope, log)
+
+    return check, log, status
+
+async def save_list(id_list: set, scope: str, log: str):
+    FILE = await helpers.load_file_path(f'{scope}_announcement_channels')
+    try:
+        async with aiofiles.open(FILE, mode='w') as f:
+            await f.write(json.dumps(list(id_list)))
             check = 1
-        else:
-            check = 0
-    elif (scope == "CSR2"):
-        try:
-            csr2.remove(str(channel))
-        except Exception as e:
-            log += f"Channel {channel} not in CSR2 announcemt channel list"
-        csr2_check, log = save_csr2_channels(csr2, log)
-        if csr2_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "CSR3"):
-        try:
-            csr3.remove(str(channel))
-        except Exception as e:
-            log += f"Channel {channel} not in CSR3 announcemt channel list"
-        csr3_check, log = save_csr3_channels(csr3, log)
-        if csr3_check == 1:
-            check = 1
-        else:
-            check = 0
-    elif (scope == "Blog"):
-        try:
-            blog.remove(str(channel))
-        except Exception as e:
-            log += f"Channel {channel} not in Blog announcemt channel list"
-        blog_check, log = save_blog_channels(blog, log)
-        if blog_check == 1:
-            check = 1
-        else:
-            check = 0
-    else:
-        logger.error(f"Channel {channel} could not be removed from announcements lists because no scope was defined")
-        log += f"\nChannel {channel} could not be removed from announcements lists because no scope was defined"
+            status = 2
+    except Exception as e:
+        logger.error(f"ANNOUNCE_UPDATES - Error saving {scope} announcement user file: {e}")
+        log += f"\nANNOUNCE_UPDATES - Error saving {scope} announcement user file: {e}"
         check = 0
-    return check, log
+        status = 0
 
-def save_csr2_channels(csr2, log):
-    CSR2_ANNOUNCEMENT_CHANNEL_FILE = helpers.load_CSR2_announcement_channel_file()
-    try:
-        with open(CSR2_ANNOUNCEMENT_CHANNEL_FILE, 'w') as f:
-            json.dump(list(csr2), f)
-            check = 1
-    except Exception as e:
-        logger.error(f"Error saving CSR2 announcement channels file: {e}")
-        log += f"\nError saving CSR2 announcement channels file: {e}"
-    return check, log
-
-def save_csr3_channels(csr3, log):
-    CSR3_ANNOUNCEMENT_CHANNEL_FILE = helpers.load_CSR3_announcement_channel_file()
-    try:
-        with open(CSR3_ANNOUNCEMENT_CHANNEL_FILE, 'w') as f:
-            json.dump(list(csr3), f)
-            check = 1
-    except Exception as e:
-        logger.error(f"Error saving CSR3 announcement channels file: {e}")
-        log += f"\nError saving CSR3 announcement channels file: {e}"
-    return check, log
-
-def save_blog_channels(blog, log):
-    BLOG_ANNOUNCEMENT_CHANNEL_FILE = helpers.load_blog_announcement_channel_file()
-    try:
-        with open(BLOG_ANNOUNCEMENT_CHANNEL_FILE, 'w') as f:
-            json.dump(list(blog), f)
-            check = 1
-    except Exception as e:
-        logger.error(f"Error saving Blog announcement channels file: {e}")
-        log += f"\nError saving Blog announcement channels file: {e}"
-    return check, log
+    return check, log, status
 
 async def setup(bot):
     await bot.add_cog(AnnounceUpdatesCog(bot))
