@@ -30,7 +30,7 @@ class BroadcastCommandCog(commands.Cog):
         all_moderators = set()
 
         for guild in self.bot.guilds:
-            moderators = {member for member in guild.members if member.guild_permissions.administrator}
+            moderators = {member for member in guild.members if member.guild_permissions.administrator and not member.bot}
             moderators.add(guild.owner)
             all_moderators.update(moderators)
 
@@ -43,7 +43,6 @@ class BroadcastCommandCog(commands.Cog):
                 await asyncio.sleep(1)
             except Exception as e:
                 logger.warning(f"BROADCAST - Could not send message to {moderator} (DMs might be closed): {e}")
-                await in_app_logging.send_log(self.bot, log, 1, 1, interaction)
 
         await interaction.followup.send(f"Broadcast sent to {len(all_moderators)} unique moderators.", ephemeral=True)
         logger.info("BROADCAST - Broadcast sent")
