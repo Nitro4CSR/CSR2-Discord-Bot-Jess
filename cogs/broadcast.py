@@ -50,4 +50,5 @@ class BroadcastCommandCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
 
 async def setup(bot):
-    await bot.add_cog(BroadcastCommandCog(bot))
+    ADMIN_SERVER = await helpers.load_admin_server()
+    await bot.add_cog(BroadcastCommandCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
