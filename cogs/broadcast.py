@@ -39,7 +39,7 @@ class BroadcastCommandCog(commands.Cog):
         for moderator in all_moderators:
             try:
                 await moderator.send(embed=embed)
-            except discord.Forbidden:
+            except Exception:
                 logger.warning(f"BROADCAST - Could not send message to {moderator} (DMs might be closed)")
                 log += f"BROADCAST - Could not send message to {moderator} (DMs might be closed)"
                 await in_app_logging.send_log(self.bot, log, 1, 1, interaction)
