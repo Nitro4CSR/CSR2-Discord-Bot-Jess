@@ -20,6 +20,7 @@ class AnnounceUpdatesCog(commands.Cog):
         log = f"ANNOUNCE_UPDATES_ADD - The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}"
 
         NITRO = await helpers.load_super_admin()
+        status_list = []
         if interaction.user.id == interaction.guild.owner or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
             log += f"\nANNOUNCE_UPDATES_ADD - User has required permissions"
             await interaction.response.defer(ephemeral=True)
@@ -33,7 +34,6 @@ class AnnounceUpdatesCog(commands.Cog):
             embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
             checks = []
-            status_list = []
             try:
                 send_channel = self.bot.get_channel(int(channel.id))
                 message = await send_channel.send(embed=embed)
@@ -57,7 +57,8 @@ class AnnounceUpdatesCog(commands.Cog):
         else:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             log += f"\nANNOUNCE_UPDATES_ADD - User lacks required permissions"
-        await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
+            status_list.append(2)
+        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
 
     @app_commands.command(name="csr2_announce_updates_delete", description="Set a text channel as Announcements channel for app updates")
     @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
@@ -67,6 +68,7 @@ class AnnounceUpdatesCog(commands.Cog):
         log = f"The following command has been used: /csr2_announce_updates_delete channel: {channel} scope: {scope}"
 
         NITRO = await helpers.load_super_admin()
+        status_list = []
         if interaction.user.id == interaction.guild.owner or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
             log += f"\nANNOUNCE_UPDATES_DELETE - User has required permissions"
             await interaction.response.defer(ephemeral=True)
@@ -77,7 +79,6 @@ class AnnounceUpdatesCog(commands.Cog):
                 scope = await str_to_list(scope)
 
             checks = []
-            status_list = []
             for scope in scope:
                 check, log, status = await process_request(channel.id, scope, 0, log)
                 checks.append(check)
@@ -93,6 +94,7 @@ class AnnounceUpdatesCog(commands.Cog):
         else:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             log += f"\nANNOUNCE_UPDATES_DELETE - User lacks required permissions"
+            status_list.append(2)
         await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
 
 async def str_to_list(scope: str):
