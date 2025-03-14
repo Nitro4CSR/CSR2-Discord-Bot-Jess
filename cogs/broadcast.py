@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -39,9 +40,9 @@ class BroadcastCommandCog(commands.Cog):
         for moderator in all_moderators:
             try:
                 await moderator.send(embed=embed)
-            except Exception:
-                logger.warning(f"BROADCAST - Could not send message to {moderator} (DMs might be closed)")
-                log += f"BROADCAST - Could not send message to {moderator} (DMs might be closed)"
+                await asyncio.sleep(1)
+            except Exception as e:
+                logger.warning(f"BROADCAST - Could not send message to {moderator} (DMs might be closed): {e}")
                 await in_app_logging.send_log(self.bot, log, 1, 1, interaction)
 
         await interaction.followup.send(f"Broadcast sent to {len(all_moderators)} unique moderators.", ephemeral=True)
