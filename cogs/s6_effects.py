@@ -248,9 +248,9 @@ async def send_s6e_in_channel(bot: commands.Bot, interaction: discord.Interactio
     messages, log = await construct_results(rows, log)
 
     if messages:
-        for batch in messages:
+        for i, batch in enumerate(messages):
             try:
-                await interaction.followup.send(embeds=batch)
+                await interaction.followup.send(embeds=batch, silent=True if i != 0 else None)
                 await asyncio.sleep(0.5)
             except Exception as e:
                 logger.error(f"S6_EFFECTS - Follow-up interaction expired: {e}")
@@ -274,10 +274,7 @@ async def send_s6e_in_dm(bot: commands.Bot, interaction: discord.Interaction, ro
             if messages:
                 for i, batch in enumerate(messages):
                     try:
-                        if i == 0:
-                            await user.send(embeds=batch)
-                        else:
-                            await user.send(embeds=batch, silent=True)
+                        await user.send(embeds=batch, silent=True if i != 0 else None)
                         await asyncio.sleep(0.5)
                     except discord.Forbidden:
                         logger.info("S6_EFFECTS - DMs are closed or closed for non-friended accounts. No records will be sent. Please open your DMs and try again.")

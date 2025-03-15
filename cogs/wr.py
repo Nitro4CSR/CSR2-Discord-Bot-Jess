@@ -250,9 +250,9 @@ async def send_records_in_channel(bot: commands.Bot, interaction: discord.Intera
     messages, log = await construct_results(rows, log)
 
     if messages:
-        for batch in messages:
+        for i, batch in enumerate(messages):
             try:
-                await interaction.followup.send(embeds=batch)
+                await interaction.followup.send(embeds=batch, silent=True if i != 0 else None)
                 await asyncio.sleep(0.5)
             except discord.NotFound:
                 logger.error("WR - Follow-up interaction expired.")
@@ -278,10 +278,7 @@ async def send_records_in_dm(bot: commands.Bot, interaction: discord.Interaction
             if messages:
                 for i, batch in enumerate(messages):
                     try:
-                        if i == 0:
-                            await user.send(embeds=batch)
-                        else:
-                            await user.send(embeds=batch, silent=True)
+                        await user.send(embeds=batch, silent=True if i != 0 else None)
                         await asyncio.sleep(0.5)
                     except discord.Forbidden:
                         logger.info(f"WR - DMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again.")
