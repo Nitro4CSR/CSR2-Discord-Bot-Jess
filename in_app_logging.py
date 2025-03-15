@@ -11,12 +11,12 @@ async def send_log(bot: commands.Bot, log: str, status: int, type: int, interact
     NITRO = await helpers.load_super_admin()
     log_channel = bot.get_channel(CHANNEL[type-1])
 
-    if status == 0:
-        log += f"\n\n<@{NITRO}>"
-
     embed = await log_type_to_embed(log, status, type, interaction)
     try:
-        await log_channel.send(embed=embed)
+        message=""
+        if status == 0:
+            message = f"<@{NITRO}>"
+        await log_channel.send(message if status == 0 else None,embed=embed)
     except Exception as e:
         logger.error(f"{e}")
 
