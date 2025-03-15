@@ -202,41 +202,40 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
 
 async def fetch_and_send_s6e_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, log: str):
     DATABASE_PATH = await helpers.load_file_path('EDB')
-    async with aiosqlite.connect(DATABASE_PATH) as conn:
-        async with conn.cursor() as cursor:
 
-            query = """\nSELECT UniqueID, "DB Name", "Ingame Name", Un, ★, "S5 - PP", "S5 - EVO", "S5 - NOS", "S5 - FD", "S5 - TIRES", "S5 - DYNO", Engine, Turbo, Intake, NOS, Body, Tires, Trans, "Is EV?"\nFROM s6_effects\nWHERE UniqueID = ?"""
+    query = """\nSELECT UniqueID, "DB Name", "Ingame Name", Un, ★, "S5 - PP", "S5 - EVO", "S5 - NOS", "S5 - FD", "S5 - TIRES", "S5 - DYNO", Engine, Turbo, Intake, NOS, Body, Tires, Trans, "Is EV?"\nFROM s6_effects\nWHERE UniqueID = ?"""
+    
+    logger.info(f"S6_EFFECTS - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}")
+    log += f"\nS6_EFFECTS - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}"
         
-            logger.info(f"S6_EFFECTS - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}")
-            log += f"\nS6_EFFECTS - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}"
+    try:
+        logger.info(f"S6_EFFECTS - Querying with UniqueID from Recovery.")
+        log += f"\nS6_EFFECTS - Querying with UniqueID from Recovery."
+        async with aiosqlite.connect(DATABASE_PATH) as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(query, (unique_id,))
+                rows = await cursor.fetchall()
+        await conn.close()
+    except aiosqlite.OperationalError as e:
+        await interaction.response.send_message(f"Database error occurred: {e}", ephemeral=True)
+        log += f"\nDatabase error occurred: {e}"
+        await in_app_logging.send_log(bot, log, 0, 1, interaction)
+        await conn.close()
+        return
         
-            try:
-                logger.info(f"S6_EFFECTS - Querying with UniqueID from Recovery.")
-                log += f"\nS6_EFFECTS - Querying with UniqueID from Recovery."
-                cursor.execute(query, (unique_id,))
-                rows = cursor.fetchall()
-            except aiosqlite.OperationalError as e:
-                await interaction.response.send_message(f"Database error occurred: {e}", ephemeral=True)
-                log += f"\nDatabase error occurred: {e}"
-                await in_app_logging.send_log(bot, log, 0, 1, interaction)
-                await conn.close()
-                return
-        
-            if rows:
-                logger.info(f"S6_EFFECTS - Query success")
-                log += f"\nS6_EFFECTS - Query success"
-                await send_s6e_in_channel(bot, interaction, rows, log, direct_match=False)
-            else:
-                logger.info(f"S6_EFFECTS - Query found no S6E entry... Sending contribute notice")
-                log += f"\nS6_EFFECTS - Query found no S6E entry... Sending contribute notice"
-                try:
-                    await interaction.response.send_message("Selected car not found in Stage 6 Effects database. [Contribute Now](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)")
-                except Exception as e:
-                    logger.error(f"S6_EFFECTS - Follow-up interaction expired: {e}")
-                    log += f"\nS6_EFFECTS - Follow-up interaction expired: {e}"
-                    await in_app_logging.send_log(bot, log, 0, 1, interaction)
-        
-    await conn.close()
+    if rows:
+        logger.info(f"S6_EFFECTS - Query success")
+        log += f"\nS6_EFFECTS - Query success"
+        await send_s6e_in_channel(bot, interaction, rows, log, direct_match=False)
+    else:
+        logger.info(f"S6_EFFECTS - Query found no S6E entry... Sending contribute notice")
+        log += f"\nS6_EFFECTS - Query found no S6E entry... Sending contribute notice"
+        try:
+            await interaction.response.send_message("Selected car not found in Stage 6 Effects database. [Contribute Now](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)")
+        except Exception as e:
+            logger.error(f"S6_EFFECTS - Follow-up interaction expired: {e}")
+            log += f"\nS6_EFFECTS - Follow-up interaction expired: {e}"
+            await in_app_logging.send_log(bot, log, 0, 1, interaction)
 
     return log
 
