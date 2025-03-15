@@ -21,7 +21,7 @@ class AnnounceUpdatesCog(commands.Cog):
 
         NITRO = await helpers.load_super_admin()
         status_list = []
-        if interaction.user.id == interaction.guild.owner or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
+        if interaction.user.id == interaction.guild.owner.id or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
             log += f"\nANNOUNCE_UPDATES_ADD - User has required permissions"
             await interaction.response.defer(ephemeral=True)
 
@@ -69,7 +69,7 @@ class AnnounceUpdatesCog(commands.Cog):
 
         NITRO = await helpers.load_super_admin()
         status_list = []
-        if interaction.user.id == interaction.guild.owner or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
+        if interaction.user.id == interaction.guild.owner.id or interaction.user.id == interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
             log += f"\nANNOUNCE_UPDATES_DELETE - User has required permissions"
             await interaction.response.defer(ephemeral=True)
 
