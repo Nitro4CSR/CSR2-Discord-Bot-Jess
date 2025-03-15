@@ -343,7 +343,7 @@ async def construct_results(rows: list, log: str):
 
         batch.append(embed)
 
-        if len(batch) == 10:
+        if len(batch) == 8:
             messages.append(batch)
             batch = []
 
