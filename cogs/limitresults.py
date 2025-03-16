@@ -26,7 +26,7 @@ class LimitResultsCog(commands.Cog):
             return
 
         NITRO = await helpers.load_super_admin()    
-        if interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
+        if interaction.user.id == interaction.guild.owner.id or interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
             if limit < 0:
                 limit = 0
 
