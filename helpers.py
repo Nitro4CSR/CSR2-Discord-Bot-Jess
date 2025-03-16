@@ -192,7 +192,7 @@ async def emojify_rarity(db_value):
         'N0-G3': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
         'N0-G4': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
         'N0-G5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0-P5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'N0-P5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
         '1': f'{os.getenv('S1_EMOJI')}',
         '2': f'{os.getenv('S2_EMOJI')}',
         '3': f'{os.getenv('S3_EMOJI')}',
