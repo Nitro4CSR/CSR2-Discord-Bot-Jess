@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import aiofiles
 import asyncio
 import datetime
@@ -34,6 +34,24 @@ async def on_ready():
     logger.info(f"BOOT - Logged in as {bot.user.name} ({bot.user.id})")
     log = f"BOOT - Logged in as {bot.user.name} ({bot.user.id})"
     status = 2
+
+    if not schedule_db_updates.is_running():
+        logger.info(f"BOOT - Starting EDB update scheduler")
+        log += f"\nBOOT - Starting EDB update scheduler"
+        schedule_db_updates.start()
+    if not schedule_version_check.is_running():
+        logger.info(f"BOOT - Starting VC store update check scheduler")
+        log += f"\nBOOT - Starting VC store update check scheduler"
+        schedule_version_check.start()
+    if not schedule_blog_check.is_running():
+        logger.info(f"BOOT - Starting BLOG update check scheduler")
+        log += f"\nBOOT - Starting BLOG update check scheduler"
+        schedule_blog_check.start()
+    if not schedule_profile_update.is_running():
+        logger.info(f"BOOT - Starting PROFILE update scheduler")
+        log += f"\nBOOT - Starting PROFILE update scheduler"
+        schedule_profile_update.start()
+
     FIRST_SETUP_DONE = await helpers.load_setup_status()
 
     if not FIRST_SETUP_DONE:
@@ -130,12 +148,6 @@ async def on_ready():
         log += f"BOOT - Failed to sync commands: {e}"
         status = 0
 
-    asyncio.create_task(schedule_profile_update())
-    await asyncio.sleep(3)
-    asyncio.create_task(schedule_version_check())
-    await asyncio.sleep(3)
-    asyncio.create_task(schedule_blog_check())
-
     await in_app_logging.send_log(bot, log, status, 2)
 
 async def profile_update():
@@ -172,53 +184,48 @@ async def update_bot_profile(pfp_path, new_name):
                 log = f"PROFILE - Failed to update bot profile: {e}"
                 await in_app_logging.send_log(bot, log, 0, 2)
 
+@tasks.loop(minutes=5)
 async def schedule_db_updates():
     await tunes_manager.create_database(bot, log="")
-    while True:
-        try:
-            await database_manager.recreate_database(bot)
-            await asyncio.sleep(0.0)
-        except Exception as e:
-            logger.error(f"EDB - Error during database update: {e}")
-            log = f"EDB - Error during database update: {e}"
-            await in_app_logging.send_log(bot, log, 0, 2)
-        await asyncio.sleep(300) # Sleep for 5 minutes
+    try:
+        await database_manager.recreate_database(bot)
+        await asyncio.sleep(0.0)
+    except Exception as e:
+        logger.error(f"EDB - Error during database update: {e}")
+        log = f"EDB - Error during database update: {e}"
+        await in_app_logging.send_log(bot, log, 0, 2)
 
+@tasks.loop(minutes=30)
 async def schedule_version_check():
-    while True:
-        try:
-            await asyncio.gather(version_check_manager_apps.version_check_task(bot))
-            await asyncio.sleep(0.0)
-        except Exception as e:
-            logger.error(f"VC - Error during version check: {e}")
-            log  = f"VC - Error during version check: {e}"
-            await in_app_logging.send_log(bot, log, 0, 2)
-        await asyncio.sleep(1788) # Sleep for 29 minutes 48 seconds
+    try:
+        await asyncio.gather(version_check_manager_apps.version_check_task(bot))
+        await asyncio.sleep(0.0)
+    except Exception as e:
+        logger.error(f"VC - Error during version check: {e}")
+        log  = f"VC - Error during version check: {e}"
+        await in_app_logging.send_log(bot, log, 0, 2)
 
+@tasks.loop(minutes=1)
 async def schedule_blog_check():
-    while True:
-        try:
-            await asyncio.gather(version_check_manager_blog.version_check_task(bot))
-            await asyncio.sleep(0.0)
-        except Exception as e:
-            logger.error(f"Blog - Error during version check: {e}")
-            log = f"Blog - Error during version check: {e}"
-            await in_app_logging.send_log(bot, log, 0, 2)
-        await asyncio.sleep(60) # Sleep for 1 minute
+    try:
+        await asyncio.gather(version_check_manager_blog.version_check_task(bot))
+        await asyncio.sleep(0.0)
+    except Exception as e:
+        logger.error(f"Blog - Error during version check: {e}")
+        log = f"Blog - Error during version check: {e}"
+        await in_app_logging.send_log(bot, log, 0, 2)
 
+@tasks.loop(time=datetime.time(0, 0))
 async def schedule_profile_update():
-    while True:
-        try:
-            await profile_update()
-            await asyncio.sleep(1)
-        except Exception as e:
-            logger.error(f"PROFILE - Error during profile update: {e}")
-            log = f"PROFILE - Error during profile update: {e}"
-            await in_app_logging.send_log(bot, log, 0, 2)
-        await asyncio.sleep(86400) # Sleep for 1 day
+    try:
+        await profile_update()
+        await asyncio.sleep(1)
+    except Exception as e:
+        logger.error(f"PROFILE - Error during profile update: {e}")
+        log = f"PROFILE - Error during profile update: {e}"
+        await in_app_logging.send_log(bot, log, 0, 2)
 
 async def main():
-    asyncio.create_task(schedule_db_updates())
     TOKEN = await helpers.load_token()
     await bot.start(TOKEN)
 
