@@ -13,9 +13,9 @@ class NotifyUpdatesCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="csr2_notify_updates_add", description="Allow Jess to notify you about updates in DMs")
-    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
+    @app_commands.choices(scope=helpers.load_command_options_scope())
     @app_commands.describe(scope="Which app updates to announce")
-    async def notify_updates_add(self, interaction: discord.Interaction, scope: str = None):
+    async def notify_updates_add(self, interaction: discord.Interaction, scope: app_commands.Choice[str] = None):
         logger.info(f"NOTIFY_UPDATES_ADD - The following command has been used: /csr2_notify_updates_add scope: {scope}")
         log = f"NOTIFY_UPDATES_ADD - The following command has been used: /csr2_notify_updates_add scope: {scope}"
         await interaction.response.defer()
@@ -53,9 +53,9 @@ class NotifyUpdatesCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, min(status_list), 1, interaction)
 
     @app_commands.command(name="csr2_notify_updates_delete", description="Allow Jess to notify you about updates in DMs")
-    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
+    @app_commands.choices(scope=helpers.load_command_options_scope())
     @app_commands.describe(scope="Which app updates to announce")
-    async def notify_updates_delete(self, interaction: discord.Interaction, scope: str = None):
+    async def notify_updates_delete(self, interaction: discord.Interaction, scope: app_commands.Choice[str] = None):
         logger.info(f"NOTIFY_UPDATES_DELETE - The following command has been used: /csr2_notify_updates_delete scope: {scope}")
         log = f"NOTIFY_UPDATES_DELETE - The following command has been used: /csr2_notify_updates_delete scope: {scope}"
 

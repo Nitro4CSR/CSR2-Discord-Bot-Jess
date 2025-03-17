@@ -13,9 +13,9 @@ class AnnounceUpdatesCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="csr2_announce_updates_add", description="Set a text channel as Announcements channel for app updates")
-    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
+    @app_commands.choices(scope=helpers.load_command_options_scope())
     @app_commands.describe(channel="Channel to send announcements to", scope="Which app updates to announce")
-    async def announce_updates_add(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: str = None):
+    async def announce_updates_add(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: app_commands.Choice[str] = None):
         logger.info(f"ANNOUNCE_UPDATES_ADD - The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}")
         log = f"ANNOUNCE_UPDATES_ADD - The following command has been used: /csr2_announce_updates_add channel: {channel} scope: {scope}"
 
@@ -61,9 +61,9 @@ class AnnounceUpdatesCog(commands.Cog):
         await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
 
     @app_commands.command(name="csr2_announce_updates_delete", description="Set a text channel as Announcements channel for app updates")
-    @app_commands.choices(scope=[app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")])
+    @app_commands.choices(scope=helpers.load_command_options_scope())
     @app_commands.describe(channel="Channel to send announcements to", scope="Which app updates to announce")
-    async def announce_updates_delete(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: str = None):
+    async def announce_updates_delete(self, interaction: discord.Interaction, channel: discord.TextChannel, scope: app_commands.Choice[str] = None):
         logger.info(f"The following command has been used: /csr2_announce_updates_delete channel: {channel} scope: {scope}")
         log = f"The following command has been used: /csr2_announce_updates_delete channel: {channel} scope: {scope}"
 
