@@ -64,25 +64,6 @@ async def on_ready():
                     log += f"\nBOOT - {name}: {markdown}"
                     await asyncio.sleep(0.1)
 
-        logger.info(f"BOOT - Fetching slash commands")
-        log += f"\nBOOT - Fetching slash commands"
-        commands = await bot.tree.fetch_commands(guild=discord.Object(id=await helpers.load_admin_server()))
-        commands += await bot.tree.fetch_commands()
-
-        if commands:
-            dotenv = await helpers.load_dotenv_dir()
-            try:
-                async with aiofiles.open(dotenv, mode="a") as f:
-                    for command in commands:
-                        await f.write(f"\n{command.name.upper()}_COMMAND={command.id}")
-                        logger.info(f"BOOT - {command.name}: {command.id}")
-                        log += f"\nBOOT - {command.name}: {command.id}"
-                        await asyncio.sleep(0.1)
-            except Exception as e:
-                logger.error(f"BOOT - Slash Command {command.name} already fetched: {e}")
-                log += f"\nBOOT - Slash Command {command.name} already fetched: {e}"
-                status = 1
-
         async with aiofiles.open(dotenv, mode="r") as f:
             lines = await f.readlines()
         async with aiofiles.open(dotenv, mode="w") as f:
@@ -96,9 +77,41 @@ async def on_ready():
             if not found:
                 await f.write("\nFIRST_SETUP_DONE=True\n")
 
-        logger.info("BOOT - Reloading environment variables...")
-        log += "\nBOOT - Reloading environment variables..."
-        await helpers.load_dotenv_data()
+    logger.info(f"BOOT - Fetching slash commands")
+    log += f"\nBOOT - Fetching slash commands"
+    commands = await bot.tree.fetch_commands(guild=discord.Object(id=await helpers.load_admin_server()))
+    commands += await bot.tree.fetch_commands()
+
+    if commands:
+        dotenv = await helpers.load_dotenv_dir()
+        try:
+            async with aiofiles.open(dotenv, mode="a") as f:
+                for command in commands:
+                    async with aiofiles.open(dotenv, mode="r") as f:
+                        lines = await f.readlines()
+                    async with aiofiles.open(dotenv, mode="w") as f:
+                        found = False
+                        while not found:
+                            for line in lines:
+                                if line.startswith(f"{command.name.upper()}_COMMAND"):
+                                    await f.write(f"{command.name.upper()}_COMMAND={command.id}\n")
+                                    found = True
+                                else:
+                                    await f.write(line)
+                            if not found:
+                                await f.write(f"{command.name.upper()}_COMMAND={command.id}\n")
+                                found =True
+                    logger.info(f"BOOT - {command.name}: {command.id}")
+                    log += f"\nBOOT - {command.name}: {command.id}"
+                    await asyncio.sleep(0.1)
+        except Exception as e:
+            logger.error(f"BOOT - Slash Command {command.name} couldn't get registered in .env file: {e}")
+            log += f"\nBOOT - Slash Command {command.name} couldn't get registered in .env file: {e}"
+            status = 1
+
+    logger.info("BOOT - Reloading environment variables...")
+    log += "\nBOOT - Reloading environment variables..."
+    await helpers.load_dotenv_data()
 
     await bot.change_presence(activity=discord.Game(name="CSR Racing"))
     logger.info("BOOT - Basic presence set")
