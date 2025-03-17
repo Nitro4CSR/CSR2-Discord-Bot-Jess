@@ -226,8 +226,7 @@ async def schedule_profile_update():
         await in_app_logging.send_log(bot, log, 0, 2)
 
 async def main():
-    TOKEN = await helpers.load_token()
-    await bot.start(TOKEN)
+    await bot.start(await helpers.load_token())
 
 if __name__ == "__main__":
     bot.setup_hook = setup_hook
