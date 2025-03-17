@@ -100,12 +100,16 @@ async def fetch_and_send_records(bot: commands.Bot, interaction: discord.Interac
             if rows:
                 logger.info(f"WR - {len(rows)} results found")
                 log += f"\nWR - {len(rows)} results found"
-                server_id = str(interaction.guild.id) if interaction.guild else None
-                async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                    limits = json.loads(await file.read())
-                limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]
-                logger.info(f"WR - Limit on {interaction.guild.name} ({server_id}): {limit}")
-                log += f"\nWR - Limit on {interaction.guild.name} ({server_id}): {limit}"
+                if interaction.guild:
+                    async with aiofiles.open(LIMIT_FILE, 'r') as file:
+                        limits = json.loads(await file.read())
+                    limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                    logger.info(f"WR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
+                    log += f"\nWR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
+                else:
+                    limit = 0
+                    logger.info(f"WR - Limit in DM's is infinite")
+                    log += f"\nWR - Limit in DM's is infinite"
         
                 if limit == 0 or len(rows) <= limit:
                     logger.info(f"WR - Sending in Channel")

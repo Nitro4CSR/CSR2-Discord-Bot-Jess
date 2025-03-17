@@ -438,14 +438,17 @@ class ShareTuneCog(commands.Cog):
         if results:
             logger.info(f"COMMUNITY_TUNE - {len(results)} results found")
             log += f"\nCOMMUNITY_TUNE - {len(results)} results found"
-            server_id = str(interaction.guild.id) if interaction.guild else None
-            server_name = str(interaction.guild.name) if interaction.guild else None
             LIMIT_FILE = await helpers.load_file_path('limits')
-            async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                limits = json.loads(await file.read())
-            limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]
-            logger.info(f"COMMUNITY_TUNE - Limit on {server_name} ({server_id}): {limit}")
-            log += f"\nCOMMUNITY_TUNE - Limit on {server_name} ({server_id}): {limit}"
+            if interaction.guild:
+                async with aiofiles.open(LIMIT_FILE, 'r') as file:
+                    limits = json.loads(await file.read())
+                limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                logger.info(f"COMMUNITY_TUNE - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
+                log += f"\nCOMMUNITY_TUNE - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
+            else:
+                limit = 0
+                logger.info(f"COMMUNITY_TUNE - Limit in DM's is infinite")
+                log += f"\nCOMMUNITY_TUNE - Limit in DM's is infinite"
 
             if limit == 0 or len(results) <= limit:
                 logger.info("COMMUNITY_TUNE - Sending in Channel")

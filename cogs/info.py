@@ -95,12 +95,16 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
             if rows:
                 logger.info(f"INFO - {len(rows)} results found")
                 log += f"\nINFO - {len(rows)} results found"
-                server_id = str(interaction.guild.id) if interaction.guild else None
-                async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                    limits = json.loads(await file.read())
-                limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]
-                logger.info(f"INFO - Limit on {interaction.guild.name} ({server_id}): {limit}")
-                log += f"\nINFO - Limit on {interaction.guild.name} ({server_id}): {limit}"
+                if interaction.guild:
+                    async with aiofiles.open(LIMIT_FILE, 'r') as file:
+                        limits = json.loads(await file.read())
+                    limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                    logger.info(f"INFO - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
+                    log += f"\nINFO - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
+                else:
+                    limit = 0
+                    logger.info(f"INFO - Limit in DM's is infinite")
+                    log += f"\nINFO - Limit in DM's is infinite"
         
                 if limit == 0 or len(rows) <= limit:
                     log = await send_info_in_channel(bot, interaction, rows, log)

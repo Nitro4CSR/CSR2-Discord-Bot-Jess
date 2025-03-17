@@ -85,13 +85,17 @@ class CustomSQLCog(commands.Cog):
                 if results:
                     logger.info(f"CUSTOMSQL - {len(results)} results found")
                     log += f"\nCUSTOMSQL - {len(results)} results found"
-                    server_id = str(interaction.guild.id) if interaction.guild else None
-                    LIMIT_FILE = await helpers.load_file_path('limits')
-                    async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                        limits = json.loads(file)
-                    limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]
-                    logger.info(f"CUSTOMSQL - Limit on {interaction.guild.name} ({server_id}): {limit}")
-                    log += f"\nCUSTOMSQL - Limit on {interaction.guild.name} ({server_id}): {limit}"
+                    if interaction.guild:
+                        LIMIT_FILE = await helpers.load_file_path('limits')
+                        async with aiofiles.open(LIMIT_FILE, 'r') as file:
+                            limits = json.loads(await file.read())
+                        limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                        logger.info(f"WR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
+                        log += f"\nWR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
+                    else:
+                        limit = 0
+                        logger.info(f"WR - Limit in DM's is infinite")
+                        log += f"\nWR - Limit in DM's is infinite"
 
                     if limit == 0 or len(results) <= limit:
                         logger.info(f"CUSTOMSQL - Sending in Channel")

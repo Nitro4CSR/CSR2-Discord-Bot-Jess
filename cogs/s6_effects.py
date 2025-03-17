@@ -99,13 +99,16 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
             if rows:
                 logger.info(f"S6_EFFECTS - {len(rows)} results found")
                 log += f"\nS6_EFFECTS - {len(rows)} results found"
-                server_id = str(interaction.guild.id) if interaction.guild else None
-                server_name = str(interaction.guild.name) if interaction.guild else None
-                async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                    limits = json.loads(await file.read())
-                limit = limits.get(server_id, {"PostLimit": 0})["PostLimit"]
-                logger.info(f"S6_EFFECTS - Limit on {interaction.guild.name} ({server_id}): {limit}")
-                log += f"\nS6_EFFECTS - Limit on {interaction.guild.name} ({server_id}): {limit}"
+                if interaction.guild:
+                    async with aiofiles.open(LIMIT_FILE, 'r') as file:
+                        limits = json.loads(await file.read())
+                    limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                    logger.info(f"S6_EFFECTS - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
+                    log += f"\nS6_EFFECTS - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
+                else:
+                    limit = 0
+                    logger.info(f"S6_EFFECTS - Limit in DM's is infinite")
+                    log += f"\nS6_EFFECTS - Limit in DM's is infinite"
         
                 if limit == 0 or len(rows) <= limit:
                     logger.info(f"S6_EFFECTS - Sending in Channel")
