@@ -19,7 +19,7 @@ class S6ECog(commands.Cog):
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
     @app_commands.choices(rarity=helpers.load_command_options_rarity())
     @app_commands.choices(tier=helpers.load_command_options_tier())
-    async def s6e_command(self, interaction: discord.Interaction, car: str = None, rarity: app_commands.Choice[str] = None, tier: app_commands.Choice[str] = None, csr2_version: str = None):
+    async def s6e_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"S6_EFFECTS - The following command has been used: /csr2_stage6_effects car: {car}, rarity: {rarity}, tier: {tier} csr2_version: {csr2_version}")
         log = f"S6_EFFECTS - The following command has been used: /csr2_stage6_effects car: {car}, rarity: {rarity}, tier: {tier} csr2_version: {csr2_version}"
         await interaction.response.defer()
@@ -68,12 +68,12 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
                 if car:
                     query += """ AND"""
                 query += """ s6_effects.★ LIKE ?"""
-                parameters.append(f"{rarity}%")
+                parameters.append(rarity)
             if tier:
                 if any([car, rarity]):
                     query += """ AND"""
-                query += """ s6_effects.Un LIKE ?"""
-                parameters.append(f"%{tier}%")
+                query += """ s6_effects.Un == ?"""
+                parameters.append(tier)
             if csr2_version:
                 if "OTA" in csr2_version:
                     csr2_version = f"""Added into the game in {csr2_version[:4]} Update {csr2_version[5:]}"""
@@ -132,12 +132,12 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
         
                 if rarity:
                     similar_entries_query += """ records.★ LIKE ?"""
-                    parameters.append(f"{rarity}%")
+                    parameters.append(rarity)
                 if tier:
                     if rarity:
                         similar_entries_query += """ AND"""
-                    similar_entries_query += """ records.Un LIKE ?"""
-                    parameters.append(f"%{tier}%")
+                    similar_entries_query += """ records.Un == ?"""
+                    parameters.append(tier)
                 if csr2_version:
                     if rarity or tier:
                         similar_entries_query += """ AND"""

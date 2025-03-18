@@ -89,7 +89,7 @@ def load_command_options_tier():
     return [app_commands.Choice(name="Tier 5 (T5|K5|L5)", value="T5"), app_commands.Choice(name="Tier 4 (T4|K4|L4)", value="T4"), app_commands.Choice(name="Tier 3 (T3|K3|L3)", value="T3"), app_commands.Choice(name="Tier 2 (T2|K2|L2)", value="T2"), app_commands.Choice(name="Tier 1 (T1|K1|L1)", value="T1")]
 
 def load_command_options_rarity():
-    return [app_commands.Choice(name="5 Gold Stars", value="G5"), app_commands.Choice(name="5 Purple Stars", value="P5"), app_commands.Choice(name="5 Stars", value="5"), app_commands.Choice(name="4 Gold Stars", value="G4"), app_commands.Choice(name="4 Purple Stars", value="P4"), app_commands.Choice(name="4 Stars", value="4"), app_commands.Choice(name="3 Gold Stars", value="G3"), app_commands.Choice(name="3 Purple Stars", value="P3"), app_commands.Choice(name="3 Stars", value="3"), app_commands.Choice(name="2 Gold Stars", value="G2"), app_commands.Choice(name="2 Purple Stars", value="P2"), app_commands.Choice(name="2 Stars", value="2"), app_commands.Choice(name="1 Gold Stars", value="G1"), app_commands.Choice(name="1 Purple Stars", value="P1"), app_commands.Choice(name="1 Stars", value="1"), app_commands.Choice(name="Gold Star", value="G"), app_commands.Choice(name="Purple Star", value="P"), app_commands.Choice(name="Non Star", value="N0")]
+    return [app_commands.Choice(name="5 Gold Stars", value="G5%"), app_commands.Choice(name="5 Purple Stars", value="P5%"), app_commands.Choice(name="5 Stars", value=f"%5%"), app_commands.Choice(name="4 Gold Stars", value="G4%"), app_commands.Choice(name="4 Purple Stars", value="P4%"), app_commands.Choice(name="4 Stars", value=f"%4%"), app_commands.Choice(name="3 Gold Stars", value="G3%"), app_commands.Choice(name="3 Purple Stars", value="P3%"), app_commands.Choice(name="3 Stars", value=f"%3%"), app_commands.Choice(name="2 Gold Stars", value="G2%"), app_commands.Choice(name="2 Purple Stars", value="P2%"), app_commands.Choice(name="2 Stars", value=f"%2%"), app_commands.Choice(name="1 Gold Stars", value="G1%"), app_commands.Choice(name="1 Purple Stars", value="P1%"), app_commands.Choice(name="1 Stars", value=f"%1%"), app_commands.Choice(name="Gold Star", value="G%"), app_commands.Choice(name="Purple Star", value="P%"), app_commands.Choice(name="Non Star", value="N0%")]
 
 def load_command_options_scope():
     return [app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")]
@@ -195,14 +195,14 @@ async def emojify_rarity(db_value):
         'P4': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}',
         'P5': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}{os.getenv('PS5_EMOJI')}',
         'G1-G3': f'{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G2-G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G3-G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G3-G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G4-G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0-G3': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0-G4': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0-G5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0-P5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'G2_G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'G3_G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'G3_G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'G4_G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'N0_G3': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'N0_G4': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'N0_G5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
+        'N0_P5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
         '1': f'{os.getenv('S1_EMOJI')}',
         '2': f'{os.getenv('S2_EMOJI')}',
         '3': f'{os.getenv('S3_EMOJI')}',

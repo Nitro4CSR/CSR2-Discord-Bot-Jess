@@ -19,7 +19,7 @@ class InfoCommandCog(commands.Cog):
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
     @app_commands.choices(rarity=helpers.load_command_options_rarity())
     @app_commands.choices(tier=helpers.load_command_options_tier())
-    async def info_command(self, interaction: discord.Interaction, car: str = None, rarity: app_commands.Choice[str] = None, tier: app_commands.Choice[str] = None, csr2_version: str = None):
+    async def info_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
         logger.info(f"INFO - The following command has been used: /csr2_info car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
         log = f"INFO - The following command has been used: /csr2_info car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
         await interaction.response.defer()
@@ -64,12 +64,12 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
                 if car:
                     query += """ AND"""
                 query += """ ★ LIKE ?"""
-                parameters.append(f"{rarity}%")
+                parameters.append(rarity)
             if tier:
                 if any([car, rarity]):
                     query += """ AND"""
-                query += """ Un LIKE ?"""
-                parameters.append(f"%{tier}%")
+                query += """ Un == ?"""
+                parameters.append(tier)
             if csr2_version:
                 if "OTA" in csr2_version:
                     csr2_version = f"""Added into the game in {csr2_version[:4]} Update {csr2_version[5:]}%"""
@@ -125,12 +125,12 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
                     if car:
                         similar_entries_query += " AND"
                     similar_entries_query += """ ★ LIKE ?"""
-                    parameters.append(f"{rarity}%")
+                    parameters.append(rarity)
                 if tier:
                     if car or rarity:
                         similar_entries_query += " AND"
-                    similar_entries_query += """ Un LIKE ?"""
-                    parameters.append(f"%{tier}%")
+                    similar_entries_query += """ Un == ?"""
+                    parameters.append(tier)
                 if csr2_version:
                     if car or rarity or tier:
                         similar_entries_query += " AND"

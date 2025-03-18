@@ -15,7 +15,7 @@ class NotifyUpdatesCog(commands.Cog):
     @app_commands.command(name="csr2_notify_updates_add", description="Allow Jess to notify you about updates in DMs")
     @app_commands.choices(scope=helpers.load_command_options_scope())
     @app_commands.describe(scope="Which app updates to announce")
-    async def notify_updates_add(self, interaction: discord.Interaction, scope: app_commands.Choice[str] = None):
+    async def notify_updates_add(self, interaction: discord.Interaction, scope: str = None):
         logger.info(f"NOTIFY_UPDATES_ADD - The following command has been used: /csr2_notify_updates_add scope: {scope}")
         log = f"NOTIFY_UPDATES_ADD - The following command has been used: /csr2_notify_updates_add scope: {scope}"
         await interaction.response.defer()
@@ -55,7 +55,7 @@ class NotifyUpdatesCog(commands.Cog):
     @app_commands.command(name="csr2_notify_updates_delete", description="Allow Jess to notify you about updates in DMs")
     @app_commands.choices(scope=helpers.load_command_options_scope())
     @app_commands.describe(scope="Which app updates to announce")
-    async def notify_updates_delete(self, interaction: discord.Interaction, scope: app_commands.Choice[str] = None):
+    async def notify_updates_delete(self, interaction: discord.Interaction, scope: str = None):
         logger.info(f"NOTIFY_UPDATES_DELETE - The following command has been used: /csr2_notify_updates_delete scope: {scope}")
         log = f"NOTIFY_UPDATES_DELETE - The following command has been used: /csr2_notify_updates_delete scope: {scope}"
 
