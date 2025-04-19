@@ -102,7 +102,7 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
                 if interaction.guild:
                     async with aiofiles.open(LIMIT_FILE, 'r') as file:
                         limits = json.loads(await file.read())
-                    limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                    limit = limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
                     logger.info(f"S6_EFFECTS - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
                     log += f"\nS6_EFFECTS - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
                 else:

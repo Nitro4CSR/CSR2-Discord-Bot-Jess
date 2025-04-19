@@ -442,7 +442,7 @@ class ShareTuneCog(commands.Cog):
             if interaction.guild:
                 async with aiofiles.open(LIMIT_FILE, 'r') as file:
                     limits = json.loads(await file.read())
-                limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                limit = limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
                 logger.info(f"COMMUNITY_TUNE - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
                 log += f"\nCOMMUNITY_TUNE - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
             else:

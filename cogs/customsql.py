@@ -89,7 +89,7 @@ class CustomSQLCog(commands.Cog):
                         LIMIT_FILE = await helpers.load_file_path('limits')
                         async with aiofiles.open(LIMIT_FILE, 'r') as file:
                             limits = json.loads(await file.read())
-                        limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                        limit = limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
                         logger.info(f"WR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
                         log += f"\nWR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
                     else:

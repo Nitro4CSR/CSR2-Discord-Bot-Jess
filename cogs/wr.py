@@ -103,7 +103,7 @@ async def fetch_and_send_records(bot: commands.Bot, interaction: discord.Interac
                 if interaction.guild:
                     async with aiofiles.open(LIMIT_FILE, 'r') as file:
                         limits = json.loads(await file.read())
-                    limit = limits.get(interaction.guild.id, {"PostLimit": 0})["PostLimit"]
+                    limit = limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
                     logger.info(f"WR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
                     log += f"\nWR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
                 else:
