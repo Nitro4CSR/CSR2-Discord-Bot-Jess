@@ -13,17 +13,18 @@ class WRlistCog(commands.Cog):
 
     @app_commands.command(name="csr2_wrlist", description="❗Select one more variable from above❗ Compiles a custom list of WR times")
     @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
+    @app_commands.choices(race=[app_commands.Choice(name="1/2 mile", value="'T4', 'T5'"), app_commands.Choice(name="1/4 mile", value="'T1', 'T2', 'T3'")])
     @app_commands.choices(rarity=helpers.load_command_options_rarity())
     @app_commands.choices(tier=helpers.load_command_options_tier())
-    async def wrlist_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
-        logger.info(f"WRLIST - The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
-        log = f"WRLIST - The following command has been used: /csr2_wrlist car: {car}, rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
+    async def wrlist_command(self, interaction: discord.Interaction, car: str = None, race: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
+        logger.info(f"WRLIST - The following command has been used: /csr2_wrlist car: {car} race: {race} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
+        log = f"WRLIST - The following command has been used: /csr2_wrlist car: {car} race: {race} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
         await interaction.response.defer()
 
-        if not any([car, rarity, tier, csr2_version]):
+        if not any([car, race, rarity, tier, csr2_version]):
             tier = "T5"
 
-        results, log = await fetch_all_results(self.bot, interaction, car, rarity, tier, csr2_version, log)
+        results, log = await fetch_all_results(self.bot, interaction, car, race, rarity, tier, csr2_version, log)
         logger.info(f"WRLIST - {len(results)} results found")
         log += f"\nWRLIST - {len(results)} results found"
 
@@ -41,12 +42,12 @@ class WRlistCog(commands.Cog):
 
             await interaction.followup.send("Fetching records, please wait...")
             if t1_t3_results and t4_t5_results:
-                view1 = PaginatedView(t1_t3_results, interaction.user, car, rarity, "T1-T3", csr2_version)
-                view2 = PaginatedView(t4_t5_results, interaction.user, car, rarity, "T4-T5", csr2_version)
+                view1 = PaginatedView(t1_t3_results, interaction.user, car, race, rarity, "T1-T3", csr2_version)
+                view2 = PaginatedView(t4_t5_results, interaction.user, car, race, rarity, "T4-T5", csr2_version)
                 await interaction.followup.send("**T1 - T3 Results**", embed=await view1.get_embed_page(), view=view1)
                 await interaction.followup.send("**T4 - T5 Results**", embed=await view2.get_embed_page(), view=view2)
             else:
-                view = PaginatedView(results, interaction.user, car, rarity, tier, csr2_version)
+                view = PaginatedView(results, interaction.user, car, race, rarity, tier, csr2_version)
                 await view.start(interaction)
             await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
         else:
@@ -55,7 +56,7 @@ class WRlistCog(commands.Cog):
             await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
             await interaction.followup.send("No results found.", ephemeral=True)
 
-async def fetch_all_results(bot: commands.Bot, interaction: discord.Interaction, car: str, rarity: str, tier: str, csr2_version: str, log: str):
+async def fetch_all_results(bot: commands.Bot, interaction: discord.Interaction, car: str, race: str, rarity: str, tier: str, csr2_version: str, log: str):
     DATABASE_PATH = await helpers.load_file_path('EDB')
     async with aiosqlite.connect(DATABASE_PATH) as conn:
         async with conn.cursor() as cursor:
@@ -78,7 +79,9 @@ async def fetch_all_results(bot: commands.Bot, interaction: discord.Interaction,
                 else:
                     query += """ AND records."Ingame Name Clarification" COLLATE NOCASE LIKE ?"""
                 parameters.append(f"%{car}%")
-        
+
+            if race:
+                query += f""" and records.Un IN ({race})"""
             if rarity:
                 query += """ AND records.★ LIKE ?"""
                 parameters.append(rarity)
@@ -137,11 +140,12 @@ class PageJumpModal(discord.ui.Modal, title="Jump to Page"):
             await interaction.response.send_message("Invalid input. Please enter a number.", ephemeral=True)
 
 class PaginatedView(discord.ui.View):
-    def __init__(self, results, user, car, rarity, tier, csr2_version):
+    def __init__(self, results, user, car, race, rarity, tier, csr2_version):
         super().__init__(timeout=300)
         self.results = results
         self.user = user
         self.car = car
+        self.race = race
         self.rarity = rarity
         self.tier = tier
         self.csr2_version = csr2_version
@@ -157,13 +161,14 @@ class PaginatedView(discord.ui.View):
         page_results = self.results[start_index:end_index]
 
         car_display = self.car if self.car else "Any Car"
+        race_display = ("½ mile" if self.race == "'T4', 'T5'" else "¼ mile") if self.race else "Any"
         rarity_display = f"{await helpers.emojify_rarity(self.rarity)}" if self.rarity else "Any Rarity"
         tier_display = f"{await helpers.emojify_tier(self.tier)}" if self.tier else "Any Tier"
         version_display = f"CSR Version {self.csr2_version}" if self.csr2_version else "Any Version"
 
         logger.info(f"WRLIST - Constructing Embed for page {self.page_number}")
         embed = discord.Embed(
-            title=f"WR List for {tier_display} {car_display} with {rarity_display} released in {version_display}",
+            title=f"WR List for {tier_display} {car_display} with {rarity_display}, doing {race_display} race and released in {version_display}",
             description="\n".join(
                 f"{start_index + i + 1}. {row[0]}\n{row[2]} | {float(row[1]):.3f}s"
                 for i, row in enumerate(page_results)
