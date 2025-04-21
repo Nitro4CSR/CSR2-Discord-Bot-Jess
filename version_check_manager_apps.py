@@ -132,6 +132,8 @@ async def detect_changes(old_data, new_data):
                     continue
                 if old_error or new_error:
                     continue
+                if new_last_updated is None:
+                    new_last_updated = old_last_updated
                 if old_version >= new_version and old_last_updated >= new_last_updated:
                     new_entry["version"] = old_version
                     new_entry["last_updated"] = old_last_updated
