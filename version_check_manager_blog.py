@@ -113,7 +113,7 @@ async def version_check_task(bot: commands.Bot):
             logger.info("Blog - Sending detected Changes")
             log += f"\nBlog - Sending detected Changes"
             messages = await announce_changes(latest_data)
-            await send_changes(bot, messages, log)
+            log, status, check = await send_changes(bot, messages, log)
 
             logger.info("Blog - Overwriting old data with the new data")
             log += "\nBlog - Overwriting old data with the new data"
@@ -123,7 +123,7 @@ async def version_check_task(bot: commands.Bot):
             log += f"\nBlog - No changes detected. Exiting..."
     logger.info("Blog - Blog check completed")
     log += f"\nBlog - Blog check completed"
-    await in_app_logging.send_log(bot, log, status, 2)
+    await in_app_logging.send_log(bot, log, status if check == 1 else 1, 2)
     last_data = None
     latest_data = None
 
@@ -190,12 +190,12 @@ async def send_changes(bot: commands.Bot, messages: discord.Embed, log: str):
                 await user.send(embed=messages)
                 await asyncio.sleep(3)
         except discord.Forbidden as e:
-            check, log, status = notify_updates.process_request(user_id, "Blog", 0, log)
+            check, log, status = await notify_updates.process_request(user_id, "Blog", 0, log)
         except discord.NotFound as e:
-            check, log, status = notify_updates.process_request(user_id, "Blog", 0, log)
+            check, log, status = await notify_updates.process_request(user_id, "Blog", 0, log)
         except Exception as e:
             logger.error(f"Blog - Error while trying to send changes to {user_id}: {e}")
             log += f"Blog - Error while trying to send changes to {user_id}: {e}"
             status = 1
 
-    return log, status
+    return log, status, check
