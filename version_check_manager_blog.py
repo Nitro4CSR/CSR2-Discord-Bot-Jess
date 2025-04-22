@@ -114,8 +114,6 @@ async def version_check_task(bot: commands.Bot):
             log += f"\nBlog - Sending detected Changes"
             messages = await announce_changes(latest_data)
             log, status, check = await send_changes(bot, messages, log)
-            if not check:
-                check = 1
 
             logger.info("Blog - Overwriting old data with the new data")
             log += "\nBlog - Overwriting old data with the new data"
@@ -125,7 +123,7 @@ async def version_check_task(bot: commands.Bot):
             log += f"\nBlog - No changes detected. Exiting..."
     logger.info("Blog - Blog check completed")
     log += f"\nBlog - Blog check completed"
-    await in_app_logging.send_log(bot, log, status if check == 1 else 1, 2)
+    await in_app_logging.send_log(bot, log, status, 2)
     last_data = None
     latest_data = None
 
