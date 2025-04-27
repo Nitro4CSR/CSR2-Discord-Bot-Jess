@@ -29,6 +29,7 @@ class InfoCommandCog(commands.Cog):
                 await fetch_and_send_info(self.bot, interaction, car, rarity, tier, csr2_version, log)
             except Exception as e:
                 await interaction.followup.send(f"An error occurred: {e}")
+                logger.error(f"INFO - An error occurred: {e}")
                 log += f"\nINFO - An error occurred: {e}"
                 await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
         else:
@@ -107,7 +108,7 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
                     log += f"\nINFO - Limit in DM's is infinite"
         
                 if limit == 0 or len(rows) <= limit:
-                    log = await send_info_in_channel(bot, interaction, rows, log)
+                    log = await send_info_in_channel(bot, interaction, rows, log, True)
                 else:
                     log = await send_info_in_dm(bot, interaction, rows, log)
             else:
@@ -149,40 +150,46 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
                 else:
                     car = f"% %"
                     cutoff = 1.0
+
                 similar_entries = get_close_matches(car.strip('%'), list(all_unique_ids.keys()), n=10, cutoff=cutoff)
         
                 if similar_entries:
                     logger.info(f"INFO - Recovery success with {len(similar_entries)} results.")
                     log += f"\nINFO - Recovery success with {len(similar_entries)} results."
-        
-                    view = discord.ui.View(timeout=300)
-                    for i, entry in enumerate(similar_entries):
-                        button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
-        
-                        async def button_callback(interaction: discord.Interaction, entry=entry):
-                            try:
-                                selected_unique_id = all_unique_ids[entry][0]
-                                log = await fetch_and_send_info_by_unique_id(bot, interaction, selected_unique_id, log)
-                            except discord.errors.NotFound:
-                                await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
-        
-                        button.callback = button_callback
-                        view.add_item(button)
 
-                    description_list = [
-                        f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
-                        for i, entry in enumerate(similar_entries)
-                    ]
-        
-                    embed = discord.Embed(
-                        title="Did you mean one of these?",
-                        description="\n".join(description_list),
-                        color=discord.Color(0xff00ff)
-                    )
-                    embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-        
-                    await interaction.followup.send(embed=embed, view=view)
-        
+                    if len(similar_entries) > 1:
+                        view = discord.ui.View(timeout=300)
+                        for i, entry in enumerate(similar_entries):
+                            button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
+
+                            async def button_callback(interaction: discord.Interaction, entry=entry):
+                                try:
+                                    selected_unique_id = all_unique_ids[entry][0]
+                                    log = await fetch_and_send_info_by_unique_id(bot, interaction, selected_unique_id, False, log)
+                                except discord.errors.NotFound:
+                                    await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
+
+                            button.callback = button_callback
+                            view.add_item(button)
+
+                        description_list = [
+                            f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
+                            for i, entry in enumerate(similar_entries)
+                        ]
+
+                        embed = discord.Embed(
+                            title="Did you mean one of these?",
+                            description="\n".join(description_list),
+                            color=discord.Color(0xff00ff)
+                        )
+                        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+
+                        await interaction.followup.send(embed=embed, view=view)
+                    else:
+                        try:
+                            await fetch_and_send_info_by_unique_id(bot, interaction, all_unique_ids[similar_entries[0]][0], True, log)
+                        except discord.errors.NotFound:
+                            await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
                 else:
                     logger.info(f"INFO - Recovery failed. No results found.")
                     log += f"\nINFO - Recovery failed. No results found."
@@ -197,7 +204,7 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
 
     return log
 
-async def fetch_and_send_info_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, log: str):
+async def fetch_and_send_info_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, direct_match: bool, log: str):
     DATABASE_PATH = await helpers.load_file_path('EDB')
     async with aiosqlite.connect(DATABASE_PATH) as conn:
         async with conn.cursor() as cursor:
@@ -221,7 +228,7 @@ async def fetch_and_send_info_by_unique_id(bot: commands.Bot, interaction: disco
             if rows:
                 logger.info(f"INFO - Querry success")
                 log += f"\nINFO - Querry success"
-                log = await send_info_in_channel(bot, interaction, rows, log)
+                log = await send_info_in_channel(bot, interaction, rows, log, direct_match)
             else:
                 try:
                     await interaction.followup.send("No info found with the selected UniqueID.")
@@ -234,8 +241,11 @@ async def fetch_and_send_info_by_unique_id(bot: commands.Bot, interaction: disco
 
     return log
 
-async def send_info_in_channel(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str):
-    await interaction.followup.send("Fetching info, please wait...")
+async def send_info_in_channel(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str, direct_match: bool):
+    if direct_match:
+        await interaction.followup.send("Fetching records, please wait...")
+    else:
+        await interaction.response.send_message("Fetching records, please wait...")
 
     messages, log = await construct_results(rows, log)
 

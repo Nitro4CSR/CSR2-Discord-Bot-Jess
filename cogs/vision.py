@@ -29,7 +29,8 @@ class VisionCommandCog(commands.Cog):
                 await fetch_and_send_records(self.bot, interaction, car, rarity, tier, csr2_version, log)
             except Exception as e:
                 await interaction.followup.send(f"An error occurred: {e}")
-                log += f"\nAn error occurred: {e}"
+                logger.error(f"VISION - An error occurred: {e}")
+                log += f"\nVISION - An error occurred: {e}"
                 await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
         else:
             await interaction.followup.send(f"You didn't specify any variables but at least 1 is required! Please rerun the command with a defined variable", ephemeral=True)
@@ -160,34 +161,40 @@ async def fetch_and_send_records(bot: commands.Bot, interaction: discord.Interac
                 if similar_entries:
                     logger.info(f"VISION - Recovery success with {len(similar_entries)} results.")
                     log += f"\nVISION - Recovery success with {len(similar_entries)} results."
-        
-                    view = discord.ui.View(timeout=300)
-                    for i, entry in enumerate(similar_entries):
-                        button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
-        
-                        async def button_callback(interaction: discord.Interaction, entry=entry):
-                            try:
-                                selected_unique_id = all_unique_ids[entry][0]
-                                await fetch_and_send_records_by_unique_id(bot, interaction, selected_unique_id, log)
-                            except discord.errors.NotFound:
-                                await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
-        
-                        button.callback = button_callback
-                        view.add_item(button)
 
-                    description_list = [
-                        f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
-                        for i, entry in enumerate(similar_entries)
-                    ]
-        
-                    embed = discord.Embed(
-                        title="Did you mean one of these?",
-                        description="\n".join(description_list),
-                        color=discord.Color(0xff00ff)
-                    )
-                    embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-        
-                    await interaction.followup.send(embed=embed, view=view)
+                    if len(similar_entries) > 1:
+                        view = discord.ui.View(timeout=300)
+                        for i, entry in enumerate(similar_entries):
+                            button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
+
+                            async def button_callback(interaction: discord.Interaction, entry=entry):
+                                try:
+                                    selected_unique_id = all_unique_ids[entry][0]
+                                    await fetch_and_send_records_by_unique_id(bot, interaction, selected_unique_id, False, log)
+                                except discord.errors.NotFound:
+                                    await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
+
+                            button.callback = button_callback
+                            view.add_item(button)
+
+                        description_list = [
+                            f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
+                            for i, entry in enumerate(similar_entries)
+                        ]
+
+                        embed = discord.Embed(
+                            title="Did you mean one of these?",
+                            description="\n".join(description_list),
+                            color=discord.Color(0xff00ff)
+                        )
+                        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+
+                        await interaction.followup.send(embed=embed, view=view)
+                    else:
+                        try:
+                            await fetch_and_send_records_by_unique_id(bot, interaction, all_unique_ids[similar_entries[0]][0], True, log)
+                        except discord.errors.NotFound:
+                            await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
                 else:
                     logger.info(f"VISION - Recovery failed. No results found.")
                     log += f"\nVISION - Recovery failed. No results found."
@@ -202,12 +209,13 @@ async def fetch_and_send_records(bot: commands.Bot, interaction: discord.Interac
 
     return log
 
-async def fetch_and_send_records_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, log: str):
+async def fetch_and_send_records_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, direct_match: bool, log: str):
     DATABASE_PATH = await helpers.load_file_path('EDB')
     async with aiosqlite.connect(DATABASE_PATH) as conn:
          async with conn.cursor() as cursor:
 
-            query = """\nSELECT "UniqueID", "DB Name", "Ingame Name Clarification", Un, ★, "WR-PP", "WR-EVO", "WR-NITRO", "WR-FD", "WR-TIRE", "WR-DYNO", "WR-BEST ET", "WR Addon", "SHIFT Links", "WR-DRIVER"\nFROM records\nWHERE UniqueID = ?"""
+            query = """\nSELECT records.UniqueID, records."DB Name", records."Ingame Name Clarification", records.Un, records.★, records."WR-PP", records."WR-EVO", records."WR-NITRO", records."WR-FD", records."WR-TIRE", records."WR-DYNO", records."WR-BEST ET", records."WR Addon", records."SHIFT Links", records."WR-DRIVER", info.IMG, info."Vision Info", info."is EV?", info.thread, s6_effects."S5 - PP", s6_effects."S5 - EVO", s6_effects."S5 - Nos", s6_effects."S5 - FD", s6_effects."S5 - TIRES", s6_effects."S5 - DYNO", s6_effects.Engine, s6_effects.Turbo, s6_effects.Intake, s6_effects.NOS, s6_effects.Body, s6_effects.Tires, s6_effects.Trans\nFROM records\nLEFT JOIN info ON records.UniqueID = info.UniqueID\nLEFT JOIN s6_effects ON records.UniqueID = s6_effects.UniqueID\nWHERE records.UniqueID = ?"""
+
         
             logger.info(f"VISION - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}")
             log += f"\nVISION - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}"
@@ -226,7 +234,7 @@ async def fetch_and_send_records_by_unique_id(bot: commands.Bot, interaction: di
             if rows:
                 logger.info(f"VISION - Query success")
                 log += f"\nVISION - Query success"
-                await send_records_in_channel(bot, interaction, rows, log, direct_match=False)
+                await send_records_in_channel(bot, interaction, rows, log, direct_match)
             else:
                 logger.info(f"VISION - Query found no WR entry... Sending contribute notice")
                 log += f"\nVISION - Query found no WR entry... Sending contribute notice"

@@ -29,6 +29,7 @@ class S6ECog(commands.Cog):
                 log = await fetch_and_send_s6e(self.bot, interaction, car, rarity, tier, csr2_version, log)
             except Exception as e:
                 await interaction.followup.send(f"An error occurred: {e}")
+                logger.error(f"S6_EFFECTS - An error occurred: {e}")
                 log += f"\nS6_EFFECTS - An error occurred: {e}"
                 await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
         else:
@@ -156,39 +157,46 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
                 else:
                     car = f"% %"
                     cutoff = 1.0
+
                 similar_entries = get_close_matches(car.strip('%'), list(all_unique_ids.keys()), n=10, cutoff=cutoff)
         
                 if similar_entries:
                     logger.info(f"S6_EFFECTS - Recovery success with {len(similar_entries)} results.")
                     log += f"\nS6_EFFECTS - Recovery success with {len(similar_entries)} results."
-        
-                    view = discord.ui.View(timeout=300)
-                    for i, entry in enumerate(similar_entries):
-                        button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
-        
-                        async def button_callback(interaction: discord.Interaction, entry=entry):
-                            try:
-                                selected_unique_id = all_unique_ids[entry][0]
-                                await fetch_and_send_s6e_by_unique_id(bot, interaction, selected_unique_id, log)
-                            except discord.errors.NotFound:
-                                await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
-        
-                        button.callback = button_callback
-                        view.add_item(button)
 
-                    description_list = [
-                        f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
-                        for i, entry in enumerate(similar_entries)
-                    ]
-        
-                    embed = discord.Embed(
-                        title="Did you mean one of these?",
-                        description="\n".join(description_list),
-                        color=discord.Color(0xff00ff)
-                    )
-                    embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-        
-                    await interaction.followup.send(embed=embed, view=view)
+                    if len(similar_entries) > 1:
+                        view = discord.ui.View(timeout=300)
+                        for i, entry in enumerate(similar_entries):
+                            button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
+
+                            async def button_callback(interaction: discord.Interaction, entry=entry):
+                                try:
+                                    selected_unique_id = all_unique_ids[entry][0]
+                                    await fetch_and_send_s6e_by_unique_id(bot, interaction, selected_unique_id, False, log)
+                                except discord.errors.NotFound:
+                                    await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
+
+                            button.callback = button_callback
+                            view.add_item(button)
+
+                        description_list = [
+                            f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
+                            for i, entry in enumerate(similar_entries)
+                        ]
+
+                        embed = discord.Embed(
+                            title="Did you mean one of these?",
+                            description="\n".join(description_list),
+                            color=discord.Color(0xff00ff)
+                        )
+                        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+
+                        await interaction.followup.send(embed=embed, view=view)
+                    else:
+                        try:
+                            await fetch_and_send_s6e_by_unique_id(bot, interaction, all_unique_ids[similar_entries[0]][0], True, log)
+                        except discord.errors.NotFound:
+                            await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
                 else:
                     logger.info(f"S6_EFFECTS - Recovery failed. No results found.")
                     log += f"\nS6_EFFECTS - Recovery failed. No results found."
@@ -203,7 +211,7 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
 
     return log
 
-async def fetch_and_send_s6e_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, log: str):
+async def fetch_and_send_s6e_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, direct_match: bool, log: str):
     DATABASE_PATH = await helpers.load_file_path('EDB')
 
     query = """\nSELECT UniqueID, "DB Name", "Ingame Name", Un, ★, "S5 - PP", "S5 - EVO", "S5 - NOS", "S5 - FD", "S5 - TIRES", "S5 - DYNO", Engine, Turbo, Intake, NOS, Body, Tires, Trans, "Is EV?"\nFROM s6_effects\nWHERE UniqueID = ?"""
@@ -229,12 +237,15 @@ async def fetch_and_send_s6e_by_unique_id(bot: commands.Bot, interaction: discor
     if rows:
         logger.info(f"S6_EFFECTS - Query success")
         log += f"\nS6_EFFECTS - Query success"
-        await send_s6e_in_channel(bot, interaction, rows, log, direct_match=False)
+        await send_s6e_in_channel(bot, interaction, rows, log, direct_match)
     else:
         logger.info(f"S6_EFFECTS - Query found no S6E entry... Sending contribute notice")
         log += f"\nS6_EFFECTS - Query found no S6E entry... Sending contribute notice"
         try:
-            await interaction.response.send_message("Selected car not found in Stage 6 Effects database. [Contribute Now](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)")
+            if direct_match:
+                await interaction.followup.send("Selected car not found in Stage 6 Effects database. [Contribute Now](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)")
+            else:
+                await interaction.response.send_message("Selected car not found in Stage 6 Effects database. [Contribute Now](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)")
         except Exception as e:
             logger.error(f"S6_EFFECTS - Follow-up interaction expired: {e}")
             log += f"\nS6_EFFECTS - Follow-up interaction expired: {e}"
