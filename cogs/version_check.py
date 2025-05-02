@@ -123,7 +123,7 @@ class VersionCheckCog(commands.Cog):
             batch.append(embeds)
 
         for i, embeds in enumerate(batch):
-            await interaction.followup.send(embeds=batch, silent=True if i != 0 else None)
+            await interaction.followup.send(embeds=embeds, silent=True if i != 0 else None)
 
         logger.info("VERSION_CHECK - Results sent in Channel.")
         log += "\nVERSION_CHECK - Results sent in Channel."
