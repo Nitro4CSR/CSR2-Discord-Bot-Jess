@@ -119,15 +119,15 @@ async def detect_changes(old_data, new_data):
                     if old_error == new_error:
                         continue
                     if "No app found with ID " in new_error:
-                        changes.append([platform, country, new_error])
+                        changes.append([platform, country, new_error, "The app might've been delisted from the countries store page."])
                         case = 1
                     continue
                 if old_error and "No app found with ID " in old_error:
-                    changes.append([platform, country, old_error, new_version, new_last_updated])
+                    changes.append([platform, country, old_error, new_version, new_last_updated, "A new version has been released."])
                     case = 2
                     continue
                 if new_error and "No app found with ID " in new_error:
-                    changes.append([platform, country, old_version, old_last_updated, new_error])
+                    changes.append([platform, country, old_version, old_last_updated, new_error, "The app might've been delisted from the countries store page."])
                     case = 3
                     continue
                 if old_error or new_error:
@@ -138,15 +138,15 @@ async def detect_changes(old_data, new_data):
                     new_entry["version"] = old_version
                     new_entry["last_updated"] = old_last_updated
                 if old_version < new_version or old_last_updated < new_last_updated:
-                    changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated])
+                    changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated, "A new version has been released."])
                     case = 4
                 continue
             if new_error and "No app found with ID " in new_error:
-                changes.append([platform, country, new_error])
+                changes.append([platform, country, new_error, "The app might've been delisted from the countries store page."])
                 case = 1
                 continue
             if not new_error:
-                changes.append([platform, country, new_version, new_last_updated])
+                changes.append([platform, country, new_version, new_last_updated, "A new version has been released."])
                 case = 5
             continue
 
