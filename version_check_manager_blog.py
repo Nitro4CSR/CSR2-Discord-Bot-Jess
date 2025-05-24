@@ -138,6 +138,7 @@ async def announce_changes(changes: dict):
 
 async def send_changes(bot: commands.Bot, messages: discord.Embed, log: str):
     status = 2
+    check = 1
     channel_ids = await helpers.load_file('Blog announcement channel file')
     for channel_id in channel_ids:
         try:
@@ -196,7 +197,6 @@ async def send_changes(bot: commands.Bot, messages: discord.Embed, log: str):
         except Exception as e:
             logger.error(f"Blog - Error while trying to send changes to {user_id}: {e}")
             log += f"Blog - Error while trying to send changes to {user_id}: {e}"
-            check = 1
             status = 1
 
     return log, status, check
