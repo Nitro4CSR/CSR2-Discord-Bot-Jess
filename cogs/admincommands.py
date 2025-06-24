@@ -12,7 +12,7 @@ class AdminCommandsCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="csr2_admincommands", description="List of all available commands")
-    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_connected", value="connected"), app_commands.Choice(name="csr2_scrape", value="scrape"), app_commands.Choice(name="csr2_broadcast", value="broadcast")])
+    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_connected", value="connected"), app_commands.Choice(name="csr2_scrape", value="scrape"), app_commands.Choice(name="csr2_broadcast", value="broadcast"), app_commands.Choice(name="csr2_updatecode", value="updatecode"), app_commands.Choice(name="csr2_restart", value="restart")])
     async def admincommands(self, interaction: discord.Interaction, command: str = None):
         logger.info(f"ADMINCOMMANDS - The following command has been used: /csr2_admincommands commad: {command}")
         log = f"ADMINCOMMANDS - The following command has been used: /csr2_admincommands commad: {command}"
@@ -31,14 +31,16 @@ class AdminCommandsCog(commands.Cog):
                 title_text = 'Command Usage'
 
             descriptions = {
-                'default': f'</csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\n</csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\n</csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\n</csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\n</csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\n</csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\n</csr2_broadcast:{os.getenv('CSR2_BROADCAST_COMMAND')}>\n',
+                'default': f'</csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\n</csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\n</csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\n</csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\n</csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\n</csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\n</csr2_broadcast:{os.getenv('CSR2_BROADCAST_COMMAND')}>\n</csr2_updatecode:{os.getenv('CSR2_UPDATECODE_COMMAND')}>\n</csr2_restart:{os.getenv('CSR2_RESTART_COMMAND')}>\n',
                 'updatedb': f'## </csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\nUpdates the internal DataBase\n',
                 'addadmin': f'## </csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\nAdditional Operators:\n - user: ping a user and add him to the Bot Admin team\n',
                 'removeadmin': f'## </csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\nAdditional Operators:\n - user: ping a user and remove him from the Bot Admin team\n',
                 'listadmins': f'## </csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\nAdditional Operators:\n - List all Bot Admins\n',
                 'connected': f'## </csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\nAdditional Operators:\n - mod: `y` to see all server names and IDs\n',
                 'scrape': f'## </csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\nScrape the appstores for CSR2 and CSR3 app updates\n',
-                'broadcast': f'## </csr2_broadcast:{os.getenv('CSR2_BROADCAST_COMMAND')}>\nAdditional Operators:\n - message_title: title of the broadcasted embed message\n - You will be asked to send a text message containing the containing the messages text body that will be broadcasted.'
+                'broadcast': f'## </csr2_broadcast:{os.getenv('CSR2_BROADCAST_COMMAND')}>\nAdditional Operators:\n - message_title: title of the broadcasted embed message\n - You will be asked to send a text message containing the containing the messages text body that will be broadcasted.',
+                'updatecode': f'## </csr2_updatecode:{os.getenv('CSR2_UPDATECODE_COMMAND')}>\nAdditional Operators:\n - restart_in: Delay time in hours until the bot auto restarts after the code update, format: `X.XX...`',
+                'restart': f'</csr2_restart:{os.getenv('CSR2_RESTART_COMMAND')}>\nRestarts the bot'
             }
 
             description_text = descriptions[command]
