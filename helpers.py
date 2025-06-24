@@ -97,41 +97,41 @@ def load_command_options_scope():
 
 async def load_asset_path(asset):
     conversion = {
-        'PfP': 'PfP.png',
-        'PfP_Halloween': 'PfP_Halloween.png',
-        'PfP_Christmas': 'PfP_Christmas.png',
-        'PfP_Birthday': 'PfP_Birthday.png'
+        "PfP": "PfP.png",
+        "PfP_Halloween": "PfP_Halloween.png",
+        "PfP_Christmas": "PfP_Christmas.png",
+        "PfP_Birthday": "PfP_Birthday.png"
     }
 
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', conversion.get(asset))
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", conversion.get(asset))
 
 async def load_file_path(file):
     conversion = {
-        'admins': 'admins.json',
-        'CSR2_announcement_channels': 'CSR2_announcement_channels.json',
-        'CSR3_announcement_channels': 'CSR3_announcement_channels.json',
-        'Blog_announcement_channels': 'Blog_announcement_channels.json',
-        'CSR2_announcement_users': 'CSR2_announcement_users.json',
-        'CSR3_announcement_users': 'CSR3_announcement_users.json',
-        'Blog_announcement_users': 'Blog_announcement_users.json',
-        'CSR2_versions': 'CSR2_versions.json',
-        'CSR3_versions': 'CSR3_versions.json',
-        'Blog_versions': 'Blog_versions.json',
-        'limits': 'limits.json',
-        'EDB': 'EDB.db',
-        'tunes': 'tunes.db'
+        "admins": "admins.json",
+        "CSR2_announcement_channels": "CSR2_announcement_channels.json",
+        "CSR3_announcement_channels": "CSR3_announcement_channels.json",
+        "Blog_announcement_channels": "Blog_announcement_channels.json",
+        "CSR2_announcement_users": "CSR2_announcement_users.json",
+        "CSR3_announcement_users": "CSR3_announcement_users.json",
+        "Blog_announcement_users": "Blog_announcement_users.json",
+        "CSR2_versions": "CSR2_versions.json",
+        "CSR3_versions": "CSR3_versions.json",
+        "Blog_versions": "Blog_versions.json",
+        "limits": "limits.json",
+        "EDB": "EDB.db",
+        "tunes": "tunes.db"
     }
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', conversion.get(file))
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", conversion.get(file))
 
 async def load_file(file):
     conversion = {
-        'Admin file': await load_file_path('admins'),
-        'CSR2 announcement channel file': await load_file_path('CSR2_announcement_channels'),
-        'CSR3 announcement channel file': await load_file_path('CSR3_announcement_channels'),
-        'Blog announcement channel file': await load_file_path('Blog_announcement_channels'),
-        'CSR2 announcement user file': await load_file_path('CSR2_announcement_users'),
-        'CSR3 announcement user file': await load_file_path('CSR3_announcement_users'),
-        'Blog announcement user file': await load_file_path('Blog_announcement_users')
+        "Admin file": await load_file_path('admins'),
+        "CSR2 announcement channel file": await load_file_path('CSR2_announcement_channels'),
+        "CSR3 announcement channel file": await load_file_path('CSR3_announcement_channels'),
+        "Blog announcement channel file": await load_file_path('Blog_announcement_channels'),
+        "CSR2 announcement user file": await load_file_path('CSR2_announcement_users'),
+        "CSR3 announcement user file": await load_file_path('CSR3_announcement_users'),
+        "Blog announcement user file": await load_file_path('Blog_announcement_users')
     }
     FILE = conversion.get(file)
 
@@ -160,21 +160,21 @@ async def load_perms_dic():
         "send_messages": "Send Messages",
         "embed_links": "Embed Links",
         "attach_files": "Attach Files",
-        "add_reactions": "Add Reactions",
+        "add_reactions": "Add Reactions"
     }
 
     return discord_permissions
 
 async def emojify_tier(db_value):
     conversion = {
-        '': '',
-        'T1': f'{os.getenv('T1_EMOJI')}',
-        'T2': f'{os.getenv('T2_EMOJI')}',
-        'T3': f'{os.getenv('T3_EMOJI')}',
-        'T4': f'{os.getenv('T4_EMOJI')}',
-        'T5': f'{os.getenv('T5_EMOJI')}',
-        'T1-T3': f'{os.getenv('T1_EMOJI')}-{os.getenv('T3_EMOJI')}',
-        'T4-T5': f'{os.getenv('T4_EMOJI')}-{os.getenv('T5_EMOJI')}'
+        "": "",
+        "T1": f"{os.getenv('T1_EMOJI')}",
+        "T2": f"{os.getenv('T2_EMOJI')}",
+        "T3": f"{os.getenv('T3_EMOJI')}",
+        "T4": f"{os.getenv('T4_EMOJI')}",
+        "T5": f"{os.getenv('T5_EMOJI')}",
+        "T1-T3": f"{os.getenv('T1_EMOJI')}-{os.getenv('T3_EMOJI')}",
+        "T4-T5": f"{os.getenv('T4_EMOJI')}-{os.getenv('T5_EMOJI')}"
     }
 
     emoji = conversion.get(db_value)
@@ -183,32 +183,32 @@ async def emojify_tier(db_value):
 
 async def emojify_rarity(db_value):
     conversion = {
-        '': '',
-        'N0': f'{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}',
-        'G1': f'{os.getenv('GS_EMOJI')}',
-        'G2': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
-        'G3': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
-        'G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
-        'G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}',
-        'P1': f'{os.getenv('PS1_EMOJI')}',
-        'P2': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}',
-        'P3': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}',
-        'P4': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}',
-        'P5': f'{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}{os.getenv('PS5_EMOJI')}',
-        'G1-G3': f'{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G2_G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G3_G4': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G3_G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'G4_G5': f'{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0_G3': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0_G4': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0_G5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        'N0_P5': f'{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}',
-        '1': f'{os.getenv('S1_EMOJI')}',
-        '2': f'{os.getenv('S2_EMOJI')}',
-        '3': f'{os.getenv('S3_EMOJI')}',
-        '4': f'{os.getenv('S4_EMOJI')}',
-        '5': f'{os.getenv('S5_EMOJI')}'
+        "": "",
+        "N0": f"{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}",
+        "G1": f"{os.getenv('GS_EMOJI')}",
+        "G2": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
+        "G3": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
+        "G4": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
+        "G5": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
+        "P1": f"{os.getenv('PS1_EMOJI')}",
+        "P2": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}",
+        "P3": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}",
+        "P4": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}",
+        "P5": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}{os.getenv('PS5_EMOJI')}",
+        "G1-G3": f"{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "G2_G4": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "G3_G4": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "G3_G5": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "G4_G5": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "N0_G3": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "N0_G4": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "N0_G5": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "N0_P5": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
+        "1": f"{os.getenv('S1_EMOJI')}",
+        "2": f"{os.getenv('S2_EMOJI')}",
+        "3": f"{os.getenv('S3_EMOJI')}",
+        "4": f"{os.getenv('S4_EMOJI')}",
+        "5": f"{os.getenv('S5_EMOJI')}"
     }
 
     emoji = conversion.get(db_value)
@@ -217,9 +217,9 @@ async def emojify_rarity(db_value):
 
 async def emojify_store(store):
     conversion = {
-        '': '',
-        'App Store': f'{os.getenv('APP_STORE_EMOJI')}',
-        'Google Play': f'{os.getenv('GOOGLE_PLAY_EMOJI')}'
+        "": "",
+        "App Store": f"{os.getenv('APP_STORE_EMOJI')}",
+        "Google Play": f"{os.getenv('GOOGLE_PLAY_EMOJI')}"
     }
 
     emoji = conversion.get(store)
@@ -230,7 +230,7 @@ async def get_update_case(case: int, change: list, log: str, status: int):
     try:
         change += [""] * (6 - len(change))
         conversion = {
-            '': '',
+            "": "",
             1: f"New:\nScrape Error: {change[2]}",
             2: f"Old:\nScrape Error: {change[2]}\n\nNew Version: {change[3]}\nNew Last Updated: <t:{change[4]}:F>",
             3: f"Old Version: {change[2]}\nOld Last Updated: <t:{change[3]}:F>\n\nNew:\nScrape Error: {change[4]}",
