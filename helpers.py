@@ -4,6 +4,7 @@ import aiofiles
 import json
 import os
 import pycountry_convert
+import sys
 import logging
 
 load_dotenv()
@@ -279,3 +280,14 @@ async def get_continent(cc):
         return continent_names.get(continent_code, "Unknown")
     except Exception:
         return "Unknown"
+
+async def is_float(v):
+    try:
+        float(v)
+        return True
+    except ValueError:
+        return False
+
+async def restart():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
