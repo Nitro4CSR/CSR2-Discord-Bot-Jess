@@ -48,7 +48,7 @@ class UpdateCodeCog(commands.Cog):
         logger.info(f"UPDATECODE - ⬇️ Downloading and applying update from GitHub...")
         log += "\nUPDATECODE - ⬇️ Downloading and applying update from GitHub..."
 
-        repo_zip_url = "https://github.com/Nitro4CSR/CSR2-Discord-Bot-Jess/archive/refs/heads/main.zip"  # Update this
+        repo_zip_url = "https://github.com/Nitro4CSR/CSR2-Discord-Bot-Jess/archive/refs/heads/main.zip"
         zip_path = "CSR2-Discord-Bot-Jess-main.zip"
         extract_folder = "update_temp"
 
