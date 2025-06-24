@@ -1,0 +1,9 @@
+aiosqlite
+bs4
+discord.py
+google_play_scraper
+itunes-app-scraper-dmi
+pycountry
+pycountry_convert
+pypresence
+python-dotenv
