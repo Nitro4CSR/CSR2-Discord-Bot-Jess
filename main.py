@@ -52,6 +52,19 @@ async def on_ready():
         log += f"\nBOOT - Starting PROFILE update scheduler"
         schedule_profile_update.start()
 
+    try:
+        ADMIN_SERVER = await helpers.load_admin_server()
+        admin_guild = bot.get_guild(int(ADMIN_SERVER))
+        logger.info(f"BOOT - Trying to sync commands to Admin Server ({admin_guild.name})")
+        log += f"BOOT - Trying to sync commands to Admin Server ({admin_guild.name})"
+        await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
+        logger.info(f"BOOT - Commands synced to to Admin Server ({admin_guild.name})")
+        log += f"\nBOOT - Commands synced to to Admin Server ({admin_guild.name})"
+    except Exception as e:
+        logger.error(f"BOOT - Failed to sync commands: {e}")
+        log += f"BOOT - Failed to sync commands: {e}"
+        status = 0
+
     FIRST_SETUP_DONE = await helpers.load_setup_status()
 
     if not FIRST_SETUP_DONE:
@@ -134,19 +147,6 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="CSR Racing"))
     logger.info("BOOT - Basic presence set")
     log += "\nBOOT - Basic presence set"
-
-    try:
-        ADMIN_SERVER = await helpers.load_admin_server()
-        admin_guild = bot.get_guild(int(ADMIN_SERVER))
-        logger.info(f"BOOT - Trying to sync commands to Admin Server ({admin_guild.name})")
-        log += f"BOOT - Trying to sync commands to Admin Server ({admin_guild.name})"
-        await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
-        logger.info(f"BOOT - Commands synced to to Admin Server ({admin_guild.name})")
-        log += f"\nBOOT - Commands synced to to Admin Server ({admin_guild.name})"
-    except Exception as e:
-        logger.error(f"BOOT - Failed to sync commands: {e}")
-        log += f"BOOT - Failed to sync commands: {e}"
-        status = 0
 
     await in_app_logging.send_log(bot, log, status, 2)
 
