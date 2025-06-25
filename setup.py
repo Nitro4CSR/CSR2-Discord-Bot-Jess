@@ -21,8 +21,7 @@ def ensure_requests_installed():
         print("[*] Installing 'requests'...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
         print("[✓] 'requests' installed.")
-
-import requests
+     globals()['requests'] = __import__('requests')
 
 def download_requirements():
     if REQUIREMENTS_PATH.exists():
