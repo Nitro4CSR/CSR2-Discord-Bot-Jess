@@ -46,12 +46,24 @@ def download_source():
     print("[*] Downloading and extracting bot source code...")
     response = requests.get(ZIP_URL)
     response.raise_for_status()
+
     with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
         for member in zip_ref.infolist():
-            if member.filename.endswith(".env"):
+            filename = member.filename
+            if filename.endswith(".env"):
                 continue
-            zip_ref.extract(member)
-    print(f"[✓] Bot source extracted to ./{SOURCE_DIR}")
+
+            parts = Path(filename).parts
+            if len(parts) > 1:
+                target_path = Path(*parts[1:])
+                if member.is_dir():
+                    target_path.mkdir(parents=True, exist_ok=True)
+                else:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    with zip_ref.open(member) as source_file:
+                        with open(target_path, "wb") as target_file:
+                            target_file.write(source_file.read())
+    print("[✓] Bot source extracted to current directory.")
 
 def download_env():
     if ENV_PATH.exists():
