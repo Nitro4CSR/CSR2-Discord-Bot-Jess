@@ -1,3 +1,4 @@
+aiofiles
 aiosqlite
 bs4
 discord.py
