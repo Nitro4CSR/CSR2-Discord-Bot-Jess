@@ -1,4 +1,3 @@
-import os
 import sys
 import subprocess
 import zipfile
@@ -14,6 +13,7 @@ ENV_PATH = Path(".env")
 SOURCE_DIR = Path("CSR2-Discord-Bot-Jess-main")
 
 def ensure_requests_installed():
+    global requests
     try:
         import requests
         print("[✓] 'requests' already installed.")
@@ -21,7 +21,7 @@ def ensure_requests_installed():
         print("[*] Installing 'requests'...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
         print("[✓] 'requests' installed.")
-     globals()['requests'] = __import__('requests')
+        import requests
 
 def download_requirements():
     if REQUIREMENTS_PATH.exists():
