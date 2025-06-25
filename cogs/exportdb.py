@@ -18,7 +18,7 @@ class ExportDBCog(commands.Cog):
         log = f"EXPORTDB - The following command has been used: /csr2_exportdb"
 
         admins = await helpers.load_file('Admin file')
-        if str(interaction.user.id) in admins:
+        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
             await interaction.response.defer(ephemeral=True)
 
             DB_FILE = await helpers.load_file_path('EDB')

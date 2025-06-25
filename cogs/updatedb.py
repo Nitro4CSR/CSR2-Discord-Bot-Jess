@@ -18,7 +18,7 @@ class DatabaseUpdateCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         admins = await helpers.load_file('Admin file')
-        if str(interaction.user.id) in admins:
+        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
             logger.info(f"UPDATEDB - User has permission to run command")
             log += f"\nUPDATEDB - User has permission to run command"
             logger.info(f"UPDATEDB - Starting DB update...")

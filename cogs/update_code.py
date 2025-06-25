@@ -23,7 +23,7 @@ class UpdateCodeCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         admins = await helpers.load_file('Admin file')
-        if str(interaction.user.id) not in admins:
+        if str(interaction.user.id) not in admins or str(interaction.user.id) != str(await helpers.load_super_admin()):
             logger.info(f"UPDATECODE - Interaction canceled, user lacks permissions...")
             log += "\nUPDATECODE - Interaction canceled, user lacks permissions..."
             await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)

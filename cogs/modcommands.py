@@ -18,8 +18,7 @@ class ModcommandsCog(commands.Cog):
         logger.info(f"MODCOMMANDS - The following command has been used: /csr2_modcommands commad: {command}")
         log = f"MODCOMMANDS - The following command has been used: /csr2_modcommands commad: {command}"
 
-        NITRO = await helpers.load_super_admin()
-        if interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(NITRO):
+        if interaction.user.guild_permissions.administrator or str(interaction.user.id) == str(await helpers.load_super_admin()):
             await interaction.response.defer()
 
             helpers.load_dotenv

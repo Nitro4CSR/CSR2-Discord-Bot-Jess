@@ -19,7 +19,7 @@ class AdminCommandsCog(commands.Cog):
 
         admins = await helpers.load_file('Admin file')
         helpers.load_dotenv
-        if str(interaction.user.id) in admins:
+        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
             await interaction.response.defer(ephemeral=True)
 
             if command is None:

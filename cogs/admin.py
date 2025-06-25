@@ -30,7 +30,7 @@ class AdminCog(commands.Cog):
         log = f"LISTADMIN - The following command has been used: /csr2_listadmins"
 
         admins = await helpers.load_file('Admin file')
-        if str(interaction.user.id) in admins:
+        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
             admin_list = ", ".join([f"<@{admin_id}>" for admin_id in admins])
             await interaction.response.send_message(f"Current admins: {admin_list}", ephemeral=True)
             log += f"\nUser is Admin"
@@ -46,7 +46,7 @@ class AdminCog(commands.Cog):
         log = f"ADDADMIN - The following command has been used: /csr2_addadmin {user}"
 
         admins = await helpers.load_file('Admin file')
-        if str(interaction.user.id) in admins:
+        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
             admins.add(str(user.id))
             log = await save_admins(admins, log)
             await interaction.response.send_message(f"User {user} has been added as an admin.", ephemeral=True)
@@ -63,7 +63,7 @@ class AdminCog(commands.Cog):
         log = f"REMOVEADMIN - The following command has been used: /csr2_removeadmin {user}"
 
         admins = await helpers.load_file('Admin file')
-        if str(interaction.user.id) in admins:
+        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
             if str(user.id) in admins:
                 admins.remove(str(user.id))
                 log = await save_admins(admins, log)
