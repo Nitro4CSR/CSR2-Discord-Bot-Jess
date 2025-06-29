@@ -238,7 +238,7 @@ async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: s
                         log += f"\n{APP_DATA[2]} - Error while notifying Admin {admin.name} of {channel.guild.name}: {e}"
                         status = 0
         except discord.NotFound as e:
-            check, log, status = announce_updates.process_request(channel_id, str(APP_DATA[2]), 0, log)
+            check, log, status = await announce_updates.process_request(channel_id, str(APP_DATA[2]), 0, log)
         except Exception as e:
             logger.error(f"{APP_DATA[2]} - Error while trying to send changes to {channel_id}: {e}")
             log += f"\n{APP_DATA[2]} - Error while trying to send changes to {channel_id}: {e}"
@@ -259,9 +259,9 @@ async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: s
                         await user.send(embeds=message, silent=True)
                     await asyncio.sleep(3)
         except discord.Forbidden as e:
-            notify_updates.process_request(user_id, str(APP_DATA[2]), 0, log)
+            await notify_updates.process_request(user_id, str(APP_DATA[2]), 0, log)
         except discord.NotFound as e:
-            notify_updates.process_request(user_id, str(APP_DATA[2]), 0, log)
+            await notify_updates.process_request(user_id, str(APP_DATA[2]), 0, log)
         except Exception as e:
             logger.error(f"{APP_DATA[2]} - Error while trying to send changes to {user_id}: {e}")
             log += f"\n{APP_DATA[2]} - Error while trying to send changes to {user_id}: {e}"

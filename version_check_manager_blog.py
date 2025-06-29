@@ -174,7 +174,7 @@ async def send_changes(bot: commands.Bot, messages: discord.Embed, log: str):
                         log += f"\nBlog - Error while notifying Admin {admin.name} of {channel.guild.name}: {e}"
                         status = 0
         except discord.NotFound as e:
-            check, log, status = announce_updates.process_request(channel_id, "Blog", 0, log)
+            check, log, status = await announce_updates.process_request(channel_id, "Blog", 0, log)
         except Exception as e:
             logger.error(f"Blog - Error while trying to send changes to {channel_id}: {e}")
             log += f"Blog - Error while trying to send changes to {channel_id}: {e}"
