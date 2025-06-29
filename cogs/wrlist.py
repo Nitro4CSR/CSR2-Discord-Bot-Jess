@@ -221,7 +221,7 @@ class PaginatedView(discord.ui.View):
 
     async def on_timeout(self):
         logger.info("WRLIST - Button view timed out, restarting pagination.")
-        new_view = PaginatedView(self.results, self.user, self.car, self.rarity, self.tier, self.csr2_version)
+        new_view = PaginatedView(self.results, self.user, self.car, self.race, self.rarity, self.tier, self.csr2_version)
         embed = await new_view.get_embed_page()
         if self.message:
             await self.message.edit(embed=embed, view=new_view)
