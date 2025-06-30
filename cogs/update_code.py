@@ -109,8 +109,8 @@ class UpdateCodeCog(commands.Cog):
             await asyncio.sleep(round(float(restart_in) * 3600, 0))
         logger.info("UPDATECODE - Restarting bot...")
         log += "\nUPDATECODE - Restarting bot..."
-        await helpers.restart()
         await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+        await helpers.restart()
 
 async def setup(bot):
     ADMIN_SERVER = await helpers.load_admin_server()
