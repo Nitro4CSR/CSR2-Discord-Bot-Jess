@@ -50,7 +50,7 @@ class UpdateCodeCog(commands.Cog):
 
         repo_zip_url = "https://github.com/Nitro4CSR/CSR2-Discord-Bot-Jess/archive/refs/heads/main.zip"
         zip_path = "CSR2-Discord-Bot-Jess-main.zip"
-        extract_folder = "update_temp"
+        extract_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "update_temp")
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -65,7 +65,7 @@ class UpdateCodeCog(commands.Cog):
                         f.write(await resp.read())
 
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_folder)
+                zip_ref.extractall(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), extract_folder))
 
             extracted_name = os.listdir(extract_folder)[0]
             extracted_path = os.path.join(extract_folder, extracted_name)
@@ -79,7 +79,9 @@ class UpdateCodeCog(commands.Cog):
                     continue
 
                 src = os.path.join(extracted_path, item)
-                dest = os.path.join(os.getcwd(), item)
+                dest = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), item)
+                logger.info(f"Source: {src}\nDestination: {dest}")
+                log += f"\nSource: {src}\nDestination: {dest}"
 
                 if os.path.isdir(src):
                     if os.path.exists(dest):
