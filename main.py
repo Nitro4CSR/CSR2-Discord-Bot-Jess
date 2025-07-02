@@ -32,19 +32,20 @@ async def setup_hook():
 
 @bot.event
 async def on_ready():
+    log = ""
     if os.path.exists(await helpers.load_file_path('Version')):
         version = await helpers.load_file('Version')
     else:
         version = {'INITIAL', 'INITIAL'}
     if len(list(version)) > 1:
         logger.info(f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}")
-        log = f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}"
+        log += f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}\n"
         VERSION_FILE = await helpers.load_file_path(f'Version')
         async with aiofiles.open(VERSION_FILE, mode="w") as file:
             await file.write(json.dumps([list(version)[0], list(version)[0]]))
 
     logger.info(f"BOOT - Logged in as {bot.user.name} ({bot.user.id})")
-    log += f"\nBOOT - Logged in as {bot.user.name} ({bot.user.id})"
+    log += f"BOOT - Logged in as {bot.user.name} ({bot.user.id})"
     status = 2
 
     if not schedule_db_updates.is_running():
