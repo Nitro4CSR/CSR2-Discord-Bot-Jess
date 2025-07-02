@@ -119,7 +119,8 @@ async def load_file_path(file):
         "Blog_versions": "Blog_versions.json",
         "limits": "limits.json",
         "EDB": "EDB.db",
-        "tunes": "tunes.db"
+        "tunes": "tunes.db",
+        "version": "version.json"
     }
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", conversion.get(file))
 
@@ -131,7 +132,8 @@ async def load_file(file):
         "Blog announcement channel file": await load_file_path('Blog_announcement_channels'),
         "CSR2 announcement user file": await load_file_path('CSR2_announcement_users'),
         "CSR3 announcement user file": await load_file_path('CSR3_announcement_users'),
-        "Blog announcement user file": await load_file_path('Blog_announcement_users')
+        "Blog announcement user file": await load_file_path('Blog_announcement_users'),
+        "Version": await load_file_path('version')
     }
     FILE = conversion.get(file)
 
