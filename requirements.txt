@@ -8,3 +8,4 @@ pycountry
 pycountry_convert
 pypresence
 python-dotenv
+requests
