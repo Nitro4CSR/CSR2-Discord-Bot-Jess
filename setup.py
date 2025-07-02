@@ -46,11 +46,12 @@ def download_source():
     print("[*] Downloading and extracting bot source code...")
     response = requests.get(ZIP_URL)
     response.raise_for_status()
+    excluded_files = ['.env', 'README.md', 'LICENSE', '.gitattributes']
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
         for member in zip_ref.infolist():
             filename = member.filename
-            if filename.endswith(".env"):
+            if filename in excluded_files:
                 continue
 
             parts = Path(filename).parts
