@@ -41,8 +41,8 @@ async def on_ready():
         async with aiofiles.open(VERSION_FILE, mode="w") as file:
             await file.write(json.dumps(['INITIAL', 'INITIAL']))
     if len(list(version)) > 1:
-        logger.info(f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}")
-        log += f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}\n"
+        logger.info(f"BOOT - Upgraded Source Code version from {list(version)[1]} to {list(version)[0]}")
+        log += f"BOOT - Upgraded Source Code version from {list(version)[1]} to {list(version)[0]}\n"
         async with aiofiles.open(VERSION_FILE, mode="w") as file:
             await file.write(json.dumps([list(version)[0], list(version)[0]]))
 
@@ -71,7 +71,7 @@ async def on_ready():
         ADMIN_SERVER = await helpers.load_admin_server()
         admin_guild = bot.get_guild(int(ADMIN_SERVER))
         logger.info(f"BOOT - Trying to sync commands to Admin Server ({admin_guild.name})")
-        log += f"BOOT - Trying to sync commands to Admin Server ({admin_guild.name})"
+        log += f"\nBOOT - Trying to sync commands to Admin Server ({admin_guild.name})"
         await bot.tree.sync(guild=discord.Object(id=int(ADMIN_SERVER)))
         logger.info(f"BOOT - Commands synced to to Admin Server ({admin_guild.name})")
         log += f"\nBOOT - Commands synced to to Admin Server ({admin_guild.name})"
