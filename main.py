@@ -37,6 +37,8 @@ async def on_ready():
         version = await helpers.load_file('Version')
     else:
         version = {'INITIAL', 'INITIAL'}
+        async with aiofiles.open(VERSION_FILE, mode="w") as file:
+            await file.write(json.dumps(['INITIAL', 'INITIAL']))
     if len(list(version)) > 1:
         logger.info(f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}")
         log += f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}\n"
