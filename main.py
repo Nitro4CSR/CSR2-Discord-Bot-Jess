@@ -36,7 +36,7 @@ async def on_ready():
         version = await helpers.load_file('Version')
     else:
         version = {'INITIAL', 'INITIAL'}
-    if list(version)[0] != list(version)[1]:
+    if len(list(version)) > 1:
         logger.info(f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}")
         log = f"BOOT - Updated Source Code version from {list(version)[1]} to {list(version)[0]}"
         VERSION_FILE = await helpers.load_file_path(f'Version')
