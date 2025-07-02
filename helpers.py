@@ -120,7 +120,7 @@ async def load_file_path(file):
         "limits": "limits.json",
         "EDB": "EDB.db",
         "tunes": "tunes.db",
-        "version": "version.json"
+        "Version": "version.json"
     }
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", conversion.get(file))
 
