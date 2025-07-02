@@ -133,7 +133,7 @@ async def load_file(file):
         "CSR2 announcement user file": await load_file_path('CSR2_announcement_users'),
         "CSR3 announcement user file": await load_file_path('CSR3_announcement_users'),
         "Blog announcement user file": await load_file_path('Blog_announcement_users'),
-        "Version": await load_file_path('version')
+        "Version": await load_file_path('Version')
     }
     FILE = conversion.get(file)
 
