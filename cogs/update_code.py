@@ -1,4 +1,6 @@
+import aiofiles
 import discord
+import json
 from discord.ext import commands
 from discord import app_commands
 import in_app_logging
@@ -49,6 +51,7 @@ class UpdateCodeCog(commands.Cog):
         log += "\nUPDATECODE - ⬇️ Downloading and applying update from GitHub..."
 
         repo_zip_url = "https://github.com/Nitro4CSR/CSR2-Discord-Bot-Jess/archive/refs/heads/main.zip"
+        repo_commit_url = "https://api.github.com/repos/Nitro4CSR/CSR2-Discord-Bot-Jess/commits/main"
         zip_path = "CSR2-Discord-Bot-Jess-main.zip"
         extract_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "update_temp")
 
@@ -92,6 +95,27 @@ class UpdateCodeCog(commands.Cog):
 
             os.remove(zip_path)
             shutil.rmtree(extract_folder)
+
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(repo_commit_url) as response:
+                        if response.status == 200:
+                            response = await response.json()
+                            commit_id = response['sha'][:7]
+                            versions = await helpers.load_file('Version')
+                            versions_new = [commit_id, next(iter(versions))]
+                            logger.info(f"UPDATECODE - Downloaded Verion: {commit_id}")
+                            log += f"\nUPDATECODE - Downloaded Verion: {commit_id}"
+                            await interaction.followup.send(f"Downloaded Verion: {commit_id}", ephemeral=True)
+
+                            VERSION_FILE = await helpers.load_file_path(f'Version')
+                            async with aiofiles.open(VERSION_FILE, mode="w") as file:
+                                await file.write(json.dumps(versions_new))
+                        else:
+                            raise Exception
+            except:
+                logger.info(f"UPDATECODE - ❌ Failed to get latest commitID: HTTP {response.status}")
+                log += f"\nUPDATECODE - ❌ Failed to get latest commitID: HTTP {response.status}"
 
             log += "\nUPDATECODE - ✅ Code update complete."
             logger.info("UPDATECODE - Code update completed successfully.")
