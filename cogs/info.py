@@ -294,6 +294,7 @@ async def send_info_in_channel(bot: commands.Bot, interaction: discord.Interacti
         log += f"\nINFO - Results sent in Channel."
     await in_app_logging.send_log(bot, log, 2, 1, interaction)
     
+    return log
 
 async def send_info_in_dm(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str):
     try:
@@ -337,6 +338,8 @@ async def send_info_in_dm(bot: commands.Bot, interaction: discord.Interaction, r
     except discord.errors.NotFound:
         await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
         await in_app_logging.send_log(bot, log, 0, 1, interaction)
+
+    return log
 
 async def construct_results(rows: list, log: str):
     logger.info(f"INFO - Constructing Embeds")

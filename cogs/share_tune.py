@@ -699,6 +699,8 @@ class ShareTuneCog(commands.Cog):
             logger.info("COMMUNITY_TUNE - Results sent in Channel.")
             log += f"\nCOMMUNITY_TUNE - Results sent in Channel."
 
+        return log
+
     async def send_tunes_in_dm(self, interaction: discord.Interaction, results: list, log: str):
         if interaction.guild:
             await interaction.followup.send(f"Sending results via DMs because the amount of results exceed the maximum allowed results on this server.")
@@ -736,6 +738,8 @@ class ShareTuneCog(commands.Cog):
         except discord.Forbidden:
             await interaction.followup.send("Unable to send DMs. Please ensure your DMs are open and try again.", ephemeral=True)
             await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+
+        return log
 
     async def construct_results(self, results: list, log: str):
         logger.info("COMMUNITY_TUNE - Constructing Embeds")
