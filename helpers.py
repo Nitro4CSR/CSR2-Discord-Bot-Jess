@@ -187,7 +187,7 @@ async def emojify_tier(db_value):
 async def emojify_rarity(db_value):
     conversion = {
         "": "",
-        "N0": f"{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}{os.getenv('NS_EMOJI')}",
+        "N0": f"{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}",
         "G1": f"{os.getenv('GS_EMOJI')}",
         "G2": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
         "G3": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",

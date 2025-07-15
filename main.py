@@ -150,7 +150,7 @@ async def on_ready():
                                 else:
                                     await f.write(line)
                             if not found:
-                                await f.write(f"{command.name.upper()}_COMMAND={command.id}\n")
+                                await f.write(f"\n{command.name.upper()}_COMMAND={command.id}")
                                 found =True
                     logger.info(f"BOOT - {command.name}: {command.id}")
                     log += f"\nBOOT - {command.name}: {command.id}"
