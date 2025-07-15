@@ -117,7 +117,8 @@ async def load_file_path(file):
         "CSR2_versions": "CSR2_versions.json",
         "CSR3_versions": "CSR3_versions.json",
         "Blog_versions": "Blog_versions.json",
-        "limits": "limits.json",
+        "server_limits": "server_limits.json",
+        "user_limits": "user_limits.json",
         "EDB": "EDB.db",
         "tunes": "tunes.db",
         "Version": "version.json"

@@ -5,6 +5,7 @@ from discord import app_commands
 import aiofiles
 import sqlite3
 import json
+import os
 from cogs import admin
 import in_app_logging
 import helpers
@@ -86,25 +87,51 @@ class CustomSQLCog(commands.Cog):
                     logger.info(f"CUSTOMSQL - {len(results)} results found")
                     log += f"\nCUSTOMSQL - {len(results)} results found"
                     if interaction.guild:
-                        LIMIT_FILE = await helpers.load_file_path('limits')
-                        async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                            limits = json.loads(await file.read())
-                        limit = limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
-                        logger.info(f"WR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
-                        log += f"\nWR - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
-                    else:
-                        limit = 0
-                        logger.info(f"WR - Limit in DM's is infinite")
-                        log += f"\nWR - Limit in DM's is infinite"
-
-                    if limit == 0 or len(results) <= limit:
-                        logger.info(f"CUSTOMSQL - Sending in Channel")
-                        log += f"\nCUSTOMSQL - Sending in Channel"
-                        log = await send_query_in_channel(interaction, results, selections, log)
-                    else:
+                        SERVER_LIMIT_FILE = await helpers.load_file_path('server_limits')
+                        async with aiofiles.open(SERVER_LIMIT_FILE, 'r') as file:
+                            server_limits = json.loads(await file.read())
+                        server_limit = server_limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
+                        logger.info(f"nCUSTOMSQL - Limit on {interaction.guild.name} ({interaction.guild.id}): {server_limit}")
+                        log += f"\nCUSTOMSQL - Limit on {interaction.guild.name} ({interaction.guild.id}): {server_limit}"
+                        if server_limit == 0 or len(results) <= server_limit:
+                            logger.info(f"CUSTOMSQL - Sending in Channel")
+                            log += f"\nCUSTOMSQL - Sending in Channel"
+                            log = await send_query_in_channel(interaction, results, selections, log)
+                            await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+                            return
+                    USER_LIMIT_FILE = await helpers.load_file_path('user_limits')
+                    async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:
+                        user_limits = json.loads(await file.read())
+                    user_limit = user_limits.get(str(interaction.user.id), {"PostLimit": 10})["PostLimit"]
+                    logger.info(f"nCUSTOMSQL - Limit for {interaction.user.name} ({interaction.user.id}): {user_limit}")
+                    log += f"\nCUSTOMSQL - Limit on {interaction.user.name} ({interaction.user.id}): {user_limit}"
+                    if user_limit == 0 or len(results) <= user_limit:
                         logger.info(f"CUSTOMSQL - Sending in DMs")
                         log += f"\nCUSTOMSQL - Sending in DMs"
                         log = await send_query_in_dm(interaction, results, selections, log)
+                    else:
+                        await interaction.followup.send(f"Both server limit and your personal limit are below the amount of results.\n" if interaction.guild else f"Your personal limit is below the amount of results.\n")
+                        class ForceSendView(discord.ui.View):
+                            def __init__(self, timeout=180):
+                                super().__init__(timeout=timeout)
+                    
+                            @discord.ui.button(label="Make an exception", style=discord.ButtonStyle.primary)
+                            async def force_send_button(self, interaction_button: discord.Interaction, button: discord.ui.Button):
+                                logger.info("INFO - User made an exception")
+                                nonlocal log
+                                log += "\nINFO - User made an exception"
+                                await interaction_button.response.defer(ephemeral=True)
+                                await send_query_in_dm(self.bot, interaction_button, results, log)
+                    
+                        message_text = (
+                            f"Search results: **{len(results)}**\n"
+                            f"Your personal Limit: **{user_limit}**\n"
+                            f"-# Increase your personal limit by running </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>, entering a number and selecting `Personal` as the scope or refine your query."
+                        )
+                        await interaction.followup.send(message_text, ephemeral=True, view=ForceSendView())
+                        logger.info("INFO - User and server limit exceeded, button offered")
+                        log += f"\nINFO - User and server limit exceeded, button offered"
+                    await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
                 await interaction.followup.send("Query executed successfully")
             else:
                 cursor.execute(sql_statement)
@@ -153,11 +180,12 @@ async def send_query_in_channel(self, interaction: discord.Interaction, results:
 
 async def send_query_in_dm(self, interaction: discord.Interaction, results: list, selections: list, log: str):
     try:
-        await interaction.followup.send("Sending results via DMs because the amount of results exceeds the maximum allowed results on this server.", ephemeral=True)
+        if interaction.guild:
+            await interaction.followup.send(f"Sending results via DMs because the amount of results exceed the maximum allowed results on this server.")
         user = interaction.user
 
         try:
-            await user.send("Fetching records, please wait...")
+            await user.send("Fetching data, please wait...") if interaction.guild else await interaction.followup.send("Fetching data, please wait...")
 
             messages, log = await construct_results(results, selections, log)
 
@@ -175,7 +203,8 @@ async def send_query_in_dm(self, interaction: discord.Interaction, results: list
 
             await asyncio.sleep(0.5)
             try:
-                await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
+                if interaction.guild:
+                    await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
             except discord.HTTPException as e:
                 if e.status == 429:
                     logger.warning(f"CUSTOMSQL - Rate Limited caught (HTTP 429)")

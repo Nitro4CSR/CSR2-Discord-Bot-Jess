@@ -46,6 +46,11 @@ async def on_ready():
         async with aiofiles.open(VERSION_FILE, mode="w") as file:
             await file.write(json.dumps([list(version)[0], list(version)[0]]))
 
+    if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", "limits.json")):
+        log += f"BOOT - Renaming limits.json to server_limits.json due to Code update"
+        logger.info(f"BOOT - Renaming limits.json to server_limits.json due to Code update")
+        os.rename(os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", "limits.json"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", "server_limits.json"))
+
     logger.info(f"BOOT - Logged in as {bot.user.name} ({bot.user.id})")
     log += f"BOOT - Logged in as {bot.user.name} ({bot.user.id})"
     status = 2

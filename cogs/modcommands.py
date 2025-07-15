@@ -33,7 +33,7 @@ class ModcommandsCog(commands.Cog):
 
             descriptions = {
                 "default": f"</csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>\n</csr2_announce_updates_add:{os.getenv('CSR2_ANNOUNCE_UPDATES_ADD_COMMAND')}>\n</csr2_announce_updates_delete:{os.getenv('CSR2_ANNOUNCE_UPDATES_DELETE_COMMAND')}>\n",
-                "limitresults": f"## </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>\nAdditional operators:\n- limit: Accepts integers.\n",
+                "limitresults": f"## </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>\nAdditional operators:\n- limit: Accepts integers.\n- scope: Choose between `Server` and `Personal` to apply the entered limit to the server or yourself",
                 "announce_updates_add": f"## </csr2_announce_updates_add:{os.getenv('CSR2_ANNOUNCE_UPDATES_ADD_COMMAND')}>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to `All`. Available: CSR2, CSR3, Blog & All (optional)\n",
                 "announce_updates_delete": f"## </csr2_announce_updates_delete:{os.getenv('CSR2_ANNOUNCE_UPDATES_DELETE_COMMAND')}>\nAdditional operators:\n- channel: any text-channel is selectable\n- scope: Defaults to `All`. Available: CSR2, CSR3, Blog & All (optional)\n",
             }

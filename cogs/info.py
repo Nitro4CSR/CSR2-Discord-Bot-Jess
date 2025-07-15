@@ -6,6 +6,7 @@ from difflib import get_close_matches
 import aiofiles
 import asyncio
 import json
+import os
 import in_app_logging
 import helpers
 
@@ -40,7 +41,8 @@ class InfoCommandCog(commands.Cog):
 
 async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interaction, car: str, rarity: str, tier: str, csr2_version: str, log: str):
     DATABASE_PATH = await helpers.load_file_path('EDB')
-    LIMIT_FILE = await helpers.load_file_path('limits')
+    SERVER_LIMIT_FILE = await helpers.load_file_path('server_limits')
+    USER_LIMIT_FILE = await helpers.load_file_path('user_limits')
     async with  aiosqlite.connect(DATABASE_PATH) as conn:
         async with conn.cursor() as cursor:
 
@@ -97,20 +99,49 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
                 logger.info(f"INFO - {len(rows)} results found")
                 log += f"\nINFO - {len(rows)} results found"
                 if interaction.guild:
-                    async with aiofiles.open(LIMIT_FILE, 'r') as file:
-                        limits = json.loads(await file.read())
-                    limit = limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
-                    logger.info(f"INFO - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}")
-                    log += f"\nINFO - Limit on {interaction.guild.name} ({interaction.guild.id}): {limit}"
-                else:
-                    limit = 0
-                    logger.info(f"INFO - Limit in DM's is infinite")
-                    log += f"\nINFO - Limit in DM's is infinite"
-        
-                if limit == 0 or len(rows) <= limit:
-                    log = await send_info_in_channel(bot, interaction, rows, log, True)
-                else:
+                    async with aiofiles.open(SERVER_LIMIT_FILE, 'r') as file:
+                        server_limits = json.loads(await file.read())
+                    server_limit = server_limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
+                    logger.info(f"INFO - Limit on {interaction.guild.name} ({interaction.guild.id}): {server_limit}")
+                    log += f"\nINFO - Limit on {interaction.guild.name} ({interaction.guild.id}): {server_limit}"
+                    if server_limit == 0 or len(rows) <= server_limit:
+                        logger.info(f"INFO - Sending in Channel")
+                        log += f"\nINFO - Sending in Channel"
+                        log = await send_info_in_channel(bot, interaction, rows, log, True)
+                        await in_app_logging.send_log(bot, log, 2, 1, interaction)
+                        return
+                async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:
+                    user_limits = json.loads(await file.read())
+                user_limit = user_limits.get(str(interaction.user.id), {"PostLimit": 10})["PostLimit"]
+                logger.info(f"INFO - Limit for {interaction.user.name} ({interaction.user.id}): {user_limit}")
+                log += f"\nINFO - Limit on {interaction.user.name} ({interaction.user.id}): {user_limit}"
+                if user_limit == 0 or len(rows) <= user_limit:
+                    logger.info(f"INFO - Sending in DMs")
+                    log += f"\nINFO - Sending in DMs"
                     log = await send_info_in_dm(bot, interaction, rows, log)
+                else:
+                    await interaction.followup.send(f"Both server limit and your personal limit are below the amount of results.\n" if interaction.guild else f"Your personal limit is below the amount of results.\n")
+                    class ForceSendView(discord.ui.View):
+                        def __init__(self, timeout=180):
+                            super().__init__(timeout=timeout)
+                
+                        @discord.ui.button(label="Make an exception", style=discord.ButtonStyle.primary)
+                        async def force_send_button(self, interaction_button: discord.Interaction, button: discord.ui.Button):
+                            logger.info("INFO - User made an exception")
+                            nonlocal log
+                            log += "\nINFO - User made an exception"
+                            await interaction_button.response.defer(ephemeral=True)
+                            await send_info_in_dm(bot, interaction_button, rows, log)
+                
+                    message_text = (
+                        f"Search results: **{len(rows)}**\n"
+                        f"Your personal Limit: **{user_limit}**\n"
+                        f"-# Increase your personal limit by running </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>, entering a number and selecting `Personal` as the scope or refine your query."
+                    )
+                    await interaction.followup.send(message_text, ephemeral=True, view=ForceSendView())
+                    logger.info("INFO - User and server limit exceeded, button offered")
+                    log += f"\nINFO - User and server limit exceeded, button offered"
+                await in_app_logging.send_log(bot, log, 2, 1, interaction)
             else:
                 logger.info(f"INFO - No direct matches found, using cutoff to potentially recover.")
                 log += f"\nINFO - No direct matches found, using cutoff to potentially recover."
@@ -243,9 +274,9 @@ async def fetch_and_send_info_by_unique_id(bot: commands.Bot, interaction: disco
 
 async def send_info_in_channel(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str, direct_match: bool):
     if direct_match:
-        await interaction.followup.send("Fetching records, please wait...")
+        await interaction.followup.send("Fetching info, please wait...")
     else:
-        await interaction.response.send_message("Fetching records, please wait...")
+        await interaction.response.send_message("Fetching info, please wait...")
 
     messages, log = await construct_results(rows, log)
 
@@ -266,10 +297,11 @@ async def send_info_in_channel(bot: commands.Bot, interaction: discord.Interacti
 
 async def send_info_in_dm(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str):
     try:
-        await interaction.followup.send(f"Sending results via DMs because amount of results exceed the maximum allowed results on this server")
+        if interaction.guild:
+            await interaction.followup.send(f"Sending results via DMs because the amount of results exceed the maximum allowed results on this server.")
         user = interaction.user
         try:
-            await user.send("Fetching info, please wait...")
+            await user.send("Fetching info, please wait...") if interaction.guild else await interaction.followup.send("Fetching info, please wait...")
 
             messages, log = await construct_results(rows, log)
 
@@ -288,7 +320,8 @@ async def send_info_in_dm(bot: commands.Bot, interaction: discord.Interaction, r
 
             await asyncio.sleep(0.5)
             try:
-                await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
+                if interaction.guild:
+                    await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
                 await in_app_logging.send_log(bot, log, 2, 1, interaction)
             except discord.HTTPException as e:
                 if e.status == 429:
