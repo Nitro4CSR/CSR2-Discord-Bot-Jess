@@ -108,7 +108,6 @@ async def fetch_and_send_info(bot: commands.Bot, interaction: discord.Interactio
                         logger.info(f"INFO - Sending in Channel")
                         log += f"\nINFO - Sending in Channel"
                         log = await send_info_in_channel(bot, interaction, rows, log, True)
-                        await in_app_logging.send_log(bot, log, 2, 1, interaction)
                         return
                 async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:
                     user_limits = json.loads(await file.read())

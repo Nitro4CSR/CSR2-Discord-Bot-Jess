@@ -112,7 +112,6 @@ async def fetch_and_send_s6e(bot: commands.Bot, interaction: discord.Interaction
                         logger.info(f"S6_EFFECTS - Sending in Channel")
                         log += f"\nS6_EFFECTS - Sending in Channel"
                         log = await send_s6e_in_channel(bot, interaction, rows, log, True)
-                        await in_app_logging.send_log(bot, log, 2, 1, interaction)
                         return
                 async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:
                     user_limits = json.loads(await file.read())

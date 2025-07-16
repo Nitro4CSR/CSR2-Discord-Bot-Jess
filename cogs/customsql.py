@@ -97,7 +97,6 @@ class CustomSQLCog(commands.Cog):
                             logger.info(f"CUSTOMSQL - Sending in Channel")
                             log += f"\nCUSTOMSQL - Sending in Channel"
                             log = await send_query_in_channel(interaction, results, selections, log)
-                            await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
                             return
                     USER_LIMIT_FILE = await helpers.load_file_path('user_limits')
                     async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:

@@ -450,7 +450,6 @@ class ShareTuneCog(commands.Cog):
                     logger.info("COMMUNITY_TUNE - Sending in Channel")
                     log += f"\nCOMMUNITY_TUNE - Sending in Channel"
                     log = await self.send_tunes_in_channel(interaction, results, log)
-                    await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
                     return
             USER_LIMIT_FILE = await helpers.load_file_path('user_limits')
             async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:
