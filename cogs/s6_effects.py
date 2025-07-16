@@ -381,7 +381,7 @@ async def construct_results(rows: list, log: str):
         )
         embed.add_field(name=f"S5-PP: {row[5]}\nS5-EVO: {row[6]}\n", value=f"", inline=False)
         embed.add_field(name=f"S5-Nos: {row[7]}\nS5-FD: {row[8]}\nS5-TP: {row[9]}\n", value=f"S5-Dyno: {float(row[10]):.3f}", inline=False)
-        embed.add_field(name=f"Best Stage 6: {sorted_categories[0]} ({float(sorted_offsets[0]):+.3f}) ({float(sorted_values[0]):.3f})", value=f"`\nPart           Offset   Time\n{chart}`", inline=False)
+        embed.add_field(name=f"Best Stage 6: {sorted_categories[0]} ({float(sorted_offsets[0]):+.3f}) ({float(sorted_values[0]):.3f})", value=f"​\n`Part           Offset   Time\n{chart}`", inline=False)
         embed.set_footer(text=f"{row[0]} - {row[1]}")
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
 
