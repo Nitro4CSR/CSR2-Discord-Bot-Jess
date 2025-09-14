@@ -1,6 +1,5 @@
 import asyncio
 import aiohttp
-import aiosqlite
 import json
 import os
 from discord.ext import commands
@@ -17,18 +16,10 @@ JSON_URL = {
 }
 
 table_schemas = {
-    'records': [
-        '"UniqueID" TEXT PRIMARY KEY', '"DB Name" TEXT', '"Ingame Name Clarification" TEXT', '"Un" TEXT', '"★" TEXT', '"WR-PP" TEXT', '"WR-EVO" TEXT', '"WR-NITRO" TEXT', '"WR-FD" REAL', '"WR-TIRE" TEXT', '"WR-DYNO" REAL', '"WR-BEST ET" REAL', '"WR Addon" TEXT', '"SHIFT Links" TEXT', '"WR-DRIVER" TEXT'
-    ],
-    's6_effects': [
-        '"UniqueID" TEXT PRIMARY KEY', '"DB Name" TEXT', '"Ingame Name" TEXT', '"Un" TEXT', '"★" TEXT', '"S5 - PP" TEXT', '"S5 - EVO" TEXT', '"S5 - NOS" TEXT', '"S5 - FD" TEXT', '"S5 - TIRES" TEXT', '"S5 - DYNO" REAL', '"Engine" REAL', '"Turbo" REAL', '"Intake" REAL', '"NOS" REAL', '"Body" REAL', '"Tires" REAL', '"Trans" REAL', '"is EV?" TEXT'
-    ],
-    'info': [
-        '"UniqueID" TEXT PRIMARY KEY', '"DB Name" TEXT', '"Ingame Name" TEXT', '"Un" TEXT', '"★" TEXT', '"IMG" TEXT', '"Vision Info" TEXT', '"is EV?" TEXT', '"thread" TEXT'
-    ],
-    'updates': [
-        '"ID" TEXT PRIMARY KEY', '"Date" TEXT', '"Output Vision" TEXT'
-    ]
+    'records': ['"UniqueID" TEXT PRIMARY KEY', '"DB Name" TEXT', '"Ingame Name Clarification" TEXT', '"Un" TEXT', '"★" TEXT', '"WR-PP" TEXT', '"WR-EVO" TEXT', '"WR-NITRO" TEXT', '"WR-FD" REAL', '"WR-TIRE" TEXT', '"WR-DYNO" REAL', '"WR-BEST ET" REAL', '"WR Addon" TEXT', '"SHIFT Links" TEXT', '"WR-DRIVER" TEXT'],
+    's6_effects': ['"UniqueID" TEXT PRIMARY KEY', '"DB Name" TEXT', '"Ingame Name" TEXT', '"Un" TEXT', '"★" TEXT', '"S5 - PP" TEXT', '"S5 - EVO" TEXT', '"S5 - NOS" TEXT', '"S5 - FD" TEXT', '"S5 - TIRES" TEXT', '"S5 - DYNO" REAL', '"Engine" REAL', '"Turbo" REAL', '"Intake" REAL', '"NOS" REAL', '"Body" REAL', '"Tires" REAL', '"Trans" REAL', '"is EV?" TEXT'],
+    'info': ['"UniqueID" TEXT PRIMARY KEY', '"DB Name" TEXT', '"Ingame Name" TEXT', '"Un" TEXT', '"★" TEXT', '"IMG" TEXT', '"Vision Info" TEXT', '"is EV?" TEXT', '"thread" TEXT'],
+    'updates': ['"ID" TEXT PRIMARY KEY', '"Date" TEXT', '"Output Vision" TEXT']
 }
 
 etag_cache = {}
@@ -38,69 +29,75 @@ async def get_github_etag(session, url):
         headers = response.headers
         if response.status == 200:
             return headers.get('ETag')
-
     return None
 
-async def should_update_database(log: str):
-    global etag_cache
+async def should_update_database():
+    global header, log, status, etag_cache
+    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     status = 2
     async with aiohttp.ClientSession() as session:
         for url in JSON_URL.values():
             github_etag = await get_github_etag(session, url)
             if github_etag is None:
-                logger.warning(f"EDB - No ETag received for {url}")
-                log += f"\nEDB - No ETag received for {url}"
+                logger.warning(f"{header}{localisation.get('EDB_LOG_UPDATE_CHECK_FAIL')} {url}")
+                log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CHECK_FAIL')} {url}"
                 status = 1
                 continue
 
             if url not in etag_cache or etag_cache[url] != github_etag:
-                logger.info(f"EDB - Database update needed. New ETag for {url}: {github_etag}")
-                log += f"\nEDB - Database update needed. New ETag for {url}: {github_etag}"
+                logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_NEEDED')} {url}: {github_etag}")
+                log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_NEEDED')} {url}: {github_etag}"
                 etag_cache[url] = github_etag
-                return True, log, status
+                return True, status
+    return False, status
 
-    return False, log, status
-
-async def check_and_create_database(log: str):
+async def check_and_delete_database():
+    global header, log
+    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     DATABASE_PATH = await helpers.load_file_path('EDB')
     if os.path.exists(DATABASE_PATH):
         os.remove(DATABASE_PATH)
-        logger.info(f"EDB - Deleted existing database: {DATABASE_PATH}")
-        log += f"\nEDB - Deleted existing database: {DATABASE_PATH}\n"
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_DELETE_OLD_DB')} {DATABASE_PATH}")
+        log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_DELETE_OLD_DB')} {DATABASE_PATH}\n"
     else:
-        logger.info("EDB - No existing database found. Creating a new one.")
-        log += f"\nEDB - No existing database found. Creating a new one."
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_START')}")
+        log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_START')}"
 
-    return log
-
-async def fetch_json_data(log: str):
+async def fetch_json_data():
+    global header, log, status
+    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     json_data = {}
     async with aiohttp.ClientSession() as session:
         for table_name, url in JSON_URL.items():
             async with session.get(url) as response:
                 if response.status == 200:
                     json_data[table_name] = json.loads(await response.text())
-                    logger.info(f"EDB - Fetched {table_name}: {json_data[table_name][:2]}... (showing first 2 records)")
-                    log += f"\nEDB - Fetched {table_name}: {json_data[table_name][:1]}... (showing first record)\n"
+                    logger.info(f"{header}{localisation.get('EDB_LOG_FETCH_DATA_DONE_1')} {table_name}: {json_data[table_name][:2]}{localisation.get('EDB_LOG_FETCH_DATA_DONE_2')}")
+                    log += f"\n{header}{localisation.get('EDB_LOG_FETCH_DATA_DONE_1')} {table_name}: {json_data[table_name][:1]}{localisation.get('EDB_LOG_FETCH_DATA_DONE_2')}\n"
                     status = 2
                 else:
-                    logger.error(f"EDB - Failed to fetch {table_name} (HTTP {response.status})")
-                    log += f"\nEDB - Failed to fetch {table_name} (HTTP {response.status})"
+                    logger.error(f"{header}{localisation.get('EDB_LOG_FETCH_DATA_FAIL')} {table_name} (HTTP {response.status})")
+                    log += f"\n{header}{localisation.get('EDB_LOG_FETCH_DATA_FAIL')} {table_name} (HTTP {response.status})"
                     status = 0
                     json_data[table_name] = []
                     continue
+    return json_data
 
-    return json_data, log, status
-
-async def create_tables(cursor, log):
+async def create_tables(cursor):
+    global header, log
+    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     for table_name, schema in table_schemas.items():
         await cursor.execute(f"CREATE TABLE {table_name} ({', '.join(schema)})")
-        logger.info(f"EDB - Created table: {table_name}")
-        log += f"\nEDB - Created table: {table_name}"
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_TABLE_CREATED')} {table_name}")
+        log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_TABLE_CREATED')} {table_name}"
 
-    return log
-
-async def insert_data(cursor, json_data, log, status):
+async def create_database(json_data):
+    global header, log
+    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
+    for table_name, schema in table_schemas.items():
+        await helpers.execute_sql_statement("WRs", f"CREATE TABLE {table_name} ({', '.join(schema)})")
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_TABLE_CREATED')} {table_name}")
+        log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_TABLE_CREATED')} {table_name}"
     for table_name, data in json_data.items():
         if data:
             keys = list(data[0].keys())
@@ -108,58 +105,45 @@ async def insert_data(cursor, json_data, log, status):
             columns = ', '.join([f'"{key}"' for key in keys])
             schema_keys = [col.split('" ')[0] + '"' for col in table_schemas[table_name]]
             if set(keys) != set([key.replace('"', '') for key in schema_keys]):
-                logger.error(f"EDB - Column mismatch for {table_name}. JSON keys: {keys}, Schema keys: {schema_keys}")
-                log += f"\nEDB - Column mismatch for {table_name}. JSON keys: {keys}, Schema keys: {schema_keys}\n"
-                status = 0
+                logger.error(f"{header}{localisation.get('EDB_LOG_POPULATE_TABLE_ERROR_KEY_MISMATCH_1')} {table_name}\n{localisation.get('EDB_LOG_POPULATE_TABLE_ERROR_KEY_MISMATCH_2')} {keys}\n{localisation.get('EDB_LOG_POPULATE_TABLE_ERROR_KEY_MISMATCH_3')} {schema_keys}")
+                log += f"\n{header}{localisation.get('EDB_LOG_POPULATE_TABLE_ERROR_KEY_MISMATCH_1')} {table_name}\n{localisation.get('EDB_LOG_POPULATE_TABLE_ERROR_KEY_MISMATCH_2')} {keys}\n{localisation.get('EDB_LOG_POPULATE_TABLE_ERROR_KEY_MISMATCH_3')} {schema_keys}\n"
                 continue
-
             insert_data = [tuple(item[key] for key in keys) for item in data]
-            logger.info(f"EDB - Inserting data into {table_name}: {insert_data[:2]}... (showing first 2 records)")
-            log += f"\nEDB - Inserting data into {table_name}: {insert_data[:1]}... (showing first record)\n"
-
-            await cursor.executemany(
-                f'INSERT INTO {table_name} ({columns}) VALUES ({placeholders})',
-                insert_data
-            )
+            logger.info(f"{header}{localisation.get('EDB_LOG_POPULATE_TABLE_DONE_1')} {table_name}: {insert_data[:2]}{localisation.get('EDB_LOG_POPULATE_TABLE_DONE_2')}")
+            log += f"\n{header}{localisation.get('EDB_LOG_POPULATE_TABLE_DONE_1')} {table_name}: {insert_data[:1]}{localisation.get('EDB_LOG_POPULATE_TABLE_DONE_2')}\n"
+            for row in insert_data:
+                await helpers.execute_sql_statement("WRs", f'INSERT INTO {table_name} ({columns}) VALUES ({placeholders})', row)
+            status = 2
         else:
-            logger.warning(f"EDB - No data to insert for table: {table_name}")
-            log += f"\nEDB - No data to insert for table: {table_name}\n"
+            logger.warning(f"{header}{localisation.get('EDB_LOG_POPULATE_TABLE_WARNING_NO_DATA')} {table_name}")
+            log += f"\n{header}{localisation.get('EDB_LOG_POPULATE_TABLE_WARNING_NO_DATA')} {table_name}\n"
             status = 1
-
-    return log, status
-
-async def create_database(json_data, log, status):
-    DATABASE_PATH = await helpers.load_file_path('EDB')
-    async with aiosqlite.connect(DATABASE_PATH) as db:
-        cursor = await db.cursor()
-        log = await create_tables(cursor, log)
-        log, status = await insert_data(cursor, json_data, log, status)
-        await db.commit()
-    logger.info("EDB - Database created and tables populated successfully")
-    log += f"\nEDB - Database created and tables populated successfully"
-
-    return log, status
+    logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_DONE')}")
+    log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_DONE')}"
+    return status
 
 async def recreate_database(bot: commands.Bot):
-    logger.info("EDB - Checking Database Status")
-    log = f"EDB - Checking Database Status"
-    should_update, log, status = await should_update_database(log)
+    global header, log, status
+    header = bot.localisation.get('EDB_LOG_HEADER')
+    logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_START')}")
+    log = f"{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_START')}"
+    should_update, status = await should_update_database()
     if should_update:
-        logger.info("EDB - Starting database update")
-        log += f"EDB - Starting database update"
-        log = await check_and_create_database(log)
-        json_data, log, status = await fetch_json_data(log)
-        log, status = await create_database(json_data, log, status)
-        logger.info("EDB - Database update completed")
-        log += f"\nEDB - Database update completed"
+        logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_START')}")
+        log += f"{header}{bot.localisation.get('EDB_LOG_UPDATE_START')}"
+        await check_and_delete_database()
+        json_data = await fetch_json_data()
+        status = await create_database(json_data)
+        logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_DONE')}")
+        log += f"\n{header}{bot.localisation.get('EDB_LOG_UPDATE_DONE')}"
     else:
-        logger.info("EDB - No updates required. Database is up to date.")
-        log += f"\nEDB - No updates required. Database is up to date."
+        logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_UNNECESSARY')}")
+        log += f"\n{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_UNNECESSARY')}"
         status = 2
     await in_app_logging.send_log(bot, log, status, 2)
 
 async def initial_setup():
-    await recreate_database()
+    await recreate_database("")
 
 if __name__ == "__main__":
     asyncio.run(initial_setup())

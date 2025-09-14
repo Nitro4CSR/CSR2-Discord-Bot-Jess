@@ -1,24 +1,35 @@
 import discord
 from discord.ext import commands
-import json
 import helpers
 
 logger = helpers.load_logging()
 
 async def send_log(bot: commands.Bot, log: str, status: int, type: int, interaction: discord.Interaction = None):
     await bot.wait_until_ready()
-    CHANNEL = json.loads(await helpers.load_log_channels())
-    NITRO = await helpers.load_super_admin()
-    log_channel = bot.get_channel(CHANNEL[type-1])
+    CHANNELS_CMD = await helpers.load_json_key("config", "ClientLogChannels_CMD")
+    CHANNELS_LOG = await helpers.load_json_key("config", "ClientLogChannels_TASK")
+    ADMINS = await helpers.load_json_key("config", "ClientAdminIDs")
+    cmd_channels = []
+    log_channels = []
+    for channel in CHANNELS_CMD:
+        cmd_channels.append(bot.get_channel(channel))
+    for channel in CHANNELS_LOG:
+        log_channels.append(bot.get_channel(channel))
 
     embed = await log_type_to_embed(log, status, type, interaction)
     try:
-        message=""
+        message = ""
         if status == 0:
-            message = f"<@{NITRO}>"
-        await log_channel.send(message if status == 0 else None,embed=embed)
+            for admin in ADMINS:
+                message += f"<@{admin}> "
+        if type == 1:
+            for channel in cmd_channels:
+                await channel.send(message if status == 0 else None,embed=embed)
+        else:
+            for channel in log_channels:
+                await channel.send(message if status == 0 else None,embed=embed)
     except Exception as e:
-        logger.error(f"{e}")
+        logger.error(f"{bot.localisation.get('IN_APP_LOGGING_LOG_HEADER')}{bot.localisation.get('IN_APP_LOGGING_LOG_ERROR_SEND')} {e}")
 
 async def log_type_to_embed(log: str, status: int, type: int, interaction: discord.Interaction):
     conversion = {

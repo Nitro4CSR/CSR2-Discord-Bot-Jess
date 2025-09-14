@@ -1,0 +1,45 @@
+{
+    "ClientName_Default": "DISCORD_BOT_DEFAULT_NAME",
+    "ClientName_Halloween": "DISCORD_BOT_HALLOWEEN_NAME",
+    "ClientName_Christmas": "DISCORD_BOT_CHRISTMAS_NAME",
+    "ClientName_Birthday": "DISCORD_BOT_BIRTHDAY_NAME",
+    "BirthdayMonth": DISCORD_BOT_BIRTHDAY_MONTH_INTEGER,
+    "BirthdayDay": DISCORD_BOT_BIRTHDAY_DAY_INTEGER,
+    "DynamicStatusList": [
+        {
+            "Activity": "ACTIVITY_TYPE", # can alse be null
+            "Text": "ACTIVITY_TEXT",
+            "url": "VALID_TWITCH_STREAM_URL" # can also be null
+        },
+        {
+            "Activity": "ACTIVITY_TYPE", # can alse be null
+            "Text": "ACTIVITY_TEXT",
+            "url": "VALID_TWITCH_STREAM_URL" # can also be null
+        }
+    ],
+    "ClientLogChannels_CMD": [
+        DISCORD_CHANNEL_TO_LOG_COMMAND_ACTIVITY_TO,
+		DISCORD_CHANNEL_TO_LOG_COMMAND_ACTIVITY_TO
+    ],
+    "ClientLogChannels_TASK": [
+        DISCORD_CHANNEL_TO_LOG_TASK_ACTIVITY_TO,
+		DISCORD_CHANNEL_TO_LOG_TASK_ACTIVITY_TO
+    ],
+    "ClientAdminIDs": [
+        DISCORD_USER_CLIENT_ID,
+		DISCORD_USER_CLIENT_ID
+    ],
+    "ClientAdminServers": [
+        ADMIN_SERVER_ID,
+		ADMIN_SERVER_ID
+    ],
+    "Localisation": "LOCALISATION", # Currently available are [en]
+    "DefaultServerLimit": DEFAULT_RESULTS_LIMIT_FOR_SERVERS,
+    "DefaultUserLimit": DEFAULT_RESULTS_LIMIT_FOR_USERS,
+    "DB_UpdatesPerHour": DATABASE_UPDATES_PER_HOUR,
+    "VersionChecksPerHour": VERSION_CHECKS_PER_HOUR,
+    "BlogChecksPerHour": BLOG_CHECKS_PER_HOUR,
+    "DynamicStatusUpdatesPerHour": DISCORD_BOT_STATUS_CHANGES_PER_HOUR, # a high number can lead to rate limiting
+    "FirstSetupDone": false, # do not touch if you dont know what you're doing
+    "DebugMode": false # mainly for development but feel free to change to true
+}

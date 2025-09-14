@@ -1,0 +1,118 @@
+{
+    "ClientName_Default": "Jess Dev",
+    "ClientName_Halloween": "Spooky Jess Dev",
+    "ClientName_Christmas": "Festive Jess Dev",
+    "ClientName_Birthday": "Cake Jess Dev",
+    "BirthdayMonth": 2,
+    "BirthdayDay": 9,
+    "DynamicStatusList": [
+        {
+            "Activity": "playing",
+            "Text": "CSR Racing 2",
+            "url": null
+        },
+        {
+            "Activity": "competing",
+            "Text": "Elite Showdown",
+            "url": null
+        },
+        {
+            "Activity": "competing",
+            "Text": "Championship Showdown",
+            "url": null
+        },
+        {
+            "Activity": "watching",
+            "Text": "CSR2 Stores",
+            "url": null
+        },
+        {
+            "Activity": "watching",
+            "Text": "CSR3 Stores",
+            "url": null
+        },
+        {
+            "Activity": "listening",
+            "Text": "Mazda 787B flybys",
+            "url": null
+        },
+        {
+            "Activity": "playing",
+            "Text": "CSR 3",
+            "url": null
+        },
+        {
+            "Activity": "watching",
+            "Text": "CSR2 blog websites",
+            "url": null
+        },
+        {
+            "Activity": null,
+            "Text": "recording WR data",
+            "url": null
+        },
+        {
+            "Activity": "watching",
+            "Text": "Nitro4CSR",
+            "url": null
+        },
+        {
+            "Activity": "watching",
+            "Text": "Achardir CSR2",
+            "url": null
+        },
+        {
+            "Activity": "watching",
+            "Text": "ICE PeAcE ᏟᏚᏒ",
+            "url": null
+        },
+        {
+            "Activity": null,
+            "Text": "being nostalgic about Mille CSR2",
+            "url": null
+        },
+        {
+            "Activity": null,
+            "Text": "updating spreadsheets",
+            "url": null
+        },
+        {
+            "Activity": "listening",
+            "Text": "Danny Lightning tips",
+            "url": null
+        },
+        {
+            "Activity": "listening",
+            "Text": "Danny Lightning tips",
+            "url": null
+        },
+        {
+            "Activity": "playing",
+            "Text": "CSR Classics",
+            "url": null
+        },
+        {
+            "Activity": null,
+            "Text": "tuning cars",
+            "url": null
+        },
+        {
+            "Activity": null,
+            "Text": "practicing shift patterns",
+            "url": null
+        }
+    ],
+    "ClientLogChannels_CMD": [],
+    "ClientLogChannels_TASK": [],
+    "ClientAdminIDs": [],
+    "ClientAdminServers": [],
+    "Localisation": "en",
+    "DefaultServerLimit": 4,
+    "DefaultUserLimit": 10,
+    "DB_UpdatesPerHour": 12,
+    "VersionChecksPerHour": 2,
+    "BlogChecksPerHour": 10,
+    "DynamicStatusUpdatesPerHour": 3,
+    "FirstSetupDone": false,
+    "DebugMode": false
+}

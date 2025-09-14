@@ -11,45 +11,59 @@ class BroadcastCommandCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="csr2_broadcast", description="Send a message to all moderators of joined servers")
-    @app_commands.describe(message_title="The title of your broadcast message")
-    async def broadcast_command(self, interaction: discord.Interaction, message_title: str):
-        logger.info(f"BROADCAST - The following command has been used: /csr2_broadcast message_title: {message_title}")
-        log = f"BROADCAST - The following command has been used: /csr2_broadcast message_title: {message_title}"
-        await interaction.response.defer(ephemeral=True)
+    async def cog_load(self):
 
-        await interaction.followup.send("Please send the text you wanna broadcast to all server Administrators below.")
-
-        response = await self.bot.wait_for('message', check=lambda m: m.author == interaction.user)
-        embed = discord.Embed(
-            title=message_title,
-            description=response.content,
-            color=discord.Color(0xff00ff)
-        )
-        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-
-        all_moderators = set()
-
-        for guild in self.bot.guilds:
-            moderators = {member for member in guild.members if member.guild_permissions.administrator and not member.bot}
-            moderators.add(guild.owner)
-            all_moderators.update(moderators)
-
-        logger.info(f"BROADCAST - Detected {len(all_moderators)} unique moderators across all connected servers")
-        log += f"\nBROADCAST - Detected {len(all_moderators)} unique moderators across all connected servers"
-
-        for moderator in all_moderators:
+        @app_commands.command(name=self.bot.localisation.get('BROADCAST_CMD_NAME'), description=self.bot.localisation.get('BROADCAST_CMD_DESC'))
+        @app_commands.describe(message_title=self.bot.localisation.get('BROADCAST_CMD_MESSAGE_TITLE'))
+        async def broadcast(interaction: discord.Interaction, message_title: str):
+            await interaction.response.defer(ephemeral=True)
             try:
-                await moderator.send(embed=embed)
-                await asyncio.sleep(1)
-            except Exception as e:
-                logger.warning(f"BROADCAST - Could not send message to {moderator} (DMs might be closed): {e}")
+                header = self.bot.localisation.get('BROADCAST_LOG_HEADER')
+                logger.info(f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('BROADCAST_CMD_NAME')} message_title: {message_title}")
+                log = f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('BROADCAST_CMD_NAME')} message_title: {message_title}"
 
-        await interaction.followup.send(f"Broadcast sent to {len(all_moderators)} unique moderators.", ephemeral=True)
-        logger.info("BROADCAST - Broadcast sent")
-        log += "\nBROADCAST - Broadcast sent"
-        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+                await interaction.followup.send(f"{self.bot.localisation.get('BROADCAST_MSG_SEND_MESSAGE_BODY')}", ephemeral=True)
+
+                response = await self.bot.wait_for('message', check=lambda m: m.author == interaction.user)
+                embed = discord.Embed(
+                    title=message_title,
+                    description=response.content,
+                    color=discord.Color(0xff00ff)
+                )
+                embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+
+                all_moderators = set()
+
+                for guild in self.bot.guilds:
+                    moderators = {member for member in guild.members if member.guild_permissions.administrator and not member.bot}
+                    moderators.add(guild.owner)
+                    all_moderators.update(moderators)
+
+                logger.info(f"{header} {len(all_moderators)} {self.bot.localisation.get('BROADCAST_LOG_MODERATOR_COUNT_DETECTED')}")
+                log += f"\n{header} {len(all_moderators)} {self.bot.localisation.get('BROADCAST_LOG_MODERATOR_COUNT_DETECTED')}"
+
+                sent = 0
+                for moderator in all_moderators:
+                    try:
+                        await moderator.send(embed=embed)
+                        sent = sent + 1
+                        await asyncio.sleep(1)
+                    except Exception as e:
+                        logger.warning(f"{header}{self.bot.localisation.get('BROADCAST_LOG_MESSAGE_FAIL_BLOCK')} {moderator}: {e}")
+
+                await interaction.followup.send(f"{sent} {self.bot.localisation.get('BROADCAST_MSG_SUMMARY')}", ephemeral=True)
+                logger.info(f"{header}{self.bot.localisation.get('BROADCAST_LOG_DONE')}")
+                log += f"\n{header}{self.bot.localisation.get('BROADCAST_LOG_DONE')}"
+                await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+            except Exception as e:
+                await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_FETCH')} {e}", ephemeral=True)
+                logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
+                log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
+                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
+
+        self.bot.tree.add_command(broadcast, guilds=[discord.Object(id=int(server)) for server in await helpers.load_json_key("config", "ClientAdminServers")])
 
 async def setup(bot):
-    ADMIN_SERVER = await helpers.load_admin_server()
-    await bot.add_cog(BroadcastCommandCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
+    ADMIN_SERVERS = await helpers.load_json_key("config", "ClientAdminServers")
+    for server in ADMIN_SERVERS:
+        await bot.add_cog(BroadcastCommandCog(bot), guilds=[discord.Object(id=int(server))], override=True)

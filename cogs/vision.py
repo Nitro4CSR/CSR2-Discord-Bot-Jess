@@ -1,12 +1,8 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
-import aiosqlite
+from discord import app_commands, InteractionType
 from difflib import get_close_matches
-import aiofiles
 import asyncio
-import json
-import os
 import in_app_logging
 import helpers
 
@@ -16,396 +12,283 @@ class VisionCommandCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="csr2_vision", description="❗Select one more variable from above❗ Searches for CSR2 World Records and setups")
-    @app_commands.describe(car="Accepts Ingame names, code names and Unique IDs. The later 2 can be found at the bottom of a searched car", rarity="Select an option from Above", tier="Select an option from Above", csr2_version="The CSR2 version the car was released in format: `<OTA_version (optional)> <release_version>`")
-    @app_commands.choices(rarity=helpers.load_command_options_rarity())
-    @app_commands.choices(tier=helpers.load_command_options_tier())
-    async def vison_command(self, interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
-        logger.info(f"VISION - The following command has been used: /csr2_vision car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
-        log = f"VISION - The following command has been used: /csr2_vision car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
-        await interaction.response.defer()
+    async def cog_load(self):
 
-        if any([car, rarity, tier, csr2_version]):
+        @app_commands.command(name=self.bot.localisation.get('VISION_CMD_NAME'), description=self.bot.localisation.get('VISION_CMD_DESC'))
+        @app_commands.describe(car=self.bot.localisation.get('ANY_CMD_CAR'), rarity=self.bot.localisation.get('ANY_CMD_RARITY'), tier=self.bot.localisation.get('ANY_CMD_TIER'), csr2_version=self.bot.localisation.get('ANY_CMD_CSR2_VERSION'))
+        @app_commands.choices(rarity=helpers.load_command_options_rarity(self.bot.localisation))
+        @app_commands.choices(tier=helpers.load_command_options_tier(self.bot.localisation))
+        async def vision(interaction: discord.Interaction, car: str = None, rarity: str = None, tier: str = None, csr2_version: str = None):
+            await interaction.response.defer()
             try:
-                await fetch_and_send_records(self.bot, interaction, car, rarity, tier, csr2_version, log)
-            except Exception as e:
-                await interaction.followup.send(f"An error occurred: {e}")
-                logger.error(f"VISION - An error occurred: {e}")
-                log += f"\nVISION - An error occurred: {e}"
-                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
-        else:
-            await interaction.followup.send(f"You didn't specify any variables but at least 1 is required! Please rerun the command with a defined variable", ephemeral=True)
-            logger.info(f"VISION - No variable was given to  search with")
-            log += f"\nVISION - No variable was given to  search with"
-            await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
-
-async def fetch_and_send_records(bot: commands.Bot, interaction: discord.Interaction, car: str, rarity: str, tier: str, csr2_version: str, log: str):
-
-    DATABASE_PATH = await helpers.load_file_path('EDB')
-    SERVER_LIMIT_FILE = await helpers.load_file_path('server_limits')
-    USER_LIMIT_FILE = await helpers.load_file_path('user_limits')
-    async with aiosqlite.connect(DATABASE_PATH) as conn:
-        async with conn.cursor() as cursor:
-
-            parameters = []
-            query = """\nSELECT records.UniqueID, records."DB Name", records."Ingame Name Clarification", records.Un, records.★, records."WR-PP", records."WR-EVO", records."WR-NITRO", records."WR-FD", records."WR-TIRE", records."WR-DYNO", records."WR-BEST ET", records."WR Addon", records."SHIFT Links", records."WR-DRIVER", info.IMG, info."Vision Info", info."is EV?", info.thread, s6_effects."S5 - PP", s6_effects."S5 - EVO", s6_effects."S5 - Nos", s6_effects."S5 - FD", s6_effects."S5 - TIRES", s6_effects."S5 - DYNO", s6_effects.Engine, s6_effects.Turbo, s6_effects.Intake, s6_effects.NOS, s6_effects.Body, s6_effects.Tires, s6_effects.Trans\nFROM records\nLEFT JOIN info ON records.UniqueID = info.UniqueID\nLEFT JOIN s6_effects ON records.UniqueID = s6_effects.UniqueID"""
-        
-            if any([car, rarity, tier, csr2_version]):
-                query += """\nWHERE"""
-        
-            if car:
-                primary_key_valid = car.startswith('T') and len(car) > 1 and car[1] in '12345'
-                db_name_valid = "_" in car
-                if primary_key_valid:
-                    query += """ records.UniqueID COLLATE NOCASE LIKE ?"""
-                elif db_name_valid:
-                    query += """ records."DB Name" COLLATE NOCASE LIKE ?"""
-                else:
-                    query += """ records."Ingame Name Clarification" COLLATE NOCASE LIKE ?"""
-                parameters.append(f"%{car}%")
-        
-            if rarity:
-                if car:
-                    query += """ AND"""
-                query += """ records.★ LIKE ?"""
-                parameters.append(rarity)
-            if tier:
-                if any([car, rarity]):
-                    query += """ AND"""
-                query += """ records.Un == ?"""
-                parameters.append(tier)
-            if csr2_version:
-                if "OTA" in csr2_version:
-                    csr2_version = f"""Added into the game in {csr2_version[:4]} Update {csr2_version[5:]}%"""
-                else:
-                    csr2_version = f"""Added into the game in Update {csr2_version}%"""
-                if any([car, rarity, tier]):
-                    query += """ AND"""
-                query += """ info.\"Vision Info\" LIKE ?"""
-                parameters.append(f"{csr2_version}")
-        
-            logger.info(f"VISION - The following query has been used: {query}\nThe following parameters were used: {parameters}")
-            log += f"\nVISION - The following query has been used: {query}\nThe following parameters were used: {parameters}"
-        
-            try:
-                await cursor.execute(query, parameters)
-                rows = await cursor.fetchall()
-            except aiosqlite.OperationalError as e:
-                await interaction.followup.send(f"Database error occurred: {e}", ephemeral=True)
-                await in_app_logging.send_log(bot, log, 0, 1, interaction)
-                await conn.close()
-                return
-        
-            if rows:
-                logger.info(f"VISION - {len(rows)} results found")
-                log += f"\nVISION - {len(rows)} results found"
-                if interaction.guild:
-                    async with aiofiles.open(SERVER_LIMIT_FILE, 'r') as file:
-                        server_limits = json.loads(await file.read())
-                    server_limit = server_limits.get(str(interaction.guild.id), {"PostLimit": 0})["PostLimit"]
-                    logger.info(f"VISION - Limit on {interaction.guild.name} ({interaction.guild.id}): {server_limit}")
-                    log += f"\nVISION - Limit on {interaction.guild.name} ({interaction.guild.id}): {server_limit}"
-                    if server_limit == 0 or len(rows) <= server_limit:
-                        logger.info(f"VISION - Sending in Channel")
-                        log += f"\nVISION - Sending in Channel"
-                        log = await send_records_in_channel(bot, interaction, rows, log, True)
-                        return
-                async with aiofiles.open(USER_LIMIT_FILE, 'r') as file:
-                    user_limits = json.loads(await file.read())
-                user_limit = user_limits.get(str(interaction.user.id), {"PostLimit": 10})["PostLimit"]
-                logger.info(f"VISION - Limit for {interaction.user.name} ({interaction.user.id}): {user_limit}")
-                log += f"\nVISION - Limit on {interaction.user.name} ({interaction.user.id}): {user_limit}"
-                if user_limit == 0 or len(rows) <= user_limit:
-                    logger.info(f"VISION - Sending in DMs")
-                    log += f"\nVISION - Sending in DMs"
-                    log = await send_records_in_dm(bot, interaction, rows, log)
-                else:
-                    await interaction.followup.send(f"Both server limit and your personal limit are below the amount of results.\n" if interaction.guild else f"Your personal limit is below the amount of results.\n")
-                    class ForceSendView(discord.ui.View):
-                        def __init__(self, timeout=180):
-                            super().__init__(timeout=timeout)
-                
-                        @discord.ui.button(label="Make an exception", style=discord.ButtonStyle.primary)
-                        async def force_send_button(self, interaction_button: discord.Interaction, button: discord.ui.Button):
-                            logger.info("VISION - User made an exception")
-                            nonlocal log
-                            log += "\nVISION - User made an exception"
-                            await interaction_button.response.defer(ephemeral=True)
-                            await send_records_in_dm(bot, interaction_button, rows, log)
-                
-                    message_text = (
-                        f"Search results: **{len(rows)}**\n"
-                        f"Your personal Limit: **{user_limit}**\n"
-                        f"-# Increase your personal limit by running </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>, entering a number and selecting `Personal` as the scope or refine your query."
-                    )
-                    await interaction.followup.send(message_text, ephemeral=True, view=ForceSendView())
-                    logger.info("VISION - User and server limit exceeded, button offered")
-                    log += f"\nVISION - User and server limit exceeded, button offered"
-                await in_app_logging.send_log(bot, log, 2, 1, interaction)
-            else:
-                logger.info(f"VISION - No direct matches found, using cutoff to potentially recover.")
-                log += f"\nVISION - No direct matches found, using cutoff to potentially recover."
-                parameters = []
-                similar_entries_query = ("""\nSELECT records."Ingame Name Clarification", records.UniqueID, records.Un, records.★\nFROM records""")
-        
-                if csr2_version:
-                    similar_entries_query += """\nJOIN info ON records.UniqueID = info.UniqueID"""
-        
-                if any([rarity, tier, csr2_version]):
-                    similar_entries_query += """\nWHERE"""
-        
-                if rarity:
-                    similar_entries_query += """ records.★ LIKE ?"""
-                    parameters.append(rarity)
-                if tier:
+                header = self.bot.localisation.get('VISION_LOG_HEADER')
+                logger.info(f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('VISION_CMD_NAME')} car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}")
+                log = f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('VISION_CMD_NAME')} car: {car} rarity: {rarity} tier: {tier} csr2_version: {csr2_version}"
+                if any([car, rarity, tier, csr2_version]):
+                    parameters = []
+                    query = """\nSELECT records.UniqueID, records."DB Name", records."Ingame Name Clarification", records.Un, records.★, records."WR-PP", records."WR-EVO", records."WR-NITRO", records."WR-FD", records."WR-TIRE", records."WR-DYNO", records."WR-BEST ET", records."WR Addon", records."SHIFT Links", records."WR-DRIVER", info.IMG, info."Vision Info", info."is EV?", info.thread, s6_effects."S5 - PP", s6_effects."S5 - EVO", s6_effects."S5 - Nos", s6_effects."S5 - FD", s6_effects."S5 - TIRES", s6_effects."S5 - DYNO", s6_effects.Engine, s6_effects.Turbo, s6_effects.Intake, s6_effects.NOS, s6_effects.Body, s6_effects.Tires, s6_effects.Trans\nFROM records\nLEFT JOIN info ON records.UniqueID = info.UniqueID\nLEFT JOIN s6_effects ON records.UniqueID = s6_effects.UniqueID\nWHERE"""
+                    if car:
+                        if car.startswith('T') and len(car) > 1 and car[1] in "12345":
+                            query += """ records.UniqueID COLLATE NOCASE LIKE ?"""
+                        elif "_" in car:
+                            query += """ records."DB Name" COLLATE NOCASE LIKE ?"""
+                        else:
+                            query += """ records."Ingame Name Clarification" COLLATE NOCASE LIKE ?"""
+                        parameters.append(f"%{car}%")
                     if rarity:
-                        similar_entries_query += """ AND"""
-                    similar_entries_query += """ records.Un == ?"""
-                    parameters.append(tier)
-                if csr2_version:
-                    if rarity or tier:
-                        similar_entries_query += """ AND"""
-                    similar_entries_query += """ info."Vision Info" LIKE ?"""
-                    parameters.append(f"{csr2_version}")
-        
-                logger.info(f"VISION - The following query has been used: {similar_entries_query}\nThe following parameters were used: {parameters}")
-                log += f"\nVISION - The following query has been used: {similar_entries_query}\nThe following parameters were used: {parameters}"
-        
-                await cursor.execute(similar_entries_query, parameters)
-                all_entries = await cursor.fetchall()
-        
-                all_unique_ids = {row[0]: (row[1], row[2], row[3]) for row in all_entries}
-        
-                if car:
-                    cutoff = 0.3
-                else:
-                    car = f"% %"
-                    cutoff = 1.0
-        
-                similar_entries = get_close_matches(car.strip('%'), list(all_unique_ids.keys()), n=10, cutoff=cutoff)
-        
-                if similar_entries:
-                    logger.info(f"VISION - Recovery success with {len(similar_entries)} results.")
-                    log += f"\nVISION - Recovery success with {len(similar_entries)} results."
-
-                    if len(similar_entries) > 1:
-                        view = discord.ui.View(timeout=300)
-                        for i, entry in enumerate(similar_entries):
-                            button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
-
-                            async def button_callback(interaction: discord.Interaction, entry=entry):
-                                try:
-                                    selected_unique_id = all_unique_ids[entry][0]
-                                    await fetch_and_send_records_by_unique_id(bot, interaction, selected_unique_id, False, log)
-                                except discord.errors.NotFound:
-                                    await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
-
-                            button.callback = button_callback
-                            view.add_item(button)
-
-                        description_list = [
-                            f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
-                            for i, entry in enumerate(similar_entries)
-                        ]
-
-                        embed = discord.Embed(
-                            title="Did you mean one of these?",
-                            description="\n".join(description_list),
-                            color=discord.Color(0xff00ff)
-                        )
-                        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-
-                        await interaction.followup.send(embed=embed, view=view)
+                        if car:
+                            query += """ AND"""
+                        query += """ records.★ LIKE ?"""
+                        parameters.append(rarity)
+                    if tier:
+                        if any([car, rarity]):
+                            query += """ AND"""
+                        query += """ records.Un == ?"""
+                        parameters.append(tier)
+                    if csr2_version:
+                        if "OTA" in csr2_version:
+                            game_version, ota_version = csr2_version.split(maxsplit=1)
+                            if "OTA" in game_version:
+                                csr2_version = f"{ota_version} {game_version}"
+                                game_version, ota_version = csr2_version.split(maxsplit=1)
+                            csr2_version = f"""Added into the game in {ota_version}% Update {game_version}%"""
+                        else:
+                            csr2_version = f"""Added into the game in %Update {csr2_version}%"""
+                        if any([car, rarity, tier]):
+                            query += """ AND"""
+                        query += """ info."Vision Info" LIKE ?"""
+                        parameters.append(f"{csr2_version}")
+                    logger.info(f"{header}{self.bot.localisation.get('LOG_QUERY')} {query}\n{self.bot.localisation.get('LOG_PARAMETERS')} {parameters}")
+                    log += f"\n{header}{self.bot.localisation.get('LOG_QUERY')} ```{query}```\n{self.bot.localisation.get('LOG_PARAMETERS')} {parameters}"
+                    results = await helpers.execute_sql_statement("WRs", query, parameters)
+                    if results:
+                        logger.info(f"{header}{len(results)} {self.bot.localisation.get('LOG_RESULTS_FOUND')}")
+                        log += f"\n{header}{len(results)} {self.bot.localisation.get('LOG_RESULTS_FOUND')}"
+                        route = await helpers.get_send_route(len(results), interaction.user.id, interaction.guild.id if interaction.guild else None)
+                        if route == 2:
+                            await self.handle_over_limit(interaction, results, log)
+                            return
+                        else:
+                            messages, log = await self.create_embeds(results, log)
+                            log = await self.send_channel(interaction, messages, log) if route == 0 else await self.send_dms(interaction, messages, log)
                     else:
-                        try:
-                            await fetch_and_send_records_by_unique_id(bot, interaction, all_unique_ids[similar_entries[0]][0], True, log)
-                        except discord.errors.NotFound:
-                            await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
+                        similar_entries, all_unique_ids, log = await self.get_similar_entries(car, rarity, tier, csr2_version, log)
+                        if similar_entries:
+                            logger.info(f"{header}{self.bot.localisation.get('LOG_RECOVERY_DONE')} {len(similar_entries)} {self.bot.localisation.get('LOG_RESULTS_FOUND')}")
+                            log += f"\n{header}{self.bot.localisation.get('LOG_RECOVERY_DONE')} {len(similar_entries)} {self.bot.localisation.get('LOG_RESULTS_FOUND')}"
+                            if len(similar_entries) > 1:
+                                view = discord.ui.View(timeout=300)
+                                for i, entry in enumerate(similar_entries):
+                                    button = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.primary)
+                                    async def button_callback(interaction: discord.Interaction, e = entry, log = log):
+                                        await interaction.response.defer()
+                                        try:
+                                            selected_unique_id = all_unique_ids[e][0]
+                                            results, log = await self.query_by_unique_id(selected_unique_id, log)
+                                            if results:
+                                                logger.info(f"{header}{self.bot.localisation.get('LOG_QUERY_DONE')}")
+                                                log += f"\n{header}{self.bot.localisation.get('LOG_QUERY_DONE')}"
+                                                messages, log = await self.create_embeds(results, log)
+                                                log = await self.send_channel(interaction, messages, log)
+                                            else:
+                                                logger.info(f"{header}{self.bot.localisation.get('LOG_ERROR_NO_ENTRY')}")
+                                                log += f"\n{header}{self.bot.localisation.get('LOG_ERROR_NO_ENTRY')}"
+                                        except discord.errors.NotFound:
+                                            await interaction.response.send_message(f"{self.bot.localisation.get('MSG_ERROR_EXPIRED')}", ephemeral=True)
+                                    button.callback = button_callback
+                                    view.add_item(button)
+                                description_list = [
+                                    f"{i+1}. {entry} {await helpers.emojify_tier(all_unique_ids[entry][1])} {await helpers.emojify_rarity(all_unique_ids[entry][2])}" 
+                                    for i, entry in enumerate(similar_entries)
+                                ]
+                                embed = discord.Embed(
+                                    title=f"{self.bot.localisation.get('MSG_SIMILAR_RESULTS_EMBED_TITLE')}",
+                                    description="\n".join(description_list),
+                                    color=discord.Color(0xff00ff)
+                                )
+                                embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+                                await interaction.followup.send(embed=embed, view=view)
+                            else:
+                                route = await helpers.get_send_route(len(results), interaction.user.id, interaction.guild.id if interaction.guild else None)
+                                if route == 2:
+                                    log = await self.handle_over_limit(interaction, results, log)
+                                else:
+                                    messages, log = await self.create_embeds(results, log)
+                                    log = await self.send_channel(interaction, messages, log) if route == 0 else await self.send_dms(interaction, messages, log)
+                        else:
+                            await interaction.followup.send(f"{self.bot.localisation.get('MSG_NOTICE_NO_SIMILAR_RESULTS')}", ephemeral=True)
+                            logger.info(f"{header}{self.bot.localisation.get('LOG_RECOVERY_FAIL')}")
+                            log += f"\n{header}{self.bot.localisation.get('LOG_RECOVERY_FAIL')}"
                 else:
-                    logger.info(f"VISION - Recovery failed. No results found.")
-                    log += f"\nVISION - Recovery failed. No results found."
-                    try:
-                        await interaction.followup.send("No similar named cars found.")
-                    except discord.NotFound:
-                        logger.error("VISION - Follow-up interaction expired.")
-                        log += "VISION - Follow-up interaction expired."
-                    await in_app_logging.send_log(bot, log, 2, 1, interaction)
-        
-    await conn.close()
+                    await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_NO_VARIABLE')}", ephemeral=True)
+                    logger.info(f"{header}{self.bot.localisation.get('LOG_ERROR_NO_VARIABLE')}")
+                    log += f"\n{header}{self.bot.localisation.get('LOG_ERROR_NO_VARIABLE')}"
+                await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+            except Exception as e:
+                await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_FETCH')} {e}")
+                logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
+                log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
+                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
 
-    return log
+        self.bot.tree.add_command(vision)
 
-async def fetch_and_send_records_by_unique_id(bot: commands.Bot, interaction: discord.Interaction, unique_id: str, direct_match: bool, log: str):
-    DATABASE_PATH = await helpers.load_file_path('EDB')
-    async with aiosqlite.connect(DATABASE_PATH) as conn:
-         async with conn.cursor() as cursor:
-
-            query = """\nSELECT records.UniqueID, records."DB Name", records."Ingame Name Clarification", records.Un, records.★, records."WR-PP", records."WR-EVO", records."WR-NITRO", records."WR-FD", records."WR-TIRE", records."WR-DYNO", records."WR-BEST ET", records."WR Addon", records."SHIFT Links", records."WR-DRIVER", info.IMG, info."Vision Info", info."is EV?", info.thread, s6_effects."S5 - PP", s6_effects."S5 - EVO", s6_effects."S5 - Nos", s6_effects."S5 - FD", s6_effects."S5 - TIRES", s6_effects."S5 - DYNO", s6_effects.Engine, s6_effects.Turbo, s6_effects.Intake, s6_effects.NOS, s6_effects.Body, s6_effects.Tires, s6_effects.Trans\nFROM records\nLEFT JOIN info ON records.UniqueID = info.UniqueID\nLEFT JOIN s6_effects ON records.UniqueID = s6_effects.UniqueID\nWHERE records.UniqueID = ?"""
-
-        
-            logger.info(f"VISION - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}")
-            log += f"\nVISION - The following query has been used: {query}\nThe following parameters were used: {(unique_id,)}"
-        
-            try:
-                logger.info(f"VISION - Querying with UniqueID from Recovery.")
-                log += f"\nVISION - Querying with UniqueID from Recovery."
-                await cursor.execute(query, (unique_id,))
-                rows = await cursor.fetchall()
-            except aiosqlite.OperationalError as e:
-                await interaction.followup.send(f"Database error occurred: {e}")
-                await in_app_logging.send_log(bot, log, 0, 1, interaction)
-                await conn.close()
-                return
-        
-            if rows:
-                logger.info(f"VISION - Query success")
-                log += f"\nVISION - Query success"
-                await send_records_in_channel(bot, interaction, rows, log, direct_match)
+    async def get_similar_entries(self, car: str, rarity: str, tier: str, csr2_version: str, log: str):
+        header = self.bot.localisation.get('VISION_LOG_HEADER')
+        logger.info(f"{header}{self.bot.localisation.get('LOG_RECOVER')}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_RECOVER')}"
+        parameters = []
+        similar_entries_query = ("""\nSELECT "Ingame Name", UniqueID, Un, ★\nFROM info""")
+        if any([rarity, tier, csr2_version]):
+            similar_entries_query += """\nWHERE"""
+        if rarity:
+            similar_entries_query += """ ★ LIKE ?"""
+            parameters.append(rarity)
+        if tier:
+            if rarity:
+                similar_entries_query += " AND"
+                similar_entries_query += """ Un == ?"""
+                parameters.append(tier)
+        if csr2_version:
+            if rarity or tier:
+                similar_entries_query += " AND"
+            similar_entries_query += """ "Vision Info" LIKE ?"""
+            parameters.append(f"{csr2_version}")
+        logger.info(f"{header}{self.bot.localisation.get('LOG_QUERY')} {similar_entries_query}\n{self.bot.localisation.get('LOG_PARAMETERS')} {parameters}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_QUERY')} ```{similar_entries_query}```\n{self.bot.localisation.get('LOG_PARAMETERS')} {parameters}"
+        all_entries = await helpers.execute_sql_statement("WRs", similar_entries_query, parameters)
+        all_unique_ids = {entry[0]: (entry[1], entry[2], entry[3]) for entry in all_entries}
+        cutoff = 0.3 if car else 1.0
+        car = car if car else " "
+        similar_entries = get_close_matches(car.strip('%'), list(all_unique_ids.keys()), n=10, cutoff=cutoff)
+        return similar_entries if similar_entries else None, all_unique_ids, log
+    
+    async def query_by_unique_id(self, unique_id: str, log: str):
+        header = self.bot.localisation.get('VISION_LOG_HEADER')
+        query = """\nSELECT records.UniqueID, records."DB Name", records."Ingame Name Clarification", records.Un, records.★, records."WR-PP", records."WR-EVO", records."WR-NITRO", records."WR-FD", records."WR-TIRE", records."WR-DYNO", records."WR-BEST ET", records."WR Addon", records."SHIFT Links", records."WR-DRIVER", info.IMG, info."Vision Info", info."is EV?", info.thread, s6_effects."S5 - PP", s6_effects."S5 - EVO", s6_effects."S5 - Nos", s6_effects."S5 - FD", s6_effects."S5 - TIRES", s6_effects."S5 - DYNO", s6_effects.Engine, s6_effects.Turbo, s6_effects.Intake, s6_effects.NOS, s6_effects.Body, s6_effects.Tires, s6_effects.Trans\nFROM records\nLEFT JOIN info ON records.UniqueID = info.UniqueID\nLEFT JOIN s6_effects ON records.UniqueID = s6_effects.UniqueID\nWHERE UniqueID = ?"""
+        logger.info(f"{header}{self.bot.localisation.get('LOG_QUERY')} {query}\n{self.bot.localisation.get('LOG_PARAMETERS')} {(unique_id,)}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_QUERY')} ```{query}```\n{self.bot.localisation.get('LOG_PARAMETERS')} {(unique_id,)}"
+        results = await helpers.execute_sql_statement("WRs", query, (unique_id,))
+        return results, log
+    
+    async def create_embeds(self, results: list, log: str):
+        header = self.bot.localisation.get('VISION_LOG_HEADER')
+        logger.info(f"{header}{self.bot.localisation.get('LOG_BUILD_EMBEDS')}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_BUILD_EMBEDS')}"
+        messages = []
+        batch = []
+        for row in results:
+            result = list(row)
+            result[3] = await helpers.emojify_tier(result[3])
+            result[4] = await helpers.emojify_rarity(result[4])
+            markdown_characters = ['*', '_', '~', '#']
+            escaped_text = ''
+            if result[14][0] in markdown_characters:
+                escaped_text = '\\'
+            if result[22] == None:
+                result[22] = 0
+            if result[17] == 'false':
+                spacing = max([len(f"{self.bot.localisation.get('PART_ENGINE')}"), len(f"{self.bot.localisation.get('PART_TURBO')}"), len(f"{self.bot.localisation.get('PART_INTAKE')}"), len(f"{self.bot.localisation.get('PART_NITROUS')}"), len(f"{self.bot.localisation.get('PART_BODY')}"), len(f"{self.bot.localisation.get('PART_TIRES')}"), len(f"{self.bot.localisation.get('PART_TRANSMISSION')}"), len(f"{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_PART')}")])
+                categories = [f"{self.bot.localisation.get('PART_ENGINE'):<{spacing}}", f"{self.bot.localisation.get('PART_TURBO'):<{spacing}}", f"{self.bot.localisation.get('PART_INTAKE'):<{spacing}}", f"{self.bot.localisation.get('PART_NITROUS'):<{spacing}}", f"{self.bot.localisation.get('PART_BODY'):<{spacing}}", f"{self.bot.localisation.get('PART_TIRES'):<{spacing}}", f"{self.bot.localisation.get('PART_TRANSMISSION'):<{spacing}}"]
+                result[17] = f"{self.bot.localisation.get('INFO_MSG_CAR_TYPE_CUMBUSTION')}"
             else:
-                logger.info(f"VISION - Query found no WR entry... Sending contribute notice")
-                log += f"\nVISION - Query found no WR entry... Sending contribute notice"
-                try:
-                    await interaction.followup.send("Selected car not found in WR database.")
-                except discord.NotFound:
-                    print("Follow-up interaction expired.")
-                    await in_app_logging.send_log(bot, log, 0, 1, interaction)
-        
-    await conn.close()
-
-    return log
-
-async def send_records_in_channel(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str, direct_match: bool):
-    if direct_match:
-        await interaction.followup.send("Fetching Vision data, please wait...", ephemeral=True)
-    else:
-        await interaction.response.send_message("Fetching Vision data, please wait...", ephemeral=True)
-
-    messages, log = await construct_results(rows, log)
-
-    if messages:
-        for i, batch in enumerate(messages):
-            try:
-                await interaction.followup.send(embeds=batch, silent=True if i != 0 else None)
-                await asyncio.sleep(0.5)
-            except discord.NotFound:
-                logger.error("VISION - Follow-up interaction expired.")
-                log += "\nVISION - Follow-up interaction expired."
-                await in_app_logging.send_log(bot, log, 0, 1, interaction)
-                return
-        logger.info(f"VISION - Results sent in Channel.")
-        log += f"\nVISION - Results sent in Channel."
-        await in_app_logging.send_log(bot, log, 2, 1, interaction)
-
-    return log
-
-async def send_records_in_dm(bot: commands.Bot, interaction: discord.Interaction, rows: list, log: str):
-    try:
-        if interaction.guild:
-            await interaction.followup.send(f"Sending results via DMs because the amount of results exceed the maximum allowed results on this server.")
-        user = interaction.user
-
-        try:
-            await user.send("Fetching Vision data, please wait...") if interaction.guild else await interaction.followup.send("Fetching Vision data, please wait...")
-
-            messages, log = await construct_results(rows, log)
-
-            if messages:
-                for i, batch in enumerate(messages):
-                    try:
-                        await user.send(embeds=batch, silent=True if i != 0 else None)
-                        await asyncio.sleep(0.5)
-                    except discord.Forbidden:
-                        logger.info(f"VISION - DMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again.")
-                        log += f"\nVISION - DMs are closed or closed for non friended accounts. No records will be send. Please open your DMs and try again."
-                        await in_app_logging.send_log(bot, log, 0, 1, interaction)
-                        return
-                logger.info(f"VISION - Results sent in DMs.")
-                log += f"\nVISION - Results sent in DMs."
-
-            await asyncio.sleep(0.5)
-            try:
-                if interaction.guild:
-                    await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
-                await in_app_logging.send_log(bot, log, 2, 1, interaction)
-            except discord.HTTPException as e:
-                if e.status == 429:
-                    logger.warning(f"VISION - Rate Limited caught (HTTP 429)")
-                    log += f"\nVISION - Rate Limited caught (HTTP 429)"
-                    retry_after = int(e.response.headers.get('Retry-After', 5))
-                    await asyncio.sleep(retry_after)
-                    await interaction.followup.send(f"The results were sent to you via DM.", ephemeral=True)
-                    await in_app_logging.send_log(bot, log, 1, 1, interaction)
-        except discord.Forbidden:
-            await interaction.followup.send("Unable to send DMs. Please ensure your DMs are open and try again.", ephemeral=True)
-            await in_app_logging.send_log(bot, log, 2, 1, interaction)
-    except discord.errors.NotFound:
-        await interaction.response.send_message("The interaction has expired. Please try again.", ephemeral=True)
-        await in_app_logging.send_log(bot, log, 0, 1, interaction)
-
-    return log
-
-async def construct_results(rows: list, log: str):
-    logger.info(f"VISION - Constructing Embeds")
-    log += f"\nVISION - Constructing Embeds"
-    messages = []
-    batch = []
-
-    for row in rows:
-        row = list(row)
-
-        row[3] = await helpers.emojify_tier(row[3])
-        row[4] = await helpers.emojify_rarity(row[4])
-
-        markdown_characters = ['*', '_', '~', '#']
-        escaped_text = ''
-        if row[14][0] in markdown_characters:
-            escaped_text = '\\'
-
-        if row[22] == None:
-            row[22] = 0
-
-        if row[17] == 'false':
-            categories = ["Engine      ", "Turbo       ", "Intake      ", "NOS         ", "Body        ", "Tires       ", "Transmission"]
-            row[17] = 'Combustion Engine Car'
-        else:
-            categories = ["Motor       ", "Battery     ", "Inverter    ", "Overboost   ", "Body        ", "Tires       ", "Transmission"]
-            row[17] = 'Electric Car'
-
-        if not any(x is None for x in row[24:31]):
-            values = row[24:31]
-            offsets = [round(float(values[i]) - float(row[24]), 3) for i in range(7)]
-            combined = sorted(zip(values, categories, offsets))
-            sorted_values, sorted_categories, sorted_offsets = zip(*combined)
-            chart_lines = [f"{category}   {offset:+.3f}   {value:.3f}" for category, offset, value in zip(sorted_categories, sorted_offsets, sorted_values)]
-            chart = "\n".join(chart_lines)
-            value = f"S5-PP: {row[19]}\nS5-EVO: {row[20]}\n\nS5-Nos: {row[21]}\nS5-FD: {float(row[22]):.2f}\nS5-TP: {row[23]}\nS5-Dyno: {float(row[24]):.3f}\n\n**Best Stage 6:** {sorted_categories[0]} ({float(sorted_offsets[0]):+.3f}) ({float(sorted_values[0]):.3f})\n`\nPart           Offset   Time\n{chart}`"
-        else:
-            value = f"No Stage 6 Effects for this car yet. Help us and [Contribute Now](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)"
-
-        embed = discord.Embed(
-            title=row[2],
-            description=f"# {row[3]}   {row[4]}",
-            color=discord.Color(0xff00ff)
-        )
-        embed.add_field(name=f"Car Info", value=f"{row[17]}\n{row[16]}\n\n[View all Specs](https://discord.com/channels/683998568305917970/1122543660282695780/threads/{row[18]})")
-        embed.add_field(name=f"World Record Tune", value=f"PP: {row[5]}\nEVO: {row[6]}\n\nNos: {row[7]}\nFD: {float(row[8]):.2f}\nTP: {row[9]}\nDyno: {float(row[10]):.3f}\n\nWR: {float(row[11]):.3f}\nDriver: {escaped_text}{row[14]}\n\nUpgrades: {row[12]}\n[Shift Pattern]({row[13]})", inline=False)
-        embed.add_field(name=f"Stage 6 Effects", value=value)
-        embed.set_footer(text=f"{row[0]} - {row[1]}")
-        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-        embed.set_image(url=f"https://raw.githubusercontent.com/Nitro4CSR/{row[15]}")
-        batch.append(embed)
-
-        if len(batch) == 5:
+                spacing = max([len(f"{self.bot.localisation.get('PART_MOTOR')}"), len(f"{self.bot.localisation.get('PART_BATTERY')}"), len(f"{self.bot.localisation.get('PART_INVERTER')}"), len(f"{self.bot.localisation.get('PART_OVERBOOST')}"), len(f"{self.bot.localisation.get('PART_BODY')}"), len(f"{self.bot.localisation.get('PART_TIRES')}"), len(f"{self.bot.localisation.get('PART_TRANSMISSION')}"), len(f"{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_PART')}")])
+                categories = [f"{self.bot.localisation.get('PART_MOTOR'):<{spacing}}", f"{self.bot.localisation.get('PART_BATTERY'):<{spacing}}", f"{self.bot.localisation.get('PART_INVERTER'):<{spacing}}", f"{self.bot.localisation.get('PART_OVERBOOST'):<{spacing}}", f"{self.bot.localisation.get('PART_BODY'):<{spacing}}", f"{self.bot.localisation.get('PART_TIRES'):<{spacing}}", f"{self.bot.localisation.get('PART_TRANSMISSION'):<{spacing}}"]
+                result[17] = f"{self.bot.localisation.get('INFO_MSG_CAR_TYPE_EV')}"
+            if not any(x is None for x in result[24:31]) or result[27] == "-":
+                values = result[24:31]
+                offsets = [round(float(values[i]) - float(result[24]), 3) for i in range(7)]
+                combined = sorted(zip(values, categories, offsets))
+                sorted_values, sorted_categories, sorted_offsets = zip(*combined)
+                chart_lines = [f"{category}   {f"{offset:+.3f}" if await helpers.is_float(offset) else offset}          {f"{value:6.3f}" if await helpers.is_float(value) else value}" for category, offset, value in zip(sorted_categories, sorted_offsets, sorted_values)]
+                chart = "\n".join(chart_lines)
+                value = f"{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_S5PP')} {result[19]}\n{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_S5EVO')} {result[20]}\n\n{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_S5NOS')} {result[21]}\n{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_S5FD')} {f"{float(result[22]):.2f}" if await helpers.is_float(result[22]) else result[22]}\n{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_S5TP')} {result[23]}\n{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_S5DYYO')} {f"{float(result[24]):.3f}" if await helpers.is_float(result[24]) else result[24]}\n\n**{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_TOPS6')}** {sorted_categories[0]} ({f"{float(sorted_offsets[0]):+.3f}" if await helpers.is_float(sorted_offsets[0]) else sorted_offsets[0]}) ({f"{float(sorted_values[0]):.3f}" if await helpers.is_float(sorted_values[0]) else sorted_values[0]})"+f"​\n`"+f"{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_PART'):<{spacing+3}}"+f"{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_OFFSET'):<16}"[:16]+f"{self.bot.localisation.get('S6_EFFECTS_MSG_EMBED_DESC_TIME'):>6}"+f"\n{chart}`"
+            else:
+                value = f"{self.bot.localisation.get('S6_EFFECTS_MSG_WARNING_CAR_NOT_FOUND')} [{self.bot.localisation.get('S6_EFFECTS_MSG_CONTRIBUTE')}](https://docs.google.com/spreadsheets/d/1pBamDQTOcWyJoUowrXM05Tj567UVAti1VA8zWsSlrhM/edit)"
+            embed = discord.Embed(
+                title=result[2],
+                description=f"# {result[3]}   {result[4]}",
+                color=discord.Color(0xff00ff)
+            )
+            embed.add_field(name=f"{self.bot.localisation.get('VISION_MSG_EMBED_DESC_CAR_INFO')}", value=f"{result[17]}\n{result[16]}\n\n[{self.bot.localisation.get('INFO_MSG_EMBED_DESC_CAT_INFO_DESC')}](https://discord.com/channels/683998568305917970/1122543660282695780/threads/{result[18]})")
+            embed.add_field(name=f"{self.bot.localisation.get('VISION_MSG_EMBED_DESC_WR_TUNE')}", value=f"{self.bot.localisation.get('WR_MSG_EMBED_DESC_PP')} {result[5]}\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_EVO')} {result[6]}\n\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_NOS')} {result[7]}\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_FD')}: {f"{float(result[8]):.2f}" if await helpers.is_float(result[8]) else result[8]}\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_TP')} {result[9]}\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_DYNO')} {f"{float(result[10]):.3f}" if await helpers.is_float(result[10]) else result[10]}\n\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_WR')} {f"{float(result[11]):.3f}" if await helpers.is_float(result[11]) else result[11]}\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_DRIVER')} {escaped_text}{result[14]}\n\n{self.bot.localisation.get('WR_MSG_EMBED_DESC_UPGRADES')} {result[12]}\n[{self.bot.localisation.get('WR_MSG_EMBED_DESC_SHIFT')}]({result[13]})", inline=False)
+            embed.add_field(name=f"{self.bot.localisation.get('VISION_MSG_EMBED_DESC_S6_EFFECTS')}", value=value)
+            embed.set_footer(text=f"{result[0]} - {result[1]}")
+            embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+            embed.set_image(url=f"https://raw.githubusercontent.com/Nitro4CSR/{result[15]}")
+    
+            batch.append(embed)
+    
+            if len(batch) == 10:
+                messages.append(batch)
+                batch = []
+    
+        if batch:
             messages.append(batch)
-            batch = []
-
-    if batch:
-        messages.append(batch)
-
-    logger.info(f"VISION - Embeds constructed")
-    log += f"\nVISION - Embeds constructed"
-
-    return messages, log
+    
+        logger.info(f"{header}{self.bot.localisation.get('LOG_EMBEDS_BUILD')}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_EMBEDS_BUILD')}"
+        return messages, log
+    
+    async def handle_over_limit(self, interaction: discord.Interaction, results: list, log: str):
+        header = self.bot.localisation.get('VISION_LOG_HEADER')
+        logger.info(f"{header}{self.bot.localisation.get('LOG_MADE_EXCEPTION')}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_MADE_EXCEPTION')}"
+        await interaction.followup.send(f"{self.bot.localisation.get('MSG_WARNING_OVER_LIMITS')}" if interaction.guild else f"{self.bot.localisation.get('MSG_WARNING_OVER_LIMIT')}")
+        class ForceSendView(discord.ui.View):
+            def __init__(self, log, bot, cog, timeout=180):
+                super().__init__(timeout=timeout)
+                self.log = log
+                self.bot = bot
+                self.cog = cog
+    
+            @discord.ui.button(label=self.bot.localisation.get('MSG_BUTTON_NAME_EXCEPTION'), style=discord.ButtonStyle.primary)
+            async def exception_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                logger.info(f"{header}{self.bot.localisation.get('LOG_SEND_EXCEPTION')}")
+                self.log += f"\n{header}{self.bot.localisation.get('LOG_SEND_EXCEPTION')}"
+                await interaction.response.defer(ephemeral=True)
+                messages, self.log = await self.cog.create_embeds(results, self.log)
+                self.log = await self.cog.send_dms(interaction, messages, self.log)
+                await in_app_logging.send_log(self.bot, self.log, 2, 1, interaction)
+    
+        user_limits = await helpers.load_json_key("user_limits", str(interaction.user.id))
+        default_limit = await helpers.load_json_key("config", "DefaultUserLimit")
+        post_limit = user_limits.get("PostLimit") if user_limits and "PostLimit" in user_limits else default_limit
+        message_text = (
+            f"{self.bot.localisation.get('MSG_AMOUNT_SEARCH_RESULTS')} **{len(results)}**\n"
+            f"{self.bot.localisation.get('MSG_PERSONAL_LIMIT')} **{post_limit}**\n"
+            f"-# {self.bot.localisation.get('MSG_NOTICE_INCREASE_LIMIT_1')} </{self.bot.localisation.get('LIMITRESULTS_CMD_NAME')}:{await helpers.load_json_key('session', 'CSR2_LIMITRESULTS_CMD')}>{self.bot.localisation.get('MSG_NOTICE_INCREASE_LIMIT_2')}"
+        )
+        await interaction.followup.send(message_text, ephemeral=True, view=ForceSendView(log, self.bot, self))
+    
+    async def send_channel(self, interaction: discord.Interaction, messages: list, log: str):
+        header = self.bot.localisation.get('VISION_LOG_HEADER')
+        await interaction.followup.send(f"{self.bot.localisation.get('MSG_NOTICE_FETCH')}")
+        for message in messages:
+            await interaction.followup.send(embeds=message)
+            await asyncio.sleep(0.5)
+        logger.info(f"{header}{self.bot.localisation.get('LOG_DONE_CHANNEL')}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_DONE_CHANNEL')}"
+        return log
+    
+    async def send_dms(self, interaction: discord.Interaction, messages: list, log: str):
+        header = self.bot.localisation.get('VISION_LOG_HEADER')
+        if interaction.guild and interaction.type != InteractionType.component:
+            await interaction.followup.send(f"{self.bot.localisation.get('MSG_NOTICE_OVER_SERVER_LIMIT')}")
+        try:
+            await interaction.user.send(f"{self.bot.localisation.get('MSG_NOTICE_FETCH')}") if interaction.guild else await interaction.followup.send(f"{self.bot.localisation.get('MSG_NOTICE_FETCH')}")
+        except discord.Forbidden:
+            await interaction.followup.send(f"{self.bot.localisation.get('MSG_WARNING_DMS_CLOSED')}", ephemeral=True)
+            logger.info(f"{header}{self.bot.localisation.get('LOG_ERROR_CLOSED')}")
+            log += f"\n{header}{self.bot.localisation.get('LOG_ERROR_CLOSED')}"
+            return log
+        for message in messages:
+            await interaction.user.send(embeds=message)
+            await asyncio.sleep(0.5)
+        logger.info(f"{header}{self.bot.localisation.get('LOG_DONE_DM')}")
+        log += f"\n{header}{self.bot.localisation.get('LOG_DONE_DM')}"
+        if interaction.guild:
+            await interaction.followup.send(f"{self.bot.localisation.get('MSG_NOTICE_SENT_DMS')}", ephemeral=True)
+        return log
 
 async def setup(bot):
     await bot.add_cog(VisionCommandCog(bot))

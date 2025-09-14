@@ -4,7 +4,7 @@ import json
 import os
 import discord
 import pycountry
-from cogs import announce_updates, notify_updates
+from cogs import announceupdates, notifyupdates
 from discord.ext import commands
 from datetime import datetime
 from google_play_scraper import app as google_play_app
@@ -18,31 +18,32 @@ logger = helpers.load_logging()
 semaphore = Semaphore(10)
 
 async def version_check_task(bot: commands.Bot):
+    header = bot.localisation.get('VERSION_CHECK_LOG_APP_HEADER')
     status = 2
     APP_DATA = await helpers.load_app_data()
     for app in APP_DATA:
         previous_data = await load_previous_data(app)
-        logger.info(f"{app[2]} - Starting {app[2]} version check")
-        log = f"{app[2]} - Starting {app[2]} version check"
+        logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_START')}")
+        log = f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_START')}"
         new_data = await fetch_data(app)
-        logger.info(f"{app[2]} - Comparing data")
-        log += f"\n{app[2]} - Comparing data"
+        logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_COMPARE')}")
+        log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_COMPARE')}"
         changes, new_data, case = await detect_changes(previous_data, new_data)
 
-        logger.info(f"{app[2]} - Overwriting old data with the new data")
-        log += f"\n{app[2]} - Overwriting old data with the new data"
+        logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_OVERWRITING')}")
+        log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_OVERWRITING')}"
         await save_data(app, new_data)
 
         if changes:
-            logger.info(f"{app[2]} - Sending detected changes")
-            log += f"\n{app[2]} - Sending detected changes"
+            logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_SEND_CHANGES')}")
+            log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_SEND_CHANGES')}"
             messages, log, status = await construct_changes(app, changes, case, log, status)
             log, status = await send_changes(bot, app, messages, log, status)
         else:
-            logger.info(f"{app[2]} - No changes detected. Exiting...")
-            log += f"\n{app[2]} - No changes detected. Exiting..."
-        logger.info(f"{app[2]} - {app[2]} version check completed")
-        log += f"\n{app[2]} - {app[2]} version check completed"
+            logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_NO_CHANGES')}")
+            log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_NO_CHANGES')}"
+        logger.info(f"{app[2]}{header}{app[2]} {bot.localisation.get('VERSION_CHECK_LOG_DONE')}")
+        log += f"\n{app[2]}{header}{app[2]} {bot.localisation.get('VERSION_CHECK_LOG_DONE')}"
         await in_app_logging.send_log(bot, log, status, 2)
         previous_data = None
         new_data = None
@@ -134,13 +135,14 @@ async def detect_changes(old_data, new_data):
                     continue
                 if new_last_updated is None:
                     new_last_updated = old_last_updated
-                if old_version >= new_version and old_last_updated >= new_last_updated:
-                    new_entry["version"] = old_version
-                    new_entry["last_updated"] = old_last_updated
-                if old_version < new_version or old_last_updated < new_last_updated:
-                    changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated, "A new version has been released."])
-                    case = 4
-                continue
+                if all([old_version, new_version, old_last_updated, new_last_updated]):
+                    if old_version >= new_version and old_last_updated >= new_last_updated:
+                        new_entry["version"] = old_version
+                        new_entry["last_updated"] = old_last_updated
+                    if old_version < new_version or old_last_updated < new_last_updated:
+                        changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated, "A new version has been released."])
+                        case = 4
+                    continue
             if new_error and "No app found with ID " in new_error:
                 changes.append([platform, country, new_error, "The app might've been delisted from the countries store page."])
                 case = 1
@@ -201,22 +203,23 @@ async def construct_changes(APP_DATA: list, changes: list, case: int, log: str, 
     return messages, log, status
 
 async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: str, status: int):
+    header = bot.localisation.get('VERSION_CHECK_LOG_APP_HEADER')
     status = 2
     channel_ids = await helpers.load_file(f'{APP_DATA[2]} announcement channel file')
     for channel_id in channel_ids:
         try:
             channel = bot.get_channel(int(channel_id))
             if not channel:
-                logger.error(f"{APP_DATA[2]} - Channel {channel_id} not found.")
-                log += f"\n{APP_DATA[2]} - Channel {channel_id} not found."
+                logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_NO_CHANNEL')} {channel_id}")
+                log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_NO_CHANNEL')} {channel_id}"
                 status = 1
             else:
                 for message in messages:
                     await channel.send(embeds=message)
                     await asyncio.sleep(3)
         except discord.Forbidden as e:
-            logger.error(f"{APP_DATA[2]} - Error while trying to send changes to {channel_id}: {e}")
-            log += f"\n{APP_DATA[2]} - Error while trying to send changes to {channel_id}: {e}"
+            logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_FORBIDDEN')} {channel_id}: {e}")
+            log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_FORBIDDEN')} {channel_id}: {e}"
             status = 1
             bot_permissions = channel.permissions_for(channel.guild.me)
             required_permissions = await helpers.load_perms_dic()
@@ -234,22 +237,22 @@ async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: s
                         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
                         await admin.send(embed=embed)
                     except Exception as e:
-                        logger.error(f"{APP_DATA[2]} - Error while notifying Admin {admin.name} of {channel.guild.name}: {e}")
-                        log += f"\n{APP_DATA[2]} - Error while notifying Admin {admin.name} of {channel.guild.name}: {e}"
+                        logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND')} {admin.name} 🏠{channel.guild.name}: {e}")
+                        log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND')} {admin.name} 🏠{channel.guild.name}: {e}"
                         status = 0
         except discord.NotFound as e:
-            check, log, status = await announce_updates.process_request(channel_id, str(APP_DATA[2]), 0, log)
+            check, log, status = await announceupdates.process_request(channel_id, str(APP_DATA[2]), 0, log)
         except Exception as e:
-            logger.error(f"{APP_DATA[2]} - Error while trying to send changes to {channel_id}: {e}")
-            log += f"\n{APP_DATA[2]} - Error while trying to send changes to {channel_id}: {e}"
+            logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_CHANNEL')} {channel_id}: {e}")
+            log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_CHANNEL')} {channel_id}: {e}"
             status = 0
     user_ids = await helpers.load_file(f'{APP_DATA[2]} announcement user file')
     for user_id in user_ids:
         try:
             user = bot.get_user(int(user_id))
             if not user:
-                logger.error(f"{APP_DATA[2]} - User {user_id} not found.")
-                log += f"\n{APP_DATA[2]} - User {user_id} not found."
+                logger.error(f"{APP_DATA[2]}{header}User {user_id} not found.")
+                log += f"\n{APP_DATA[2]}{header}User {user_id} not found."
                 status = 1
             else:
                 for i,message in enumerate(messages):
@@ -259,12 +262,12 @@ async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: s
                         await user.send(embeds=message, silent=True)
                     await asyncio.sleep(3)
         except discord.Forbidden as e:
-            await notify_updates.process_request(user_id, str(APP_DATA[2]), 0, log)
+            await notifyupdates.process_request(user_id, str(APP_DATA[2]), 0, log)
         except discord.NotFound as e:
-            await notify_updates.process_request(user_id, str(APP_DATA[2]), 0, log)
+            await notifyupdates.process_request(user_id, str(APP_DATA[2]), 0, log)
         except Exception as e:
-            logger.error(f"{APP_DATA[2]} - Error while trying to send changes to {user_id}: {e}")
-            log += f"\n{APP_DATA[2]} - Error while trying to send changes to {user_id}: {e}"
+            logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_USER')} {user_id}: {e}")
+            log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_USER')} {user_id}: {e}"
             status = 0
 
     return log, status

@@ -1,9 +1,13 @@
 from dotenv import load_dotenv
 from discord import app_commands
+from discord.ext import commands
+import discord
 import aiofiles
+import aiosqlite
 import json
 import os
 import pycountry_convert
+import random
 import sys
 import logging
 
@@ -27,50 +31,33 @@ async def load_dotenv_data():
     load_dotenv()
 
 async def load_token():
-    TOKEN = os.getenv('TOKEN')
-    return TOKEN
+    return os.getenv('TOKEN')
 
-async def load_client_id():
-    CLIENT_ID = os.getenv('CLIENT_ID')
-    return CLIENT_ID
+async def set_dynamic_status(bot: commands.Bot):
+    statuses = await load_json_key("config", "DynamicStatusList")
+    num = random.randint(0, (len(statuses)-1))
+    if await load_json_key("status", "IsStaticStatusActive") == False:
+        await change_presence(bot, statuses[num]["Activity"], statuses[num]["Text"], statuses[num]["url"])
+    return
 
-async def load_setup_status():
-    FIRST_SETUP_DONE = os.getenv("FIRST_SETUP_DONE", "False").lower() == "true"
-    return FIRST_SETUP_DONE
-
-async def load_default_name():
-    CLIENT_DEFAULT_NAME = os.getenv('CLIENT_DEFAULT_NAME')
-    return CLIENT_DEFAULT_NAME
-
-async def load_halloween_name():
-    CLIENT_HALLOWEEN_NAME = os.getenv('CLIENT_HALLOWEEN_NAME')
-    return CLIENT_HALLOWEEN_NAME
-
-async def load_xmas_name():
-    CLIENT_CHRISTMAS_NAME = os.getenv('CLIENT_CHRISTMAS_NAME')
-    return CLIENT_CHRISTMAS_NAME
-
-async def load_bday_name():
-    CLIENT_BIRTHDAY_NAME = os.getenv('CLIENT_BIRTHDAY_NAME')
-    return CLIENT_BIRTHDAY_NAME
-
-async def load_bday_month():
-    return int(os.getenv('CLIENT_BIRTHDAY_MONTH'))
-
-async def load_bday_day():
-    return int(os.getenv('CLIENT_BIRTHDAY_DAY'))
-
-async def load_super_admin():
-    SUPER_ADMIN = os.getenv('SUPER_ADMIN')
-    return SUPER_ADMIN
-
-async def load_admin_server():
-    ADMIN_SERVER = os.getenv('ADMIN_SERVER')
-    return ADMIN_SERVER
-
-async def load_log_channels():
-    LOG_CHANNEL = os.getenv('LOG_CHANNEL_ID')
-    return LOG_CHANNEL
+async def change_presence(bot: commands.Bot, activity: str, text: str, url: str = None):
+    if activity:
+        if activity == "playing":
+            await bot.change_presence(activity=discord.Game(name=text))
+        if activity == "watching":
+            await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text))
+        if activity == "streaming":
+            if url:
+                await bot.change_presence(activity=discord.Streaming(name=text, url=url))
+            else:
+                await bot.change_presence(activity=discord.Game(name=text))
+        if activity == "listening":
+            await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=text))
+        if activity == "competing":
+            await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name=text))
+    else:
+        await bot.change_presence(activity=discord.ActionRow(type=discord.ActivityType.custom, name=text))
+    return
 
 async def load_app_data():
     PACKAGE_NAME = ["com.naturalmotion.customstreetracer2", "com.zynga.csr3"]
@@ -86,44 +73,48 @@ async def load_store_countries():
 
     return GP_COUNTRIES, AS_COUNTRIES
 
-def load_command_options_tier():
-    return [app_commands.Choice(name="Tier 5 (T5|K5|L5)", value="T5"), app_commands.Choice(name="Tier 4 (T4|K4|L4)", value="T4"), app_commands.Choice(name="Tier 3 (T3|K3|L3)", value="T3"), app_commands.Choice(name="Tier 2 (T2|K2|L2)", value="T2"), app_commands.Choice(name="Tier 1 (T1|K1|L1)", value="T1")]
+def load_command_options_tier(localisation: dict):
+    return [app_commands.Choice(name=localisation.get('ANY_CMD_TIER_OPTION_T5'), value="T5"), app_commands.Choice(name="localisation.get('ANY_CMD_TIER_OPTION_T4')", value="T4"), app_commands.Choice(name="localisation.get('ANY_CMD_TIER_OPTION_T3')", value="T3"), app_commands.Choice(name="localisation.get('ANY_CMD_TIER_OPTION_T2')", value="T2"), app_commands.Choice(name="localisation.get('ANY_CMD_TIER_OPTION_T1')", value="T1")]
 
-def load_command_options_rarity():
-    return [app_commands.Choice(name="5 Gold Stars", value="G5%"), app_commands.Choice(name="5 Purple Stars", value="P5%"), app_commands.Choice(name="5 Stars", value=f"%5%"), app_commands.Choice(name="4 Gold Stars", value="G4%"), app_commands.Choice(name="4 Purple Stars", value="P4%"), app_commands.Choice(name="4 Stars", value=f"%4%"), app_commands.Choice(name="3 Gold Stars", value="G3%"), app_commands.Choice(name="3 Purple Stars", value="P3%"), app_commands.Choice(name="3 Stars", value=f"%3%"), app_commands.Choice(name="2 Gold Stars", value="G2%"), app_commands.Choice(name="2 Purple Stars", value="P2%"), app_commands.Choice(name="2 Stars", value=f"%2%"), app_commands.Choice(name="1 Gold Stars", value="G1%"), app_commands.Choice(name="1 Purple Stars", value="P1%"), app_commands.Choice(name="1 Stars", value=f"%1%"), app_commands.Choice(name="Gold Star", value="G%"), app_commands.Choice(name="Purple Star", value="P%"), app_commands.Choice(name="Non Star", value="N0%")]
+def load_command_options_rarity(localisation: dict):
+    return [app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_5GS'), value="G5%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_5PS'), value="P5%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_5S'), value=f"%5%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_4GS'), value="G4%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_4PS'), value="P4%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_4S'), value=f"%4%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_3GS'), value="G3%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_3PS'), value="P3%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_3S'), value=f"%3%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_2GS'), value="G2%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_2PS'), value="P2%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_2S'), value=f"%2%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_1GS'), value="G1%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_1PS'), value="P1%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_1S'), value=f"%1%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_GS'), value="G%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_PS'), value="P%"), app_commands.Choice(name=localisation.get('ANY_CMD_RARITY_OPTION_NS'), value="N0%")]
 
-def load_command_options_scope():
-    return [app_commands.Choice(name="All (CSR2, CSR3 & Blog)", value="All"), app_commands.Choice(name="CSR2", value="CSR2"), app_commands.Choice(name="CSR3", value="CSR3"), app_commands.Choice(name="Blog", value="Blog")]
+def load_command_options_scope(localisation: dict):
+    return [app_commands.Choice(name=localisation.get('ANY_CMD_SCOPE_OPTION_ALL'), value="All"), app_commands.Choice(name=localisation.get('ANY_CMD_SCOPE_OPTION_CSR2'), value="CSR2"), app_commands.Choice(name=localisation.get('ANY_CMD_SCOPE_OPTION_CSR3'), value="CSR3"), app_commands.Choice(name=localisation.get('ANY_CMD_SCOPE_OPTION_BLOG'), value="Blog")]
 
-async def load_asset_path(asset):
-    conversion = {
-        "PfP": "PfP.png",
-        "PfP_Halloween": "PfP_Halloween.png",
-        "PfP_Christmas": "PfP_Christmas.png",
-        "PfP_Birthday": "PfP_Birthday.png"
-    }
-
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", conversion.get(asset))
+def load_command_options_upgrade_stages(localisation: dict):
+    return [app_commands.Choice(name=localisation.get('UPDATE_TUNE_UPGRADES_OPTION_S6'), value="6"), app_commands.Choice(name=localisation.get('UPDATE_TUNE_UPGRADES_OPTION_S5'), value="5"), app_commands.Choice(name=localisation.get('UPDATE_TUNE_UPGRADES_OPTION_S4'), value="4"), app_commands.Choice(name=localisation.get('UPDATE_TUNE_UPGRADES_OPTION_S3'), value="3"), app_commands.Choice(name=localisation.get('UPDATE_TUNE_UPGRADES_OPTION_S2'), value="2"), app_commands.Choice(name=localisation.get('UPDATE_TUNE_UPGRADES_OPTION_S1'), value="1")]
 
 async def load_file_path(file):
     conversion = {
-        "admins": "admins.json",
-        "CSR2_announcement_channels": "CSR2_announcement_channels.json",
-        "CSR3_announcement_channels": "CSR3_announcement_channels.json",
-        "Blog_announcement_channels": "Blog_announcement_channels.json",
-        "CSR2_announcement_users": "CSR2_announcement_users.json",
-        "CSR3_announcement_users": "CSR3_announcement_users.json",
-        "Blog_announcement_users": "Blog_announcement_users.json",
-        "CSR2_versions": "CSR2_versions.json",
-        "CSR3_versions": "CSR3_versions.json",
-        "Blog_versions": "Blog_versions.json",
-        "server_limits": "server_limits.json",
-        "user_limits": "user_limits.json",
-        "EDB": "EDB.db",
-        "tunes": "tunes.db",
-        "Version": "version.json"
+        "admins": "resources/admins.json",
+        "CSR2_announcement_channels": "resources/CSR2_announcement_channels.json",
+        "CSR3_announcement_channels": "resources/CSR3_announcement_channels.json",
+        "Blog_announcement_channels": "resources/Blog_announcement_channels.json",
+        "CSR2_announcement_users": "resources/CSR2_announcement_users.json",
+        "CSR3_announcement_users": "resources/CSR3_announcement_users.json",
+        "Blog_announcement_users": "resources/Blog_announcement_users.json",
+        "CSR2_versions": "resources/CSR2_versions.json",
+        "CSR3_versions": "resources/CSR3_versions.json",
+        "Blog_versions": "resources/Blog_versions.json",
+        "server_limits": "resources/server_limits.json",
+        "user_limits": "resources/user_limits.json",
+        "EDB": "resources/EDB.db",
+        "WRs": "resources/EDB.db",
+        "tunes": "resources/tunes.db",
+        "version": "resources/version.json",
+        "config": "config/config.json",
+        "status": "config/status.json",
+        "session": "config/session_variables.json",
+        "PfP": "assets/PfP.png",
+        "PfP_Halloween": "assets/PfP_Halloween.png",
+        "PfP_Christmas": "assets/PfP_Christmas.png",
+        "PfP_Birthday": "assets/PfP_Birthday.png"
     }
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", conversion.get(file))
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), conversion.get(file))
+
+async def load_localisation_path():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "localisation", f"{await load_json_key("config", "Localisation")}.json")
 
 async def load_file(file):
     conversion = {
@@ -134,29 +125,71 @@ async def load_file(file):
         "CSR2 announcement user file": await load_file_path('CSR2_announcement_users'),
         "CSR3 announcement user file": await load_file_path('CSR3_announcement_users'),
         "Blog announcement user file": await load_file_path('Blog_announcement_users'),
-        "Version": await load_file_path('Version')
+        "CSR2_versions": await load_file_path('CSR2_versions'),
+        "CSR3_versions": await load_file_path('CSR3_versions'),
+        "Blog_versions": await load_file_path('Blog_versions'),
+        "server_limits": await load_file_path('server_limits'),
+        "user_limits": await load_file_path('user_limits'),
+        "status": await load_file_path('status'),
+        "version": await load_file_path('version'),
+        "config": await load_file_path('config'),
+        "session": await load_file_path('session')
     }
-    FILE = conversion.get(file)
+    if file == "localisation":
+        FILE = await load_localisation_path()
+    else:
+        FILE = conversion.get(file)
 
     if os.path.exists(FILE):
         try:
-            async with aiofiles.open(FILE, mode='r') as f:
+            async with aiofiles.open(FILE, mode='r', encoding='utf-8') as f:
                 content = await f.read()
-                data = json.loads(content)
-                if isinstance(data, list) and all(isinstance(i, str) for i in data):
-                    return set(data)
-                else:
-                    raise ValueError("JSON file is not in the expected format")
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON: {e}")
-        except ValueError as e:
-            logger.error(f"Value error: {e}")
+            data = json.loads(content)
+            return data
         except Exception as e:
-            logger.error(f"Error loading admin file: {e}")
+            logger.error(f"There was an error opening the {file}\n{e}")
     else:
         logger.error(f"{file} '{FILE}' not found.")
+    return {}
 
-    return set()
+async def save_file(file, data):
+    FILE = await load_file_path(file)
+    async with aiofiles.open(FILE, mode="w", encoding='utf-8') as file:
+            await file.write(json.dumps(data, indent=4))
+
+async def load_json_key(file, key):
+    data = await load_file(file)
+    if data is not None:
+        val = data.get(key)
+        return val
+    else:
+        return key
+    
+async def execute_sql_statement(database: str, sql_statement: str, values: list = None):
+    database_paths = {
+        "WRs": await load_file_path('EDB'),
+        "tunes": await load_file_path('tunes')
+    }
+    db_path = database_paths[database]
+    async with aiosqlite.connect(db_path) as conn:
+        async with conn.cursor() as cursor:
+            await cursor.execute(sql_statement, values) if values else await cursor.execute(sql_statement)
+            if sql_statement.strip().lower().startswith("select"):
+                output = await cursor.fetchall()
+            else:
+                await conn.commit()
+                output = None
+    return output
+
+async def get_send_route(results: int, user: str, server: str = None):
+    if server:
+        server_data = await load_json_key("server_limits", str(server))
+        server_limit = server_data["PostLimit"] if server_data and "PostLimit" in server_data else await load_json_key("config", "DefaultServerLimit")
+        if server_limit >= results or server_limit == 0:
+            return 0
+    user_data = await load_json_key("user_limits", str(user))
+    user_limit = user_data["PostLimit"] if user_data and "PostLimit" in user_data else await load_json_key("config", "DefaultUserLimit")
+    return 1 if user_limit >= results or user_limit == 0 else 2
 
 async def load_perms_dic():
     discord_permissions = {
@@ -165,64 +198,60 @@ async def load_perms_dic():
         "attach_files": "Attach Files",
         "add_reactions": "Add Reactions"
     }
-
     return discord_permissions
 
 async def emojify_tier(db_value):
     conversion = {
         "": "",
-        "T1": f"{os.getenv('T1_EMOJI')}",
-        "T2": f"{os.getenv('T2_EMOJI')}",
-        "T3": f"{os.getenv('T3_EMOJI')}",
-        "T4": f"{os.getenv('T4_EMOJI')}",
-        "T5": f"{os.getenv('T5_EMOJI')}",
-        "T1-T3": f"{os.getenv('T1_EMOJI')}-{os.getenv('T3_EMOJI')}",
-        "T4-T5": f"{os.getenv('T4_EMOJI')}-{os.getenv('T5_EMOJI')}"
+        "T1": f"{await load_json_key("session", "T1_EMOJI")}",
+        "T2": f"{await load_json_key("session", "T2_EMOJI")}",
+        "T3": f"{await load_json_key("session", "T3_EMOJI")}",
+        "T4": f"{await load_json_key("session", "T4_EMOJI")}",
+        "T5": f"{await load_json_key("session", "T5_EMOJI")}",
+        "T1-T3": f"{await load_json_key("session", "T1_EMOJI")}-{await load_json_key("session", "T2_EMOJI")}",
+        "T4-T5": f"{await load_json_key("session", "T4_EMOJI")}-{await load_json_key("session", "T5_EMOJI")}"
     }
-
     emoji = conversion.get(db_value)
-
     return emoji
 
 async def emojify_rarity(db_value):
     conversion = {
         "": "",
-        "N0": f"{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}{os.getenv('0S_EMOJI')}",
-        "G1": f"{os.getenv('GS_EMOJI')}",
-        "G2": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
-        "G3": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
-        "G4": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
-        "G5": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}",
-        "P1": f"{os.getenv('PS1_EMOJI')}",
-        "P2": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}",
-        "P3": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}",
-        "P4": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}",
-        "P5": f"{os.getenv('PS1_EMOJI')}{os.getenv('PS2_EMOJI')}{os.getenv('PS3_EMOJI')}{os.getenv('PS4_EMOJI')}{os.getenv('PS5_EMOJI')}",
-        "G1-G3": f"{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "G2_G4": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "G3_G4": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "G3_G5": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "G4_G5": f"{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('GS_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "N0_G3": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "N0_G4": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "N0_G5": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "N0_P5": f"{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}{os.getenv('ES_EMOJI')}",
-        "1": f"{os.getenv('S1_EMOJI')}",
-        "2": f"{os.getenv('S2_EMOJI')}",
-        "3": f"{os.getenv('S3_EMOJI')}",
-        "4": f"{os.getenv('S4_EMOJI')}",
-        "5": f"{os.getenv('S5_EMOJI')}"
+        "N0": f"{await load_json_key("session", "0S_EMOJI")}{await load_json_key("session", "0S_EMOJI")}{await load_json_key("session", "0S_EMOJI")}{await load_json_key("session", "0S_EMOJI")}{await load_json_key("session", "0S_EMOJI")}",
+        "G1": f"{await load_json_key("session", "GS_EMOJI")}",
+        "G2": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}",
+        "G3": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}",
+        "G4": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}",
+        "G5": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}",
+        "P1": f"{await load_json_key("session", "PS1_EMOJI")}",
+        "P2": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}",
+        "P3": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}{await load_json_key("session", "PS3_EMOJI")}",
+        "P4": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}{await load_json_key("session", "PS3_EMOJI")}{await load_json_key("session", "PS4_EMOJI")}",
+        "P5": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}{await load_json_key("session", "PS3_EMOJI")}{await load_json_key("session", "PS4_EMOJI")}{await load_json_key("session", "PS5_EMOJI")}",
+        "G1-G3": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "G2_G4": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "G3_G4": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "G3_G5": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "G4_G5": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "N0_G3": f"{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "N0_G4": f"{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "N0_G5": f"{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "N0_P5": f"{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "N0_NP5": f"{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "1": f"{await load_json_key("session", "S1_EMOJI")}",
+        "2": f"{await load_json_key("session", "S2_EMOJI")}",
+        "3": f"{await load_json_key("session", "S3_EMOJI")}",
+        "4": f"{await load_json_key("session", "S4_EMOJI")}",
+        "5": f"{await load_json_key("session", "S5_EMOJI")}"
     }
-
     emoji = conversion.get(db_value)
-
     return emoji
 
 async def emojify_store(store):
     conversion = {
         "": "",
-        "App Store": f"{os.getenv('APP_STORE_EMOJI')}",
-        "Google Play": f"{os.getenv('GOOGLE_PLAY_EMOJI')}"
+        "App Store": f"{await load_json_key("session", "APP_STORE_EMOJI")}",
+        "Google Play": f"{await load_json_key("session", "GOOGLE_PLAY_EMOJI")}"
     }
 
     emoji = conversion.get(store)
@@ -246,7 +275,6 @@ async def get_update_case(case: int, change: list, log: str, status: int):
         logger.error(f"An unhandeled case was detected: {e}")
         log += f"An unhandeled case was detected: {e}"
         status = 0
-
     return description, log, status
 
 async def get_change_key(case: int, change: list, log: str, status: int):
@@ -265,7 +293,6 @@ async def get_change_key(case: int, change: list, log: str, status: int):
         logger.error(f"An unhandeled case was detected: {e}")
         log += f"An unhandeled case was detected: {e}"
         status = 0
-
     return key, log, status
 
 async def get_continent(cc):

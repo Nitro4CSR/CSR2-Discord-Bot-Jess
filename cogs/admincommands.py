@@ -1,5 +1,4 @@
 import discord
-import os
 from discord.ext import commands
 from discord import app_commands
 import in_app_logging
@@ -11,54 +10,69 @@ class AdminCommandsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="csr2_admincommands", description="List of all available commands")
-    @app_commands.choices(command=[app_commands.Choice(name="csr2_updatedb", value="updatedb"), app_commands.Choice(name="csr2_addadmin", value="addadmin"), app_commands.Choice(name="csr2_removeadmin", value="removeadmin"), app_commands.Choice(name="csr2_listadmins", value="listadmins"), app_commands.Choice(name="csr2_connected", value="connected"), app_commands.Choice(name="csr2_scrape", value="scrape"), app_commands.Choice(name="csr2_broadcast", value="broadcast"), app_commands.Choice(name="csr2_updatecode", value="updatecode"), app_commands.Choice(name="csr2_restart", value="restart")])
-    async def admincommands(self, interaction: discord.Interaction, command: str = None):
-        logger.info(f"ADMINCOMMANDS - The following command has been used: /csr2_admincommands commad: {command}")
-        log = f"ADMINCOMMANDS - The following command has been used: /csr2_admincommands commad: {command}"
+    async def cog_load(self):
 
-        admins = await helpers.load_file('Admin file')
-        helpers.load_dotenv
-        if str(interaction.user.id) in admins or str(interaction.user.id) == str(await helpers.load_super_admin()):
+        @app_commands.command(name=self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME'), description=self.bot.localisation.get('ADMINCOMMANDS_CMD_DESC'))
+        @app_commands.describe(command=self.bot.localisation.get('ANY_CMD_COMMAND'))
+        @app_commands.choices(command=[app_commands.Choice(name=self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME'), value="admincommands"),app_commands.Choice(name={self.bot.localisation.get('ADDADMIN_CMD_NAME')}, value="addadmin"), app_commands.Choice(name={self.bot.localisation.get('REMOVEADMIN_CMD_NAME')}, value="removeadmin"), app_commands.Choice(name={self.bot.localisation.get('LISTADMIN_CMD_NAME')}, value="listadmin"), app_commands.Choice(name={self.bot.localisation.get('UPDATECODE_CMD_NAME')}, value="updatecode"), app_commands.Choice(name={self.bot.localisation.get('RESTART_CMD_NAME')}, value="restart"), app_commands.Choice(name={self.bot.localisation.get('BROADCAST_CMD_NAME')}, value="broadcast"), app_commands.Choice(name={self.bot.localisation.get('STATUS_CMD_NAME')}, value="status"), app_commands.Choice(name={self.bot.localisation.get('CONNECTED_CMD_NAME')}, value="connected"), app_commands.Choice(name={self.bot.localisation.get('EXPORTDB_CMD_NAME')}, value="exportdb"), app_commands.Choice(name={self.bot.localisation.get('UPDATEDB_CMD_NAME')}, value="updatedb"), app_commands.Choice(name={self.bot.localisation.get('SCRAPE_CMD_NAME')}, value="scrape")])
+        async def admincommands(interaction: discord.Interaction, command: str = None):
             await interaction.response.defer(ephemeral=True)
+            try:
+                header = self.bot.localisation.get('ADMINCOMMANDS_LOG_HEADER')
+                logger.info(f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME')} commad: {command}")
+                log = f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME')} commad: {command}"
 
-            if command is None:
-                command = 'default'
+                admins = await helpers.load_file('Admin file')
+                if str(interaction.user.id) in admins or int(interaction.user.id) in await helpers.load_json_key("config", "ClientAdminIDs"):
 
-            if command == 'default':
-                title_text = 'Available Commands'
-            else:
-                title_text = 'Command Usage'
+                    if command is None:
+                        command = "default"
 
-            descriptions = {
-                "default": f"</csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\n</csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\n</csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\n</csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\n</csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\n</csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\n</csr2_broadcast:{os.getenv('CSR2_BROADCAST_COMMAND')}>\n</csr2_updatecode:{os.getenv('CSR2_UPDATECODE_COMMAND')}>\n</csr2_restart:{os.getenv('CSR2_RESTART_COMMAND')}>\n",
-                "updatedb": f"## </csr2_updatedb:{os.getenv('CSR2_UPDATEDB_COMMAND')}>\nUpdates the internal DataBase\n",
-                "addadmin": f"## </csr2_addadmin:{os.getenv('CSR2_ADDADMIN_COMMAND')}>\nAdditional Operators:\n - user: ping a user and add him to the Bot Admin team\n",
-                "removeadmin": f"## </csr2_removeadmin:{os.getenv('CSR2_REMOVEADMIN_COMMAND')}>\nAdditional Operators:\n - user: ping a user and remove him from the Bot Admin team\n",
-                "listadmins": f"## </csr2_listadmins:{os.getenv('CSR2_LISTADMINS_COMMAND')}>\nAdditional Operators:\n - List all Bot Admins\n",
-                "connected": f"## </csr2_connected:{os.getenv('CSR2_CONNECTED_COMMAND')}>\nAdditional Operators:\n - mod: `y` to see all server names and IDs\n",
-                "scrape": f"## </csr2_scrape:{os.getenv('CSR2_SCRAPE_COMMAND')}>\nScrape the appstores for CSR2 and CSR3 app updates\n",
-                "broadcast": f"## </csr2_broadcast:{os.getenv('CSR2_BROADCAST_COMMAND')}>\nAdditional Operators:\n - message_title: title of the broadcasted embed message\n - You will be asked to send a text message containing the containing the messages text body that will be broadcasted.",
-                "updatecode": f"## </csr2_updatecode:{os.getenv('CSR2_UPDATECODE_COMMAND')}>\nAdditional Operators:\n - restart_in: Delay time in hours until the bot auto restarts after the code update, format: `X.XX...`",
-                "restart": f"</csr2_restart:{os.getenv('CSR2_RESTART_COMMAND')}>\nRestarts the bot"
-            }
+                    if command == "default":
+                        title_text = f"{self.bot.localisation.get('COMMANDS_MSG_EMBED_TITLE_AVAILABLE_COMMANDS')}"
+                    else:
+                        title_text = f"{self.bot.localisation.get('COMMANDS_MSG_EMBED_TITLE_COMMAND_USAGE')}"
 
-            description_text = descriptions[command]
+                    descriptions = {
+                        """default""": f"""</{self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("ADMINCOMMANDS_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('ADDADMIN_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("ADDADMIN_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('REMOVEADMIN_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("REMOVEADMIN_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('LISTADMIN_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("LISTADMIN_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('UPDATECODE_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("UPDATECODE_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('RESTART_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("RESTART_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('BROADCAST_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("BROADCAST_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('STATUS_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("STATUS_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('CONNECTED_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("CONNECTED_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('EXPORTDB_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("EXPORTDB_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('UPDATEDB_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("UPDATEDB_CMD_NAME")}_CMD'.upper())}>\n</{self.bot.localisation.get('SCRAPE_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("SCRAPE_CMD_NAME")}_CMD'.upper())}>\n""",
+                        """admincommands""": f"""## </{self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("ADMINCOMMANDS_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('ADMINCOMMANDS_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- command: {self.bot.localisation.get('ANY_CMD_COMMAND')} {self.bot.localisation.get('COMMANDS_MSG_OPTIONAL')}\n  - {self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_OPTIONS')}\n    - {self.bot.localisation.get('ADMINCOMMANDS_CMD_NAME')}\n    - {self.bot.localisation.get('ADDADMIN_CMD_NAME')}\n    - {self.bot.localisation.get('REMOVEADMIN_CMD_NAME')}\n    - {self.bot.localisation.get('LISTADMIN_CMD_NAME')}\n    - {self.bot.localisation.get('UPDATECODE_CMD_NAME')}\n    - {self.bot.localisation.get('RESTART_CMD_NAME')}\n    - {self.bot.localisation.get('BROADCAST_CMD_NAME')}\n    - {self.bot.localisation.get('STATUS_CMD_NAME')}\n    - {self.bot.localisation.get('CONNECTED_CMD_NAME')}\n    - {self.bot.localisation.get('EXPORTDB_CMD_NAME')}\n    - {self.bot.localisation.get('UPDATEDB_CMD_NAME')}\n    - {self.bot.localisation.get('SCRAPE_CMD_NAME')}\n""",
+                        """addadmin""": f"""## </{self.bot.localisation.get('ADDADMIN_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("ADDADMIN_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('ADDADMIN_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- user: {self.bot.localisation.get('ADDADMIN_CMD_USER')}\n""",
+                        """removeadmin""": f"""## </{self.bot.localisation.get('REMOVEADMIN_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("REMOVEADMIN_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('REMOVEADMIN_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- user: {self.bot.localisation.get('REMOVEADMIN_CMD_USER')}\n""",
+                        """listadmin""": f"""## </{self.bot.localisation.get('LISTADMIN_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("LISTADMIN_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('LISTADMIN_CMD_DESC')}\n""",
+                        """updatecode""": f"""## </{self.bot.localisation.get('UPDATECODE_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("UPDATECODE_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('UPDATECODE_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- restart_in: {self.bot.localisation.get('UPDATECODE_CMD_RESTART_IN')} {self.bot.localisation.get('COMMANDS_MSG_OPTIONAL')}\n""",
+                        """restart""": f"""## </{self.bot.localisation.get('RESTART_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("RESTART_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('RESTART_CMD_DESC')}\n""",
+                        """broadcast""": f"""## </{self.bot.localisation.get('BROADCAST_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("BROADCAST_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('BROADCAST_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- message_title: {self.bot.localisation.get('BROADCAST_CMD_MESSAGE_TITLE')}\n- {self.bot.localisation.get('BROADCAST_ADDITIONAL')}""",
+                        """status""": f"""## </{self.bot.localisation.get('STATUS_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("STATUS_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('STATUS_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- action: {self.bot.localisation.get('STATUS_CMD_ACTION')}\n  - {self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_OPTIONS')}\n    - {self.bot.localisation.get('STATUS_CMD_ACTION_OPTION_ADD')}\n    - {self.bot.localisation.get('STATUS_CMD_ACTION_OPTION_ACTIVATE')}\n    - {self.bot.localisation.get('STATUS_CMD_ACTION_OPTION_REMOVE')}\n- status_type: {self.bot.localisation.get('STATUS_CMD_STATUS_TYPE')} {self.bot.localisation.get('COMMANDS_MSG_OPTIONAL')}\n  - {self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_OPTIONS')}\n    - {self.bot.localisation.get('STATUS_CMD_STATUS_TYPE_OPTION_PLAYING')}\n    - {self.bot.localisation.get('STATUS_CMD_STATUS_TYPE_OPTION_WATCHING')}\n    - {self.bot.localisation.get('STATUS_CMD_STATUS_TYPE_OPTION_STREAMING')}\n    - {self.bot.localisation.get('STATUS_CMD_STATUS_TYPE_OPTION_LISTENING')}\n    - {self.bot.localisation.get('STATUS_CMD_STATUS_TYPE_OPTION_COMPETING')}\n- status_text: {self.bot.localisation.get('STATUS_CMD_STATUS_TEXT')} {self.bot.localisation.get('COMMANDS_MSG_OPTIONAL')}\n- url: {self.bot.localisation.get('STATUS_CMD_URL')} {self.bot.localisation.get('COMMANDS_MSG_OPTIONAL')}\n""",
+                        """connected""": f"""## </{self.bot.localisation.get('CONNECTED_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("CONNECTED_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('CONNECTED_CMD_DESC')}\n{self.bot.localisation.get('COMMANDS_MSG_EMBED_DESC_ADDITIONAL_OPERATORS')}\n- mod: {self.bot.localisation.get('CONNECTED_CMD_MOD')} {self.bot.localisation.get('COMMANDS_MSG_OPTIONAL')}\n""",
+                        """exportdb""": f"""## </{self.bot.localisation.get('EXPORTDB_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("EXPORTDB_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('EXPORTDB_CMD_DESC')}\n""",
+                        """updatedb""": f"""## </{self.bot.localisation.get('UPDATEDB_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("UPDATEDB_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('UPDATEDB_CMD_DESC')}\n""",
+                        """scrape""": f"""## </{self.bot.localisation.get('SCRAPE_CMD_NAME')}:{await helpers.load_json_key('session', f'{self.bot.localisation.get("SCRAPE_CMD_NAME")}_CMD'.upper())}>\n{self.bot.localisation.get('SCRAPE_CMD_DESC')}\n""",
+                    }
 
-            embed = discord.Embed(
-                title=title_text,
-                 description=description_text,
-                color=discord.Color(0xff00ff)
-            )
-            embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+                    description_text = descriptions[command]
 
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            log += f"\nADMINCOMMANDS - User is Admin"
-        else:
-            await interaction.response.send_message("You don't have permission to use this command because you are not an Admin of this bot!", ephemeral=True)
-            log += f"\nADMINCOMMANDS - User is not Admin"
-        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+                    embed = discord.Embed(
+                        title=title_text,
+                        description=description_text,
+                        color=discord.Color(0xff00ff)
+                    )
+                    embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
+
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    log += f"\n{header}{self.bot.localisation.get('ADMIN_LOG_IS_ADMIN')}"
+                else:
+                    await interaction.followup.send(f"{self.bot.localisation.get('ADMIN_MSG_NO_PERMISSION')}", ephemeral=True)
+                    log += f"\n{header}{self.bot.localisation.get('ADMIN_LOG_NOT_ADMIN')}"
+                await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+            except Exception as e:
+                await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_FETCH')} {e}", ephemeral=True)
+                logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
+                log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
+                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
+
+        self.bot.tree.add_command(admincommands, guilds=[discord.Object(id=int(server)) for server in await helpers.load_json_key("config", "ClientAdminServers")])
 
 async def setup(bot):
-    ADMIN_SERVER = await helpers.load_admin_server()
-    await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(ADMIN_SERVER))], override=True)
+    ADMIN_SERVERS = await helpers.load_json_key("config", "ClientAdminServers")
+    for server in ADMIN_SERVERS:
+        await bot.add_cog(AdminCommandsCog(bot), guilds=[discord.Object(id=int(server))], override=True)

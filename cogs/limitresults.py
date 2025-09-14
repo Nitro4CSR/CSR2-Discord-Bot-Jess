@@ -1,9 +1,6 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import aiofiles
-import json
-import os
 import in_app_logging
 import helpers
 
@@ -13,102 +10,56 @@ class LimitResultsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="csr2_limitresults", description="Set a limit on the number of results")
-    @app_commands.describe(limit="The number of results to limit to (0 = infinite)")
-    @app_commands.choices(scope=[app_commands.Choice(name="Server", value="server_limits"), app_commands.Choice(name="Personal", value="user_limits")])
-    async def limit_results(self, interaction: discord.Interaction, limit: int, scope: str):
-        logger.info(f"LIMITRESULTS - The following command has been used: /csr2_limitresults limit:{limit} scope: {scope}")
-        log = f"LIMITRESULTS - The following command has been used: /csr2_limitresults limit:{limit} scope: {scope}"
-        await interaction.response.defer(ephemeral=True)
+    async def cog_load(self):
 
-        if scope == "server_limits":
-            if interaction.guild is None:
-                await interaction.followup.send("This is DMs. You can't set a server limit here.")
-                await in_app_logging.send_log(self.bot, log, interaction)
-                return
-            NITRO = await helpers.load_super_admin()
-            if interaction.user.id != interaction.guild.owner.id or interaction.user.guild_permissions.administrator == False or str(interaction.user.id) != str(NITRO):
-                await interaction.followup.send("You do not have permission to use this command with the scope `Server` in the server.", ephemeral=True)
-                return
-            await set_limit(interaction, interaction.guild.id, scope, limit)
-        else:
-            await set_limit(interaction, interaction.user.id, scope, limit)
-        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
-
-    @app_commands.command(name="csr2_getlimit", description="View the limit on the number of results")
-    @app_commands.choices(scope=[app_commands.Choice(name="Server", value="server_limits"), app_commands.Choice(name="Personal", value="user_limits")])
-    async def get_limit(self, interaction: discord.Interaction, scope: str = None):
-        logger.info(f"GETLIMIT - The following command has been used: /csr2_getlimit scope: {scope}")
-        log = f"GETLIMIT - The following command has been used: /csr2_getlimit scope: {scope}"
-        await interaction.response.defer(ephemeral=True)
-
-        if interaction.guild is None:
-            if scope == "server_limits":
-                await interaction.followup.send("This is DMs. Server limits do not apply here")
+        @app_commands.command(name=self.bot.localisation.get('LIMITRESULTS_CMD_NAME'), description=self.bot.localisation.get("LIMITRESULTS_CMD_DESC"))
+        @app_commands.describe(limit=self.bot.localisation.get('LIMITRESULTS_CMD_LIMIT'), scope=self.bot.localisation.get('LIMITRESULTS_CMD_SCOPE'))
+        @app_commands.choices(scope=[app_commands.Choice(name=self.bot.localisation.get('LIMIT_CMD_SCOPE_OPTION_SERVER'), value="server_limits"), app_commands.Choice(name=self.bot.localisation.get('LIMIT_CMD_SCOPE_OPTION_PERSONAL'), value="user_limits")])
+        async def limitresults(interaction: discord.Interaction, limit: int, scope: str = None):
+            await interaction.response.defer(ephemeral=True)
+            try:
+                header = self.bot.localisation.get('LIMITRESULTS_LOG_HEADER')
+                logger.info(f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('LIMITRESULTS_CMD_NAME')} limit:{limit} scope: {scope}")
+                log = f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('LIMITRESULTS_CMD_NAME')} limit:{limit} scope: {scope}"
+                if scope is None:
+                    scope = "server_limits" if interaction.guild else "user_limits"
+                if scope == "server_limits":
+                    if interaction.guild is None:
+                        await interaction.followup.send(f"{self.bot.localisation.get('LIMITRESULTS_MSG_NOTICE_DMS')}")
+                        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+                        return
+                    admins = await helpers.load_file('Admin file')
+                    if interaction.user.id != interaction.guild.owner.id and interaction.user.guild_permissions.administrator == False and str(interaction.user.id) not in admins and int(interaction.user.id) not in await helpers.load_json_key("config", "ClientAdminIDs"):
+                        await interaction.followup.send(f"{self.bot.localisation.get('LIMITRESULTS_MSG_NO_PERMISSION')}", ephemeral=True)
+                        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+                        return
+                    id = interaction.guild.id
+                else:
+                    id = interaction.user.id
+                limits = await helpers.load_file(scope)
+                if str(id) not in limits:
+                    if limit != -1:
+                        limits[str(id)] = {"PostLimit": limit}
+                else:
+                    if limit == -1:
+                        limits.pop(str(id))
+                    else:
+                        limits[str(id)]["PostLimit"] = limit
+                await helpers.save_file(scope, limits)
+                embed=discord.Embed(
+                    title=f"{self.bot.localisation.get('LIMITRESULTS_MSG_EMBED_TITLE')} {interaction.guild.name if scope == "server_limits" else interaction.user.display_name}",
+                    description=f"## {self.bot.localisation.get('LIMITRESULTS_MSG_EMBED_DESC')} {limit}",
+                    color=discord.Color(0xff00ff)
+                )
+                await interaction.followup.send(embed=embed, ephemeral=True)
                 await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
-                return
-            else:
-                limit = await get_limit(interaction.user.id, scope)
-        else:
-            if scope == "server_limits":
-                limit = await get_limit(interaction.guild.id, scope)
-            else:
-                limit = await get_limit(interaction.user.id, scope)
+            except Exception as e:
+                await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_FETCH')} {e}")
+                logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
+                log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
+                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
 
-        if scope == "server_limits":
-            description=f"## Current limit: **{limit}**\n\n-# A moderator of this server can change it by using </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>, entering a value and selecting `Server` as the scope."
-        else:
-            description=f"## Current limit: **{limit}**\n\n-# You can change it by using </csr2_limitresults:{os.getenv('CSR2_LIMITRESULTS_COMMAND')}>, entering a value and selecting `Personal` as the scope."
-
-        embed = discord.Embed(
-            title=f"Results limit for {interaction.guild.name if scope == "server_limits" else interaction.user.display_name}",
-            description=description,
-            color=discord.Color(0xff00ff)
-        )
-        embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
-
-        await interaction.followup.send(embed=embed, ephemeral=True)
-        await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
-
-async def set_limit(interaction: discord.Interaction, id: str, scope: str, limit: int):
-    data = await load_limits(scope)
-
-    if str(id) not in data:
-        data[str(id)] = {"PostLimit": limit}
-    else:
-        data[str(id)]["PostLimit"] = limit
-
-    await save_limits(data, scope)
-
-    if limit == 0:
-        limit = "∞"
-
-    embed=discord.Embed(
-        title=f"New Results limit for {interaction.guild.name if scope == "server_limits" else interaction.user.display_name}",
-        description=f"## New Limit: {limit}",
-        color=discord.Color(0xff00ff)
-    )
-    await interaction.followup.send(embed=embed, ephemeral=True)
-
-async def get_limit(id: str, scope: str):
-    data = await load_limits(scope)
-    limit = data.get(id,{"PostLimit": 0})["PostLimit"]
-    if limit == 0:
-        limit = "∞"
-    return limit
-
-async def load_limits(scope: str):
-    JSON_FILE_PATH =await helpers.load_file_path(f'{scope}')
-    if not os.path.exists(JSON_FILE_PATH):
-        return {}
-    async with aiofiles.open(JSON_FILE_PATH, 'r') as file:
-        content = await file.read()
-        return json.loads(content)
-
-async def save_limits(data, scope: str):
-    JSON_FILE_PATH = await helpers.load_file_path(f'{scope}')
-    async with aiofiles.open(JSON_FILE_PATH, 'w') as file:
-        await file.write(json.dumps(data, indent=4))
+        self.bot.tree.add_command(limitresults)
 
 async def setup(bot):
     await bot.add_cog(LimitResultsCog(bot))
