@@ -134,13 +134,14 @@ async def detect_changes(old_data, new_data):
                     continue
                 if new_last_updated is None:
                     new_last_updated = old_last_updated
-                if old_version >= new_version and old_last_updated >= new_last_updated:
-                    new_entry["version"] = old_version
-                    new_entry["last_updated"] = old_last_updated
-                if old_version < new_version or old_last_updated < new_last_updated:
-                    changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated, "A new version has been released."])
-                    case = 4
-                continue
+                if all([old_version, new_version, old_last_updated, new_last_updated])
+                    if old_version >= new_version and old_last_updated >= new_last_updated:
+                        new_entry["version"] = old_version
+                        new_entry["last_updated"] = old_last_updated
+                    if old_version < new_version or old_last_updated < new_last_updated:
+                        changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated, "A new version has been released."])
+                        case = 4
+                    continue
             if new_error and "No app found with ID " in new_error:
                 changes.append([platform, country, new_error, "The app might've been delisted from the countries store page."])
                 case = 1
