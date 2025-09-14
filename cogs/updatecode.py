@@ -54,9 +54,9 @@ class UpdateCodeCog(commands.Cog):
                 logger.info(f"{header}{self.bot.localisation.get('UPDATECODE_LOG_DOWNLOAD')}")
                 log += f"\n{header}{self.bot.localisation.get('UPDATECODE_LOG_DOWNLOAD')}"
 	    
-                repo_zip_url = "https://github.com/Nitro4CSR/CSR2-Discord-Bot-Jess/archive/refs/heads/Rewrite.zip"
-                repo_commit_url = "https://api.github.com/repos/Nitro4CSR/CSR2-Discord-Bot-Jess/commits/Rewrite"
-                zip_path = "CSR2-Discord-Bot-Jess-Rewrite.zip"
+                repo_zip_url = "https://github.com/Nitro4CSR/CSR2-Discord-Bot-Jess/archive/refs/heads/2025-Rewrite.zip"
+                repo_commit_url = "https://api.github.com/repos/Nitro4CSR/CSR2-Discord-Bot-Jess/commits/2025-Rewrite"
+                zip_path = "CSR2-Discord-Bot-Jess-2025-Rewrite.zip"
                 extract_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "update_temp")
 	    
                 try:
