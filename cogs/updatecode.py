@@ -83,7 +83,7 @@ class UpdateCodeCog(commands.Cog):
                     extracted_path = os.path.join(extract_folder, extracted_name)
 	    
                     excluded_folders = ['config', 'resources']
-                    excluded_files = ['.env', '.gitattributes', 'LICENSE', 'README.md', 'setup.py', 'update.py']
+                    excluded_files = ['.env', '.gitattributes', 'LICENSE', 'README.md']
 	    
                     for item in os.listdir(extracted_path):
                         if item in excluded_folders or item in excluded_files:
@@ -110,17 +110,14 @@ class UpdateCodeCog(commands.Cog):
                         async with aiohttp.ClientSession() as session:
                             async with session.get(repo_commit_url) as response:
                                 if response.status == 200:
-                                    response = await response.json()
-                                    commit_id = response['sha'][:7]
-                                    versions = await helpers.load_file('Version')
+                                    response_json = await response.json()
+                                    commit_id = response_json['sha'][:7]
+                                    versions = await helpers.load_file('version')
                                     versions_new = [commit_id, next(iter(versions))]
                                     logger.info(f"{header}{self.bot.localisation.get('UPDATECODE_LOG_DOWNLOAD_VERSION')} {commit_id}")
                                     log += f"\n{header}{self.bot.localisation.get('UPDATECODE_LOG_DOWNLOAD_VERSION')} {commit_id}"
                                     await interaction.followup.send(f"{self.bot.localisation.get('UPDATE_CODE_MSG_VERSION')} {commit_id}", ephemeral=True)
-	    
-                                    VERSION_FILE = await helpers.load_file_path(f'Version')
-                                    async with aiofiles.open(VERSION_FILE, mode="w") as file:
-                                        await file.write(json.dumps(versions_new))
+                                    await helpers.save_file("version", versions_new)
                                 else:
                                     raise Exception
                     except:
