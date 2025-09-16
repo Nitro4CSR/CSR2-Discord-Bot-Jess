@@ -56,7 +56,7 @@ async def change_presence(bot: commands.Bot, activity: str, text: str, url: str 
         if activity == "competing":
             await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name=text))
     else:
-        await bot.change_presence(activity=discord.ActionRow(type=discord.ActivityType.custom, name=text))
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.custom, name=text))
     return
 
 async def load_app_data():
