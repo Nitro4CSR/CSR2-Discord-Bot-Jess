@@ -89,8 +89,8 @@ async def on_ready():
         schedule_dynamic_status_change.start(bot)
 
     try:
-        ADMIN_SERVERS = await helpers.load_json_key("config", "ClientAdminServers")
-        for server in ADMIN_SERVERS:
+        ADMIN_SERVERS = list(await helpers.load_json_key("config", "ClientAdminServers"))
+        for server in list(ADMIN_SERVERS):
             admin_guild = bot.get_guild(int(server))
             logger.info(f"{header}{bot.localisation.get('BOOT_LOG_SYNC_CMD_ADMIN_SERVER_START')} {admin_guild.name}")
             log += f"\n{header}{bot.localisation.get('BOOT_LOG_SYNC_CMD_ADMIN_SERVER_START')} {admin_guild.name}"
