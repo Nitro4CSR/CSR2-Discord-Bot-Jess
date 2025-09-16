@@ -90,7 +90,6 @@ async def on_ready():
 
     try:
         ADMIN_SERVERS = await helpers.load_json_key("config", "ClientAdminServers")
-        ADMIN_SERVERS = [int(s) for s in ADMIN_SERVERS]
         for server in ADMIN_SERVERS:
             admin_guild = bot.get_guild(int(server))
             logger.info(f"{header}{bot.localisation.get('BOOT_LOG_SYNC_CMD_ADMIN_SERVER_START')} {admin_guild.name}")
