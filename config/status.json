@@ -1,6 +1,6 @@
 {
-    "StaticStatusType": "playing",
-    "StaticStatusText": "CSR Racing 2",
-    "StaticStatusURL": "",
+    "StaticStatusType": "watching",
+    "StaticStatusText": "CSR2 Store Sites",
+    "StaticStatusURL": "https://www.youtube.com/@nitro4csr",
     "IsStaticStatusActive": false
 }

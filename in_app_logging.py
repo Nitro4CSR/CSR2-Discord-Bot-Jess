@@ -3,6 +3,7 @@ from discord.ext import commands
 import helpers
 
 logger = helpers.load_logging()
+localisation = dict(helpers.load_localisation())
 
 async def send_log(bot: commands.Bot, log: str, status: int, type: int, interaction: discord.Interaction = None):
     await bot.wait_until_ready()
@@ -29,7 +30,7 @@ async def send_log(bot: commands.Bot, log: str, status: int, type: int, interact
             for channel in log_channels:
                 await channel.send(message if status == 0 else None,embed=embed)
     except Exception as e:
-        logger.error(f"{bot.localisation.get('IN_APP_LOGGING_LOG_HEADER')}{bot.localisation.get('IN_APP_LOGGING_LOG_ERROR_SEND')} {e}")
+        logger.error(f"{localisation.get('IN_APP_LOGGING_LOG_HEADER')}{localisation.get('IN_APP_LOGGING_LOG_ERROR_SEND')} {e}")
 
 async def log_type_to_embed(log: str, status: int, type: int, interaction: discord.Interaction):
     conversion = {

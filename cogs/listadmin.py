@@ -5,39 +5,36 @@ import in_app_logging
 import helpers
 
 logger = helpers.load_logging()
+localisation = dict(helpers.load_localisation())
 
 class ListadminCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def cog_load(self):
+    @app_commands.command(name=localisation.get('LISTADMIN_CMD_NAME'), description=localisation.get('LISTADMIN_CMD_DESC'))
+    async def listadmins(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        try:
+            header = localisation.get('LISTADMIN_LOG_HEADER')
+            logger.info(f"{header}{localisation.get('LOG_CMD_TRIGGERED')} /{localisation.get('LISTADMIN_CMD_NAME')}")
+            log = f"{header}{localisation.get('LOG_CMD_TRIGGERED')} /{localisation.get('LISTADMIN_CMD_NAME')}"
 
-        @app_commands.command(name=self.bot.localisation.get('LISTADMIN_CMD_NAME'), description=self.bot.localisation.get('LISTADMIN_CMD_DESC'))
-        async def listadmins(interaction: discord.Interaction):
-            await interaction.response.defer(ephemeral=True)
-            try:
-                header = self.bot.localisation.get('LISTADMIN_LOG_HEADER')
-                logger.info(f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('LISTADMIN_CMD_NAME')}")
-                log = f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('LISTADMIN_CMD_NAME')}"
-    
-                admins = await helpers.load_file('Admin file')
-                if str(interaction.user.id) in admins or int(interaction.user.id) in await helpers.load_json_key("config", "ClientAdminIDs"):
-                    admin_list = ", ".join([f"<@{admin_id}>" for admin_id in admins])
-                    await interaction.followup.send(f"{self.bot.localisation.get('LISTADMIN_MSG_ADMINS')} {admin_list}", ephemeral=True)
-                    logger.info(f"{header}{self.bot.localisation.get('ADMIN_LOG_IS_ADMIN')}")
-                    log += f"\n{header}{self.bot.localisation.get('ADMIN_LOG_IS_ADMIN')}"
-                else:
-                    await interaction.followup.send(f"{self.bot.localisation.get('ADMIN_MSG_NO_PERMISSION')}", ephemeral=True)
-                    logger.info(f"{header}{self.bot.localisation.get('ADMIN_LOG_NOT_ADMIN')}")
-                    log += f"\n{header}{self.bot.localisation.get('ADMIN_LOG_NOT_ADMIN')}"
-                await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
-            except Exception as e:
-                await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_FETCH')} {e}", ephemeral=True)
-                logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
-                log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
-                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
-
-        self.bot.tree.add_command(listadmins)
+            admins = await helpers.load_file('Admin file')
+            if str(interaction.user.id) in admins or int(interaction.user.id) in await helpers.load_json_key("config", "ClientAdminIDs"):
+                admin_list = ", ".join([f"<@{admin_id}>" for admin_id in admins])
+                await interaction.followup.send(f"{localisation.get('LISTADMIN_MSG_ADMINS')} {admin_list}", ephemeral=True)
+                logger.info(f"{header}{localisation.get('ADMIN_LOG_IS_ADMIN')}")
+                log += f"\n{header}{localisation.get('ADMIN_LOG_IS_ADMIN')}"
+            else:
+                await interaction.followup.send(f"{localisation.get('ADMIN_MSG_NO_PERMISSION')}", ephemeral=True)
+                logger.info(f"{header}{localisation.get('ADMIN_LOG_NOT_ADMIN')}")
+                log += f"\n{header}{localisation.get('ADMIN_LOG_NOT_ADMIN')}"
+            await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
+        except Exception as e:
+            await interaction.followup.send(f"{localisation.get('MSG_ERROR_FETCH')} {e}", ephemeral=True)
+            logger.info(f"{localisation.get('LOG_ERROR_FETCH')} {e}")
+            log += f"{localisation.get('LOG_ERROR_FETCH')} {e}"
+            await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
 
 async def setup(bot):
     ADMIN_SERVERS = await helpers.load_json_key("config", "ClientAdminServers")

@@ -7,6 +7,7 @@ import helpers
 import in_app_logging
 
 logger = helpers.load_logging()
+localisation = dict(helpers.load_localisation())
 
 JSON_URL = {
     'records': 'https://raw.githubusercontent.com/Nitro4CSR/CSR2WorldRecordsDB/main/JessWR.json',
@@ -33,7 +34,6 @@ async def get_github_etag(session, url):
 
 async def should_update_database():
     global header, log, status, etag_cache
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     status = 2
     async with aiohttp.ClientSession() as session:
         for url in JSON_URL.values():
@@ -53,7 +53,6 @@ async def should_update_database():
 
 async def check_and_delete_database():
     global header, log
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     DATABASE_PATH = await helpers.load_file_path('EDB')
     if os.path.exists(DATABASE_PATH):
         os.remove(DATABASE_PATH)
@@ -65,7 +64,6 @@ async def check_and_delete_database():
 
 async def fetch_json_data():
     global header, log, status
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     json_data = {}
     async with aiohttp.ClientSession() as session:
         for table_name, url in JSON_URL.items():
@@ -85,7 +83,7 @@ async def fetch_json_data():
 
 async def create_tables(cursor):
     global header, log
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
+    
     for table_name, schema in table_schemas.items():
         await cursor.execute(f"CREATE TABLE {table_name} ({', '.join(schema)})")
         logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_TABLE_CREATED')} {table_name}")
@@ -93,7 +91,6 @@ async def create_tables(cursor):
 
 async def create_database(json_data):
     global header, log
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     for table_name, schema in table_schemas.items():
         await helpers.execute_sql_statement("WRs", f"CREATE TABLE {table_name} ({', '.join(schema)})")
         logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CREATE_NEW_DB_TABLE_CREATED')} {table_name}")
@@ -124,21 +121,21 @@ async def create_database(json_data):
 
 async def recreate_database(bot: commands.Bot):
     global header, log, status
-    header = bot.localisation.get('EDB_LOG_HEADER')
-    logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_START')}")
-    log = f"{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_START')}"
+    header = localisation.get('EDB_LOG_HEADER')
+    logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CHECK_START')}")
+    log = f"{header}{localisation.get('EDB_LOG_UPDATE_CHECK_START')}"
     should_update, status = await should_update_database()
     if should_update:
-        logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_START')}")
-        log += f"{header}{bot.localisation.get('EDB_LOG_UPDATE_START')}"
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_START')}")
+        log += f"{header}{localisation.get('EDB_LOG_UPDATE_START')}"
         await check_and_delete_database()
         json_data = await fetch_json_data()
         status = await create_database(json_data)
-        logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_DONE')}")
-        log += f"\n{header}{bot.localisation.get('EDB_LOG_UPDATE_DONE')}"
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_DONE')}")
+        log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_DONE')}"
     else:
-        logger.info(f"{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_UNNECESSARY')}")
-        log += f"\n{header}{bot.localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_UNNECESSARY')}"
+        logger.info(f"{header}{localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_UNNECESSARY')}")
+        log += f"\n{header}{localisation.get('EDB_LOG_UPDATE_CHECK_DONE_UPDATE_UNNECESSARY')}"
         status = 2
     await in_app_logging.send_log(bot, log, status, 2)
 

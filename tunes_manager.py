@@ -5,13 +5,13 @@ import helpers
 import in_app_logging
 
 logger = helpers.load_logging()
+localisation = dict(helpers.load_localisation())
 
 table_schemas = {
     'community_tunes': ['"TuneID" INTEGER PRIMARY KEY AUTOINCREMENT', '"DB Name" TEXT', '"Ingame Name Clarification" TEXT', '"Un" TEXT', '"★" TEXT', '"PP" INTEGER', '"EVO" INTEGER', '"Engine/Motor" Integer', '"En_st.1" TEXT', '"En_st.2" TEXT', '"En_st.3" TEXT', '"En_st.4" TEXT', '"En_st.5" TEXT', '"En_st.6" TEXT', '"Turbo/Battery" Integer', '"Tu_st.1" TEXT', '"Tu_st.2" TEXT', '"Tu_st.3" TEXT', '"Tu_st.4" TEXT', '"Tu_st.5" TEXT', '"Tu_st.6" TEXT', '"Intake/Inverter" Integer', '"In_st.1" TEXT', '"In_st.2" TEXT', '"In_st.3" TEXT', '"In_st.4" TEXT', '"In_st.5" TEXT', '"In_st.6" TEXT', '"Nitrous/Overboost" Integer', '"Ni_st.1" TEXT', '"Ni_st.2" TEXT', '"Ni_st.3" TEXT', '"Ni_st.4" TEXT', '"Ni_st.5" TEXT', '"Ni_st.6" TEXT', '"Body" Integer', '"Bo_st.1" TEXT', '"Bo_st.2" TEXT', '"Bo_st.3" TEXT', '"Bo_st.4" TEXT', '"Bo_st.5" TEXT', '"Bo_st.6" TEXT', '"Tires" Integer', '"Ti_st.1" TEXT', '"Ti_st.2" TEXT', '"Ti_st.3" TEXT', '"Ti_st.4" TEXT', '"Ti_st.5" TEXT', '"Ti_st.6" TEXT', '"Transmission" Integer', '"Tr_st.1" TEXT', '"Tr_st.2" TEXT', '"Tr_st.3" TEXT', '"Tr_st.4" TEXT', '"Tr_st.5" TEXT', '"Tr_st.6" TEXT', '"NITRO" TEXT', '"FD" REAL', '"TIRE" TEXT', '"DYNO" REAL', '"Purpose" TEXT', '"Usage Guide" TEXT', '"Creator" TEXT', '"Creator ID" TEXT']
 }
 
 async def create_database(bot: commands.Bot, log: str = None):
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     header = localisation.get('TUNES_LOG_HEADER')
     logger.info(f"{header}{localisation.get('TUNES_LOG_BOOT_SETUP')}")
     log = f"{header}{localisation.get('TUNES_LOG_BOOT_SETUP')}"
@@ -49,7 +49,6 @@ async def search_tune_id(tune_id):
     return result
 
 async def add_entry(DB_Name: str, IGN: str, tier: str, stars: str, pp: str, evo: str, u1: int, u1_s1: int, u1_s2: int, u1_s3: int, u1_s4: int, u1_s5: int, u1_s6, u2: int, u2_s1: int, u2_s2: int, u2_s3: int, u2_s4: int, u2_s5: int, u2_s6, u3: int, u3_s1: int, u3_s2: int, u3_s3: int, u3_s4: int, u3_s5: int, u3_s6, u4: int, u4_s1: int, u4_s2: int, u4_s3: int, u4_s4: int, u4_s5: int, u4_s6, u5: int, u5_s1: int, u5_s2: int, u5_s3: int, u5_s4: int, u5_s5: int, u5_s6, u6: int, u6_s1: int, u6_s2: int, u6_s3: int, u6_s4: int, u6_s5: int, u6_s6, u7: int, u7_s1: int, u7_s2: int, u7_s3: int, u7_s4: int, u7_s5: int, u7_s6, nos: str, fd: str, tp: str, dyno: str, purpose: str, usage: str, creator: str, creatorID: str, log: str):
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     header = localisation.get('SHARE_TUNE_LOG_HEADER')
     log = await create_database(None, log)
     logger.info(f"{header}{localisation.get('SHARE_TUNE_MSG_ADD_ENTRY')}")
@@ -70,7 +69,6 @@ async def add_entry(DB_Name: str, IGN: str, tier: str, stars: str, pp: str, evo:
     return tune_ID[0][0], log
 
 async def alter_entry(tune_id: str, parameters: list, log: str):
-    localisation = {k: k for k in helpers.load_file("localisation")} if await helpers.load_json_key("config", "DebugMode") else await helpers.load_file("localisation")
     header = localisation.get('UPDATE_TUNE_LOG_HEADER')
     values = []
     query = """UPDATE community_tunes SET"""

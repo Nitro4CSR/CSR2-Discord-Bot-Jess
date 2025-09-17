@@ -8,73 +8,70 @@ import tunes_manager
 import helpers
 
 logger = helpers.load_logging()
+localisation = dict(helpers.load_localisation())
 
 log = None
 active_submissions = {}
 
 class ShareTuneCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def cog_load(self):
-
-        @app_commands.command(name=self.bot.localisation.get('SHARE_TUNE_CMD_NAME'), description=self.bot.localisation.get('SHARE_TUNE_CMD_DESC'))
-        @app_commands.describe(fusions=self.bot.localisation.get('SHARE_TUNE_CMD_FUSIONS'))
-        @app_commands.choices(fusions=[app_commands.Choice(name=self.bot.localisation.get('SHARE_TUNE_CMD_FUSIONS_OPTION_MAXED'), value=int(1)), app_commands.Choice(name=self.bot.localisation.get('SHARE_TUNE_CMD_FUSIONS_OPTION_STOCK'), value=int(2)), app_commands.Choice(name=self.bot.localisation.get('SHARE_TUNE_CMD_FUSIONS_OPTION_CUSTOM'), value=int(0))])
-        async def sharetune(interaction: discord.Interaction, fusions: int = None):
-            await interaction.response.defer()
-            try:
-                global log
-                header = self.bot.localisation.get('SHARE_TUNE_LOG_HEADER')
-                logger.info(f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('SHARE_TUNE_CMD_NAME')}")
-                log = f"{header}{self.bot.localisation.get('LOG_CMD_TRIGGERED')} /{self.bot.localisation.get('SHARE_TUNE_CMD_NAME')}"
-                if fusions is None:
-                    fusions = 0
-                active_submissions[interaction.user.id] = {"Messages": {}, "Fusions": fusions, "SelectionPage": 0, "Car": None}
-                if interaction.guild:
-                    logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_SERVER')}")
-                    log += f"{self.bot.localisation.get('SHARE_TUNE_LOG_SERVER')}"
-                    await interaction.followup.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_LOOP_CONTINUE')}")
-                else:
-                    logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_DMS')}")
-                    log += f"{self.bot.localisation.get('SHARE_TUNE_LOG_DMS')}"
-                await interaction.followup.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_LOOP_START')}") if not interaction.guild else await interaction.user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_LOOP_START')}")
-                logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_DM_SUCCESS')}")
-                log += f"{self.bot.localisation.get('SHARE_TUNE_LOG_DM_SUCCESS')}"
-                active_submissions["Chunks"] = await self.get_car_chunks()
-                selection_page = await self.get_selection_page(page = active_submissions[interaction.user.id]["SelectionPage"])
-                Buttons = self.CarSelectionButtons(active_submissions["Chunks"][active_submissions[interaction.user.id]["SelectionPage"]], interaction.user.id, self.bot, self)
-                msg = await interaction.user.send(embed=selection_page, view=Buttons)
-                active_submissions[interaction.user.id]["Messages"]["SelectionMessage"] = msg
-            except Exception as e:
-                await interaction.followup.send(f"{self.bot.localisation.get('MSG_ERROR_FETCH')} {e}")
-                logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
-                log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
-                await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
-
-        self.bot.tree.add_command(sharetune)
+    @app_commands.command(name=localisation.get('SHARE_TUNE_CMD_NAME'), description=localisation.get('SHARE_TUNE_CMD_DESC'))
+    @app_commands.describe(fusions=localisation.get('SHARE_TUNE_CMD_FUSIONS'))
+    @app_commands.choices(fusions=[app_commands.Choice(name=localisation.get('SHARE_TUNE_CMD_FUSIONS_OPTION_MAXED'), value=int(1)), app_commands.Choice(name=localisation.get('SHARE_TUNE_CMD_FUSIONS_OPTION_STOCK'), value=int(2)), app_commands.Choice(name=localisation.get('SHARE_TUNE_CMD_FUSIONS_OPTION_CUSTOM'), value=int(0))])
+    async def sharetune(self, interaction: discord.Interaction, fusions: int = None):
+        await interaction.response.defer()
+        try:
+            global log
+            header = localisation.get('SHARE_TUNE_LOG_HEADER')
+            logger.info(f"{header}{localisation.get('LOG_CMD_TRIGGERED')} /{localisation.get('SHARE_TUNE_CMD_NAME')}")
+            log = f"{header}{localisation.get('LOG_CMD_TRIGGERED')} /{localisation.get('SHARE_TUNE_CMD_NAME')}"
+            if fusions is None:
+                fusions = 0
+            active_submissions[interaction.user.id] = {"Messages": {}, "Fusions": fusions, "SelectionPage": 0, "Car": None}
+            if interaction.guild:
+                logger.info(f"{localisation.get('SHARE_TUNE_LOG_SERVER')}")
+                log += f"{localisation.get('SHARE_TUNE_LOG_SERVER')}"
+                await interaction.followup.send(f"{localisation.get('SHARE_TUNE_MSG_LOOP_CONTINUE')}")
+            else:
+                logger.info(f"{localisation.get('SHARE_TUNE_LOG_DMS')}")
+                log += f"{localisation.get('SHARE_TUNE_LOG_DMS')}"
+            await interaction.followup.send(f"{localisation.get('SHARE_TUNE_MSG_LOOP_START')}") if not interaction.guild else await interaction.user.send(f"{localisation.get('SHARE_TUNE_MSG_LOOP_START')}")
+            logger.info(f"{localisation.get('SHARE_TUNE_LOG_DM_SUCCESS')}")
+            log += f"{localisation.get('SHARE_TUNE_LOG_DM_SUCCESS')}"
+            active_submissions["Chunks"] = await self.get_car_chunks()
+            selection_page = await self.get_selection_page(page = active_submissions[interaction.user.id]["SelectionPage"])
+            Buttons = self.CarSelectionButtons(active_submissions["Chunks"][active_submissions[interaction.user.id]["SelectionPage"]], interaction.user.id, self.bot, self)
+            msg = await interaction.user.send(embed=selection_page, view=Buttons)
+            active_submissions[interaction.user.id]["Messages"]["SelectionMessage"] = msg
+        except Exception as e:
+            await interaction.followup.send(f"{localisation.get('MSG_ERROR_FETCH')} {e}")
+            logger.info(f"{localisation.get('LOG_ERROR_FETCH')} {e}")
+            log += f"{localisation.get('LOG_ERROR_FETCH')} {e}"
+            await in_app_logging.send_log(self.bot, log, 0, 1, interaction)
 
     async def submission_loop(self, interaction: discord.Interaction):
         global log
-        header = self.bot.localisation.get('SHARE_TUNE_LOG_HEADER')
-        logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_SUBMISSION_LOOP')}")
-        log += f"{self.bot.localisation.get('SHARE_TUNE_LOG_SUBMISSION_LOOP')}"
+        header = localisation.get('SHARE_TUNE_LOG_HEADER')
+        logger.info(f"{localisation.get('SHARE_TUNE_LOG_SUBMISSION_LOOP')}")
+        log += f"{localisation.get('SHARE_TUNE_LOG_SUBMISSION_LOOP')}"
         questions = [
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_01')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_02')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_03')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_04')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_05')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_06')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_07')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_08')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_09')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_10')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_11')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_12')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_13')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_14')}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_QUESTION_15')}"
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_01')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_02')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_03')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_04')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_05')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_06')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_07')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_08')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_09')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_10')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_11')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_12')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_13')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_14')}",
+            f"{localisation.get('SHARE_TUNE_MSG_QUESTION_15')}"
         ]
 
         user_answers = {}
@@ -113,10 +110,10 @@ class ShareTuneCog(commands.Cog):
                                     await interaction.user.send(sub_question)
                                     response = await self.bot.wait_for('message', check=lambda m: m.author == interaction.user)
                                     if response.content.upper() == "CANCEL":
-                                        await interaction.user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_LOOP_STOP')} </{self.bot.localisation.get('SHARE_TUNE_CMD_NAME')}:{helpers.load_json_key('session', 'CSR2_SHARE_TUNE_CMD')}>")
+                                        await interaction.user.send(f"{localisation.get('SHARE_TUNE_MSG_LOOP_STOP')} </{localisation.get('SHARE_TUNE_CMD_NAME')}:{helpers.load_json_key('session', 'CSR2_SHARE_TUNE_CMD')}>")
                                         active_submissions.pop(interaction.user.id, None)
-                                        logger.info(f"{header}{self.bot.localisation.get('SHARE_TUNE_LOG_CANCELED')}")
-                                        log += f"\n{header}{self.bot.localisation.get('SHARE_TUNE_LOG_CANCELED')}"
+                                        logger.info(f"{header}{localisation.get('SHARE_TUNE_LOG_CANCELED')}")
+                                        log += f"\n{header}{localisation.get('SHARE_TUNE_LOG_CANCELED')}"
                                         await in_app_logging.send_log(self.bot, log, 2, 1, interaction)
                                     logger.info(f"{index}: {response.content}")
                                     log += f"\n{index}: {response.content}"
@@ -129,7 +126,7 @@ class ShareTuneCog(commands.Cog):
                                     await asyncio.sleep(0.1)
         log += f"\n{user_answers}"
 
-        await interaction.user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUCCESS')}")
+        await interaction.user.send(f"{localisation.get('SHARE_TUNE_MSG_SUCCESS')}")
 
         dbn = active_submissions[interaction.user.id]["Car"][1][0]
         ign = active_submissions[interaction.user.id]["Car"][1][1]
@@ -139,7 +136,7 @@ class ShareTuneCog(commands.Cog):
         user_id = interaction.user.id
 
         tune_id, log = await tunes_manager.add_entry(dbn, ign, tier, stars, user_answers.get(0), user_answers.get(1), user_answers.get(2), user_answers.get(3), user_answers.get(4), user_answers.get(5), user_answers.get(6), user_answers.get(7), user_answers.get(8), user_answers.get(9), user_answers.get(10), user_answers.get(11), user_answers.get(12), user_answers.get(13), user_answers.get(14), user_answers.get(15), user_answers.get(16), user_answers.get(17), user_answers.get(18), user_answers.get(19), user_answers.get(20), user_answers.get(21), user_answers.get(22), user_answers.get(23), user_answers.get(24), user_answers.get(25), user_answers.get(26), user_answers.get(27), user_answers.get(28), user_answers.get(29), user_answers.get(30), user_answers.get(31), user_answers.get(32), user_answers.get(33), user_answers.get(34), user_answers.get(35), user_answers.get(36), user_answers.get(37), user_answers.get(38), user_answers.get(39), user_answers.get(40), user_answers.get(41), user_answers.get(42), user_answers.get(43), user_answers.get(44), user_answers.get(45), user_answers.get(46), user_answers.get(47), user_answers.get(48), user_answers.get(49), user_answers.get(50), user_answers.get(51), user_answers.get(52), user_answers.get(53), user_answers.get(54), user_answers.get(55), user_answers.get(56), user_name, user_id, log)
-        await interaction.user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_TUNE_ID_1')} **{tune_id}**\n{self.bot.localisation.get('SHARE_TUNE_MSG_TUNE_ID_2')}")
+        await interaction.user.send(f"{localisation.get('SHARE_TUNE_MSG_TUNE_ID_1')} **{tune_id}**\n{localisation.get('SHARE_TUNE_MSG_TUNE_ID_2')}")
         results = await tunes_manager.query_tune(car = None, tune_id = tune_id, tier = None, rarity = None, purpose = None, creator = None)
 
         active_submissions.pop(interaction.user.id, None)
@@ -155,31 +152,31 @@ class ShareTuneCog(commands.Cog):
 
     async def get_selection_page(self, page: int):
         embed = discord.Embed(
-            title=f"{self.bot.localisation.get('SHARE_TUNE_MSG_EMBED_TITLE')}",
+            title=f"{localisation.get('SHARE_TUNE_MSG_EMBED_TITLE')}",
             description="\n".join([f"{idx + 1}. {car[1][1]} ({await helpers.emojify_tier(car[1][2])} {await helpers.emojify_rarity(car[1][3])})" for idx, car in enumerate(active_submissions["Chunks"][page])]),
             color=discord.Color(0xff00ff)
         )
-        embed.set_footer(text=f"{self.bot.localisation.get('MSG_EMBED_DESC_PAGE')} {page + 1} {self.bot.localisation.get('MSG_EMBED_DESC_OF')} {len(active_submissions["Chunks"])}")
+        embed.set_footer(text=f"{localisation.get('MSG_EMBED_DESC_PAGE')} {page + 1} {localisation.get('MSG_EMBED_DESC_OF')} {len(active_submissions["Chunks"])}")
         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
         return embed
 
     async def sub_questions_gen(self, part_counter: int):
         parts = [
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_ENGINE_MOTOR')}",
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_TURBO_BATTERY')}",
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_INTAKE_INVERTER')}",
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_NITROUS_OVERBOOST')}",
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_BODY')}",
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_TIRES')}",
-            f"{self.bot.localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_TRANSMISSION')}"
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_ENGINE_MOTOR')}",
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_TURBO_BATTERY')}",
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_INTAKE_INVERTER')}",
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_NITROUS_OVERBOOST')}",
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_BODY')}",
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_TIRES')}",
+            f"{localisation.get('COMMUNITY_TUNE_MSG_EMBED_DESC_TRANSMISSION')}"
         ]
         sub_questions = [
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 1  {parts[part_counter-2]}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 2  {parts[part_counter-2]}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 3  {parts[part_counter-2]}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 4  {parts[part_counter-2]}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 5  {parts[part_counter-2]}",
-            f"{self.bot.localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 6  {parts[part_counter-2]}",
+            f"{localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 1  {parts[part_counter-2]}",
+            f"{localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 2  {parts[part_counter-2]}",
+            f"{localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 3  {parts[part_counter-2]}",
+            f"{localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 4  {parts[part_counter-2]}",
+            f"{localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 5  {parts[part_counter-2]}",
+            f"{localisation.get('SHARE_TUNE_MSG_SUB_QUESTION')} 6  {parts[part_counter-2]}",
         ]
         return sub_questions
 
@@ -190,13 +187,13 @@ class ShareTuneCog(commands.Cog):
                     valid = True
                 else:
                     valid = False
-                    await user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_WARNING_NO_INTEGER')}")
+                    await user.send(f"{localisation.get('SHARE_TUNE_MSG_WARNING_NO_INTEGER')}")
             elif 2 <= idx <= 8:
                 if (response.isdigit() and 0 <= int(response) <= 6):
                     valid = True
                 else:
                     valid = False
-                    await user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_WARNING_NO_INT_0_6')}")
+                    await user.send(f"{localisation.get('SHARE_TUNE_MSG_WARNING_NO_INT_0_6')}")
             elif 9 <= idx <= 12:
                 if response.lower() == "none":
                     response = None
@@ -208,10 +205,10 @@ class ShareTuneCog(commands.Cog):
                 valid = True
             else:
                 valid = False
-                await user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_WARNING_NO_INT_0_5')}")
+                await user.send(f"{localisation.get('SHARE_TUNE_MSG_WARNING_NO_INT_0_5')}")
         else:
             valid = False
-            await user.send(f"{self.bot.localisation.get('SHARE_TUNE_MSG_WARNING_INVALID')}")
+            await user.send(f"{localisation.get('SHARE_TUNE_MSG_WARNING_INVALID')}")
         return response, valid
 
     class CarSelectionButtons(ui.View):
@@ -221,22 +218,22 @@ class ShareTuneCog(commands.Cog):
             self.user = user
             self.bot = bot
             self.cog = cog
-    
+
             for idx, car in enumerate(self.chunk):
                 self.add_item(ShareTuneCog.CarButton(idx+1, car, bot, cog, user))
             self.add_item(ShareTuneCog.NavigationButton("Previous", -1, bot, cog, user))
             self.add_item(ShareTuneCog.NavigationButton("Next", 1, bot, cog, user))
             self.add_item(ShareTuneCog.JumpToPageButton(self, bot, cog, user))
-    
+
         async def on_timeout(self):
             global log
             for msg in active_submissions[self.user]["Messages"].values():
                 try:
                     await msg.delete()
                 except Exception as e:
-                    logger.info(f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
-                    log += f"{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
-    
+                    logger.info(f"{localisation.get('LOG_ERROR_FETCH')} {e}")
+                    log += f"{localisation.get('LOG_ERROR_FETCH')} {e}"
+
     class CarButton(ui.Button):
         def __init__(self, index, car, bot, cog, user_id):
             super().__init__(label=str(index), style=discord.ButtonStyle.primary)
@@ -245,18 +242,19 @@ class ShareTuneCog(commands.Cog):
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-        
+
         async def callback(self, interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
             global log
-            logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_CAR_SELECTED')}")
-            log += f"{self.bot.localisation.get('SHARE_TUNE_LOG_CAR_SELECTED')}"
+            logger.info(f"{localisation.get('SHARE_TUNE_LOG_CAR_SELECTED')}")
+            log += f"{localisation.get('SHARE_TUNE_LOG_CAR_SELECTED')}"
             if interaction.message.id == active_submissions[interaction.user.id]["Messages"]["SelectionMessage"].id:
-                selection_message = f"{self.bot.localisation.get('SHARE_TUNE_MSG_CONFIRM_1')} {self.car[1][1]} ({self.bot.localisation.get('SHARE_TUNE_MSG_CONFIRM_2')} {self.car[1][2]}, {self.bot.localisation.get('SHARE_TUNE_MSG_CONFIRM_3')} {self.car[1][3]})\n\n{self.bot.localisation.get('SHARE_TUNE_MSG_CONFIRM_4')}"
+                selection_message = f"{localisation.get('SHARE_TUNE_MSG_CONFIRM_1')} {self.car[1][1]} ({localisation.get('SHARE_TUNE_MSG_CONFIRM_2')} {self.car[1][2]}, {localisation.get('SHARE_TUNE_MSG_CONFIRM_3')} {self.car[1][3]})\n\n{localisation.get('SHARE_TUNE_MSG_CONFIRM_4')}"
+                interaction.followup.edit_message(view=self)
                 Buttons = ShareTuneCog.CarConfirmButtons(self.car, self.bot, self.cog, self.user_id)
                 msg = await interaction.followup.send(selection_message, view=Buttons)
                 active_submissions[interaction.user.id]["Messages"]["ConfirmationMessage"] = msg
-    
+
     class NavigationButton(ui.Button):
         def __init__(self, label, direction, bot, cog, user_id):
             super().__init__(label=label, style=discord.ButtonStyle.secondary)
@@ -265,65 +263,75 @@ class ShareTuneCog(commands.Cog):
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-        
+
         async def callback(self, interaction):
             await interaction.response.defer(ephemeral=True)
             active_submissions[interaction.user.id]["SelectionPage"] = (active_submissions[interaction.user.id]["SelectionPage"] + self.direction) % len(active_submissions["Chunks"])
             selection_page = await self.cog.get_selection_page(page = active_submissions[interaction.user.id]["SelectionPage"])
             Buttons = ShareTuneCog.CarSelectionButtons(active_submissions["Chunks"][active_submissions[interaction.user.id]["SelectionPage"]], interaction.user.id, self.view.bot, self.view.cog)
             await active_submissions[interaction.user.id]["Messages"]["SelectionMessage"].edit(embed=selection_page, view=Buttons)
-    
+
     class JumpToPageButton(ui.Button):
         def __init__(self, view, bot, cog, user_id):
-            super().__init__(label="Jump to Page", style=discord.ButtonStyle.secondary)
+            super().__init__(label=bot.localisation.get("MSG_BUTTON_JUMP_TO_PAGE"), style=discord.ButtonStyle.secondary)
             self._view = view
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-    
+
         @property
         def view(self):
             return self._view
-    
+
         async def callback(self, interaction: discord.Interaction):
             if interaction.message.id != active_submissions[interaction.user.id]["Messages"]["SelectionMessage"].id:
-                return await interaction.response.send_message(f"{self.bot.localisation.get('MSG_NO_PERMISSION')}", ephemeral=True)
+                return await interaction.response.send_message(localisation.get("MSG_NO_PERMISSION"), ephemeral=True)
             else:
                 await interaction.response.send_modal(ShareTuneCog.PageJumpModal(self.view, self.bot, self.cog, interaction.user.id))
-    
-    class PageJumpModal(discord.ui.Modal, title="Jump to Page"):
-        page_number = discord.ui.TextInput(label="Enter Page Number or +/- Offset", required=True)
-    
+
+
+    class PageJumpModal(discord.ui.Modal):
         def __init__(self, view: "ShareTuneCog.CarSelectionButtons", bot, cog, user_id):
-            super().__init__()
+            super().__init__(title=bot.localisation.get("MSG_BUTTON_JUMP_TO_PAGE"))
             self.view = view
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-    
+
+            self.page_number = discord.ui.TextInput(label=localisation.get("MSG_MODAL_JUMP_TO_PAGE"), required=True)
+            self.add_item(self.page_number)
+
         async def on_submit(self, interaction):
             await interaction.response.defer()
             try:
                 input_text = self.page_number.value.strip()
-    
+
                 if input_text.startswith(('+', '-')):
                     offset = int(input_text)
-                    active_submissions[interaction.user.id]["SelectionPage"] = (active_submissions[interaction.user.id]["SelectionPage"] + offset) % len(active_submissions["Chunks"])
+                    active_submissions[interaction.user.id]["SelectionPage"] = (
+                        active_submissions[interaction.user.id]["SelectionPage"] + offset
+                    ) % len(active_submissions["Chunks"])
                     if active_submissions[interaction.user.id]["SelectionPage"] == -1:
                         active_submissions[interaction.user.id]["SelectionPage"] = len(active_submissions["Chunks"])
                 else:
                     page_number = int(input_text) - 1
                     active_submissions[interaction.user.id]["SelectionPage"] = page_number % len(active_submissions["Chunks"])
-                    if active_submissions[interaction.user.id]["SelectionPage"] < 1 or active_submissions[interaction.user.id]["SelectionPage"] > len(active_submissions["Chunks"]):
-                        active_submissions[interaction.user.id]["SelectionPage"] = (active_submissions[interaction.user.id]["SelectionPage"] - 1) % len(active_submissions["Chunks"]) + 1
-    
-                selection_page = await self.view.cog.get_selection_page(page = active_submissions[interaction.user.id]["SelectionPage"])
-                Buttons = ShareTuneCog.CarSelectionButtons(active_submissions["Chunks"][active_submissions[interaction.user.id]["SelectionPage"]], interaction.user.id, self.view.bot, self.view.cog)
+                    if (
+                        active_submissions[interaction.user.id]["SelectionPage"] < 1
+                        or active_submissions[interaction.user.id]["SelectionPage"] > len(active_submissions["Chunks"])
+                    ):
+                        active_submissions[interaction.user.id]["SelectionPage"] = (
+                            (active_submissions[interaction.user.id]["SelectionPage"] - 1)
+                            % len(active_submissions["Chunks"])
+                        ) + 1
+
+                selection_page = await self.view.cog.get_selection_page(page=active_submissions[interaction.user.id]["SelectionPage"])
+                Buttons = ShareTuneCog.CarSelectionButtons(
+                    active_submissions["Chunks"][active_submissions[interaction.user.id]["SelectionPage"]], interaction.user.id, self.view.bot, self.view.cog)
                 await active_submissions[interaction.user.id]["Messages"]["SelectionMessage"].edit(embed=selection_page, view=Buttons)
             except ValueError:
-                await interaction.response.send_message(f"{self.bot.localisation.get('MSG_JUMP_INVALID')}", ephemeral=True)
-    
-    
+                await interaction.response.send_message(localisation.get("MSG_JUMP_INVALID"), ephemeral=True)
+
     class CarConfirmButtons(ui.View):
         def __init__(self, car: list, bot, cog, user_id):
             super().__init__()
@@ -331,10 +339,10 @@ class ShareTuneCog(commands.Cog):
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-    
+
             self.add_item(ShareTuneCog.ConfirmButton(car, bot, cog, user_id))
             self.add_item(ShareTuneCog.DeclineButton(bot, cog, user_id))
-    
+
     class ConfirmButton(ui.Button):
         def __init__(self, car, bot, cog, user_id):
             super().__init__(label="✅", style=discord.ButtonStyle.success)
@@ -342,36 +350,36 @@ class ShareTuneCog(commands.Cog):
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-        
+
         async def callback(self, interaction: discord.Interaction):
             global log
-            logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_CAR_CONFIRMED')}")
-            log += f"{self.bot.localisation.get('SHARE_TUNE_LOG_CAR_CONFIRMED')}"
-            await interaction.response.edit_message(content=f"{self.bot.localisation.get('SHARE_TUNE_MSG_SELECT_CONFIRMED')}", view=None)
+            logger.info(f"{localisation.get('SHARE_TUNE_LOG_CAR_CONFIRMED')}")
+            log += f"{localisation.get('SHARE_TUNE_LOG_CAR_CONFIRMED')}"
+            await interaction.response.edit_message(content=f"{localisation.get('SHARE_TUNE_MSG_SELECT_CONFIRMED')}", view=self)
             if interaction.message.id == active_submissions[interaction.user.id]["Messages"]["ConfirmationMessage"].id:
                 active_submissions[interaction.user.id]["Car"] = self.car
                 cog = interaction.client.get_cog("ShareTuneCog")
                 await cog.submission_loop(interaction)
-    
+
     class DeclineButton(ui.Button):
         def __init__(self, bot, cog, user_id):
             super().__init__(label="❌", style=discord.ButtonStyle.danger)
             self.bot = bot
             self.cog = cog
             self.user_id = user_id
-        
+
         async def callback(self, interaction: discord.Interaction):
             global log
-            logger.info(f"{self.bot.localisation.get('SHARE_TUNE_LOG_CAR_DECLINED')}")
-            header = self.bot.localisation.get('SHARE_TUNE_LOG_HEADER')
+            logger.info(f"{localisation.get('SHARE_TUNE_LOG_CAR_DECLINED')}")
+            header = localisation.get('SHARE_TUNE_LOG_HEADER')
             if interaction.message.id == active_submissions[interaction.user.id]["Messages"]["ConfirmationMessage"].id:
-                await interaction.response.send_message(f"{self.bot.localisation.get('SHARE_TUNE_MSG_LOOP_STOP')} </{self.bot.localisation.get('SHARE_TUNE_CMD_NAME')}:{helpers.load_json_key('session', 'CSR2_SHARE_TUNE_CMD')}>")
+                await interaction.response.send_message(f"{localisation.get('SHARE_TUNE_MSG_LOOP_STOP')} </{localisation.get('SHARE_TUNE_CMD_NAME')}:{helpers.load_json_key('session', 'CSR2_SHARE_TUNE_CMD')}>")
                 for msg in active_submissions[self.user_id]["Messages"].values():
                     try:
                         await msg.delete()
                     except Exception as e:
-                        logger.info(f"{header}{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}")
-                        log += f"{header}{self.bot.localisation.get('LOG_ERROR_FETCH')} {e}"
-    
+                        logger.info(f"{header}{localisation.get('LOG_ERROR_FETCH')} {e}")
+                        log += f"{header}{localisation.get('LOG_ERROR_FETCH')} {e}"
+
 async def setup(bot):
     await bot.add_cog(ShareTuneCog(bot))

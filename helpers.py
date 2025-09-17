@@ -16,19 +16,17 @@ load_dotenv()
 def load_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
-
     return logger
 
 logger = load_logging()
 
-async def load_base_dir():
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-async def load_dotenv_dir():
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-
-async def load_dotenv_data():
-    load_dotenv()
+def load_localisation():
+    base = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(base, "config", "config.json"), "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+    with open(os.path.join(base, "localisation", f"{cfg.get('Localisation', 'en')}.json"), "r", encoding="utf-8") as f:
+        loc = json.load(f)
+    return {k: k for k in loc} if cfg.get("DebugMode") else loc
 
 async def load_token():
     return os.getenv('TOKEN')
@@ -103,6 +101,7 @@ async def load_file_path(file):
         "WRs": "resources/EDB.db",
         "tunes": "resources/tunes.db",
         "version": "resources/version.json",
+        "custom_lists": "resources/custom_lists.json",
         "config": "config/config.json",
         "status": "config/status.json",
         "session": "config/session_variables.json",
@@ -130,6 +129,7 @@ async def load_file(file):
         "Blog_versions": await load_file_path('Blog_versions'),
         "server_limits": await load_file_path('server_limits'),
         "user_limits": await load_file_path('user_limits'),
+        "custom_lists": await load_file_path('custom_lists'),
         "status": await load_file_path('status'),
         "version": await load_file_path('version'),
         "config": await load_file_path('config'),
@@ -152,7 +152,7 @@ async def load_file(file):
         logger.error(f"{file} '{FILE}' not found.")
     return {}
 
-async def save_file(file, data):
+async def save_file(file: str, data: dict):
     FILE = await load_file_path(file)
     async with aiofiles.open(FILE, mode="w", encoding='utf-8') as file:
             await file.write(json.dumps(data, indent=4))
@@ -164,7 +164,7 @@ async def load_json_key(file, key):
         return val
     else:
         return key
-    
+
 async def execute_sql_statement(database: str, sql_statement: str, values: list = None):
     database_paths = {
         "WRs": await load_file_path('EDB'),
@@ -316,6 +316,16 @@ async def is_float(v):
         float(v)
         return True
     except ValueError:
+        return False
+
+async def is_list(v):
+    try:
+        val = json.loads(v)
+        if isinstance(val, list):
+            return True
+        else:
+            return False
+    except:
         return False
 
 async def restart():

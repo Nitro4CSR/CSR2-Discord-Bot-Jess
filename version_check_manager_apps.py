@@ -14,36 +14,37 @@ import helpers
 import in_app_logging
 
 logger = helpers.load_logging()
+localisation = dict(helpers.load_localisation())
 
 semaphore = Semaphore(10)
 
 async def version_check_task(bot: commands.Bot):
-    header = bot.localisation.get('VERSION_CHECK_LOG_APP_HEADER')
+    header = localisation.get('VERSION_CHECK_LOG_APP_HEADER')
     status = 2
     APP_DATA = await helpers.load_app_data()
     for app in APP_DATA:
         previous_data = await load_previous_data(app)
-        logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_START')}")
-        log = f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_START')}"
+        logger.info(f"{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_START')}")
+        log = f"{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_START')}"
         new_data = await fetch_data(app)
-        logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_COMPARE')}")
-        log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_COMPARE')}"
+        logger.info(f"{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_COMPARE')}")
+        log += f"\n{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_COMPARE')}"
         changes, new_data, case = await detect_changes(previous_data, new_data)
 
-        logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_OVERWRITING')}")
-        log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_OVERWRITING')}"
+        logger.info(f"{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_OVERWRITING')}")
+        log += f"\n{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_OVERWRITING')}"
         await save_data(app, new_data)
 
         if changes:
-            logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_SEND_CHANGES')}")
-            log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_SEND_CHANGES')}"
+            logger.info(f"{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_SEND_CHANGES')}")
+            log += f"\n{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_SEND_CHANGES')}"
             messages, log, status = await construct_changes(app, changes, case, log, status)
             log, status = await send_changes(bot, app, messages, log, status)
         else:
-            logger.info(f"{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_NO_CHANGES')}")
-            log += f"\n{app[2]}{header}{bot.localisation.get('VERSION_CHECK_LOG_NO_CHANGES')}"
-        logger.info(f"{app[2]}{header}{app[2]} {bot.localisation.get('VERSION_CHECK_LOG_DONE')}")
-        log += f"\n{app[2]}{header}{app[2]} {bot.localisation.get('VERSION_CHECK_LOG_DONE')}"
+            logger.info(f"{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_NO_CHANGES')}")
+            log += f"\n{app[2]}{header}{localisation.get('VERSION_CHECK_LOG_NO_CHANGES')}"
+        logger.info(f"{app[2]}{header}{app[2]} {localisation.get('VERSION_CHECK_LOG_DONE')}")
+        log += f"\n{app[2]}{header}{app[2]} {localisation.get('VERSION_CHECK_LOG_DONE')}"
         await in_app_logging.send_log(bot, log, status, 2)
         previous_data = None
         new_data = None
@@ -203,23 +204,23 @@ async def construct_changes(APP_DATA: list, changes: list, case: int, log: str, 
     return messages, log, status
 
 async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: str, status: int):
-    header = bot.localisation.get('VERSION_CHECK_LOG_APP_HEADER')
+    header = localisation.get('VERSION_CHECK_LOG_APP_HEADER')
     status = 2
     channel_ids = await helpers.load_file(f'{APP_DATA[2]} announcement channel file')
     for channel_id in channel_ids:
         try:
             channel = bot.get_channel(int(channel_id))
             if not channel:
-                logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_NO_CHANNEL')} {channel_id}")
-                log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_NO_CHANNEL')} {channel_id}"
+                logger.error(f"{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_NO_CHANNEL')} {channel_id}")
+                log += f"\n{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_NO_CHANNEL')} {channel_id}"
                 status = 1
             else:
                 for message in messages:
                     await channel.send(embeds=message)
                     await asyncio.sleep(3)
         except discord.Forbidden as e:
-            logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_FORBIDDEN')} {channel_id}: {e}")
-            log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_FORBIDDEN')} {channel_id}: {e}"
+            logger.error(f"{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_FORBIDDEN')} {channel_id}: {e}")
+            log += f"\n{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_FORBIDDEN')} {channel_id}: {e}"
             status = 1
             bot_permissions = channel.permissions_for(channel.guild.me)
             required_permissions = await helpers.load_perms_dic()
@@ -237,14 +238,14 @@ async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: s
                         embed.set_thumbnail(url='https://i.imgur.com/1VWi2Di.png')
                         await admin.send(embed=embed)
                     except Exception as e:
-                        logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND')} {admin.name} 🏠{channel.guild.name}: {e}")
-                        log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND')} {admin.name} 🏠{channel.guild.name}: {e}"
+                        logger.error(f"{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_SEND')} {admin.name} 🏠{channel.guild.name}: {e}")
+                        log += f"\n{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_SEND')} {admin.name} 🏠{channel.guild.name}: {e}"
                         status = 0
         except discord.NotFound as e:
             check, log, status = await announceupdates.process_request(channel_id, str(APP_DATA[2]), 0, log)
         except Exception as e:
-            logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_CHANNEL')} {channel_id}: {e}")
-            log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_CHANNEL')} {channel_id}: {e}"
+            logger.error(f"{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_CHANNEL')} {channel_id}: {e}")
+            log += f"\n{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_CHANNEL')} {channel_id}: {e}"
             status = 0
     user_ids = await helpers.load_file(f'{APP_DATA[2]} announcement user file')
     for user_id in user_ids:
@@ -266,8 +267,8 @@ async def send_changes(bot: commands.Bot, APP_DATA: list, messages: list, log: s
         except discord.NotFound as e:
             await notifyupdates.process_request(user_id, str(APP_DATA[2]), 0, log)
         except Exception as e:
-            logger.error(f"{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_USER')} {user_id}: {e}")
-            log += f"\n{APP_DATA[2]}{header}{bot.localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_USER')} {user_id}: {e}"
+            logger.error(f"{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_USER')} {user_id}: {e}")
+            log += f"\n{APP_DATA[2]}{header}{localisation.get('LOG_UPDATE_CHECK_ERROR_SEND_USER')} {user_id}: {e}"
             status = 0
 
     return log, status
