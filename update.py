@@ -11,7 +11,7 @@ zip_path = "CSR2-Discord-Bot-Jess-2025-Rewrite.zip"
 base_dir = os.path.dirname(os.path.abspath(__file__))
 extract_folder = os.path.join(base_dir, "update_temp")
 excluded_folders = ['config', 'resources']
-excluded_files = ['.env', '.gitattributes', 'LICENSE', 'README.md']
+excluded_files = ['.env', '.gitattributes', 'LICENSE', 'README.md', 'config.json']
 version_file_path = os.path.join(base_dir, 'resources', 'version.json')
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
