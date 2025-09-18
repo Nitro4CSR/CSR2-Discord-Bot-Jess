@@ -12,14 +12,17 @@ class ListadminCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name=localisation.get('LISTADMIN_CMD_NAME'), description=localisation.get('LISTADMIN_CMD_DESC'))
-    async def listadmins(self, interaction: discord.Interaction):
+    @app_commands.describe(type=localisation.get('ADMIN_CMD_TYPE'))
+    @app_commands.choices(type=[app_commands.Choice(name=localisation.get('ADMIN_CMD_TYPE_OPTION_CUSTOM_LISTS'), value="global_list_admins"), app_commands.Choice(name=localisation.get('ADMIN_CMD_TYPE_OPTION_BOT'), value="Admin file")])
+    async def listadmins(self, interaction: discord.Interaction, type: str = None):
         await interaction.response.defer(ephemeral=True)
         try:
             header = localisation.get('LISTADMIN_LOG_HEADER')
             logger.info(f"{header}{localisation.get('LOG_CMD_TRIGGERED')} /{localisation.get('LISTADMIN_CMD_NAME')}")
             log = f"{header}{localisation.get('LOG_CMD_TRIGGERED')} /{localisation.get('LISTADMIN_CMD_NAME')}"
-
-            admins = await helpers.load_file('Admin file')
+            if not type:
+                type = "Admin file"
+            admins = await helpers.load_file(type)
             if str(interaction.user.id) in admins or int(interaction.user.id) in await helpers.load_json_key("config", "ClientAdminIDs"):
                 admin_list = ", ".join([f"<@{admin_id}>" for admin_id in admins])
                 await interaction.followup.send(f"{localisation.get('LISTADMIN_MSG_ADMINS')} {admin_list}", ephemeral=True)

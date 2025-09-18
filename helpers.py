@@ -86,6 +86,7 @@ def load_command_options_upgrade_stages(localisation: dict):
 async def load_file_path(file):
     conversion = {
         "admins": "resources/admins.json",
+        "global_list_admins": "resources/global_list_admins.json",
         "CSR2_announcement_channels": "resources/CSR2_announcement_channels.json",
         "CSR3_announcement_channels": "resources/CSR3_announcement_channels.json",
         "Blog_announcement_channels": "resources/Blog_announcement_channels.json",
@@ -108,7 +109,8 @@ async def load_file_path(file):
         "PfP": "assets/PfP.png",
         "PfP_Halloween": "assets/PfP_Halloween.png",
         "PfP_Christmas": "assets/PfP_Christmas.png",
-        "PfP_Birthday": "assets/PfP_Birthday.png"
+        "PfP_Birthday": "assets/PfP_Birthday.png",
+        "customlist_template": "assets/CustomList_Template.json"
     }
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), conversion.get(file))
 
@@ -118,6 +120,7 @@ async def load_localisation_path():
 async def load_file(file):
     conversion = {
         "Admin file": await load_file_path('admins'),
+        "global_list_admins": await load_file_path('global_list_admins'),
         "CSR2 announcement channel file": await load_file_path('CSR2_announcement_channels'),
         "CSR3 announcement channel file": await load_file_path('CSR3_announcement_channels'),
         "Blog announcement channel file": await load_file_path('Blog_announcement_channels'),
@@ -133,7 +136,8 @@ async def load_file(file):
         "status": await load_file_path('status'),
         "version": await load_file_path('version'),
         "config": await load_file_path('config'),
-        "session": await load_file_path('session')
+        "session": await load_file_path('session'),
+        "customlist_template": await load_file_path('customlist_template')
     }
     if file == "localisation":
         FILE = await load_localisation_path()
