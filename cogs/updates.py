@@ -41,7 +41,7 @@ class UpdatesCog(commands.Cog):
         header = localisation.get('UPDATES_LOG_HEADER')
         query = """\nSELECT "Date", "Output Vision"\nFROM updates\nORDER BY "ID" ASC"""
         logger.info(f"{header}{localisation.get('INFO_LOG_QUERY')} {query}")
-        log += f"\n{header}{localisation.get('INFO_LOG_QUERY')} ```{query}```"
+        log += f"\n{header}{localisation.get('INFO_LOG_QUERY')} ```sql{query}```"
         results = await helpers.execute_sql_statement("WRs", query)
         return results, log
 

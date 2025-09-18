@@ -58,7 +58,7 @@ class VisionCommandCog(commands.Cog):
                     query += """ info."Vision Info" LIKE ?"""
                     parameters.append(f"{csr2_version}")
                 logger.info(f"{header}{localisation.get('LOG_QUERY')} {query}\n{localisation.get('LOG_PARAMETERS')} {parameters}")
-                log += f"\n{header}{localisation.get('LOG_QUERY')} ```{query}```\n{localisation.get('LOG_PARAMETERS')} {parameters}"
+                log += f"\n{header}{localisation.get('LOG_QUERY')} ```sql{query}```\n{localisation.get('LOG_PARAMETERS')} {parameters}"
                 results = await helpers.execute_sql_statement("WRs", query, parameters)
                 if results:
                     logger.info(f"{header}{len(results)} {localisation.get('LOG_RESULTS_FOUND')}")
@@ -151,7 +151,7 @@ class VisionCommandCog(commands.Cog):
             similar_entries_query += """ "Vision Info" LIKE ?"""
             parameters.append(f"{csr2_version}")
         logger.info(f"{header}{localisation.get('LOG_QUERY')} {similar_entries_query}\n{localisation.get('LOG_PARAMETERS')} {parameters}")
-        log += f"\n{header}{localisation.get('LOG_QUERY')} ```{similar_entries_query}```\n{localisation.get('LOG_PARAMETERS')} {parameters}"
+        log += f"\n{header}{localisation.get('LOG_QUERY')} ```sql{similar_entries_query}```\n{localisation.get('LOG_PARAMETERS')} {parameters}"
         all_entries = await helpers.execute_sql_statement("WRs", similar_entries_query, parameters)
         all_unique_ids = {entry[0]: (entry[1], entry[2], entry[3]) for entry in all_entries}
         cutoff = 0.3 if car else 1.0
@@ -163,7 +163,7 @@ class VisionCommandCog(commands.Cog):
         header = localisation.get('VISION_LOG_HEADER')
         query = """\nSELECT records.UniqueID, records."DB Name", records."Ingame Name Clarification", records.Un, records.★, records."WR-PP", records."WR-EVO", records."WR-NITRO", records."WR-FD", records."WR-TIRE", records."WR-DYNO", records."WR-BEST ET", records."WR Addon", records."SHIFT Links", records."WR-DRIVER", info.IMG, info."Vision Info", info."is EV?", info.thread, s6_effects."S5 - PP", s6_effects."S5 - EVO", s6_effects."S5 - Nos", s6_effects."S5 - FD", s6_effects."S5 - TIRES", s6_effects."S5 - DYNO", s6_effects.Engine, s6_effects.Turbo, s6_effects.Intake, s6_effects.NOS, s6_effects.Body, s6_effects.Tires, s6_effects.Trans\nFROM records\nLEFT JOIN info ON records.UniqueID = info.UniqueID\nLEFT JOIN s6_effects ON records.UniqueID = s6_effects.UniqueID\nWHERE UniqueID = ?"""
         logger.info(f"{header}{localisation.get('LOG_QUERY')} {query}\n{localisation.get('LOG_PARAMETERS')} {(unique_id,)}")
-        log += f"\n{header}{localisation.get('LOG_QUERY')} ```{query}```\n{localisation.get('LOG_PARAMETERS')} {(unique_id,)}"
+        log += f"\n{header}{localisation.get('LOG_QUERY')} ```sql{query}```\n{localisation.get('LOG_PARAMETERS')} {(unique_id,)}"
         results = await helpers.execute_sql_statement("WRs", query, (unique_id,))
         return results, log
 

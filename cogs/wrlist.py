@@ -58,7 +58,7 @@ class WRlistCog(commands.Cog):
                 parameters.append(f"{csr2_version}")
             query += """\nORDER BY records."WR-BEST ET" """
             logger.info(f"{header}{localisation.get('LOG_QUERY')} {query}\n{localisation.get('LOG_PARAMETERS')} {parameters}")
-            log += f"\n{header}{localisation.get('LOG_QUERY')} ```{query}```\n{localisation.get('LOG_PARAMETERS')} {parameters}"
+            log += f"\n{header}{localisation.get('LOG_QUERY')} ```sql{query}```\n{localisation.get('LOG_PARAMETERS')} {parameters}"
             results = await helpers.execute_sql_statement("WRs", query, parameters)
             if results:
                 logger.info(f"{header}{len(results)} {localisation.get('LOG_RESULTS_FOUND')}")
