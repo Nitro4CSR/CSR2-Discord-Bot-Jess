@@ -29,7 +29,7 @@ status_change_timer = None
 
 async def load_cogs():
     for filename in os.listdir(f'{os.path.dirname(os.path.abspath(__file__))}/cogs'):
-        if filename.endswith('.py'):
+        if filename.endswith('.py') and not filename.startswith('#template'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
 
 
@@ -62,8 +62,8 @@ async def on_ready():
         version = {'INITIAL', 'INITIAL'}
         await helpers.save_file('version', ['INITIAL', 'INITIAL'])
     if len(list(set(version))) > 1:
-        logger.info(f"{header}{localisation.get('BOOT_LOG_SOURCE_CODE_VERSION_UPDATE')} {list(version)[1]} ➡️ {list(version)[0]}")
-        log += f"{header}{localisation.get('BOOT_LOG_SOURCE_CODE_VERSION_UPDATE')} {list(version)[1]} ➡️ {list(version)[0]}\n"
+        logger.info(f"\n{header}{localisation.get('BOOT_LOG_SOURCE_CODE_VERSION_UPDATE')} {list(version)[1]} ➡️ {list(version)[0]}")
+        log += f"\n{header}{localisation.get('BOOT_LOG_SOURCE_CODE_VERSION_UPDATE')} {list(version)[1]} ➡️ {list(version)[0]}"
         await helpers.save_file('version', [list(version)[0], list(version)[0]])
 
     if not schedule_db_updates.is_running():

@@ -63,7 +63,7 @@
         },
         {
             "Activity": "watching",
-            "Text": "ICE PeAcE ᏟᏚᏒ",
+            "Text": "ICE PeAcE \u13df\u13da\u13d2",
             "url": null
         },
         {
@@ -113,9 +113,6 @@
     ],
     "ClientAdminServers": [
         911297387765567498
-    ],
-    "ClientGlobalListsAdminIDs": [
-        488680896904429570
     ],
     "Localisation": "en",
     "DefaultServerLimit": 4,
