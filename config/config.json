@@ -102,18 +102,10 @@
             "url": null
         }
     ],
-    "ClientLogChannels_CMD": [
-        1288795049496416287
-    ],
-    "ClientLogChannels_TASK": [
-        1349116899010810009
-    ],
-    "ClientAdminIDs": [
-        488680896904429570
-    ],
-    "ClientAdminServers": [
-        911297387765567498
-    ],
+    "ClientLogChannels_CMD": [],
+    "ClientLogChannels_TASK": [],
+    "ClientAdminIDs": [],
+    "ClientAdminServers": [],
     "Localisation": "en",
     "DefaultServerLimit": 4,
     "DefaultUserLimit": 10,
