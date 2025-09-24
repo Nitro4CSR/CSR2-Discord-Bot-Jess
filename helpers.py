@@ -232,7 +232,7 @@ async def emojify_rarity(db_value):
         "P3": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}{await load_json_key("session", "PS3_EMOJI")}",
         "P4": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}{await load_json_key("session", "PS3_EMOJI")}{await load_json_key("session", "PS4_EMOJI")}",
         "P5": f"{await load_json_key("session", "PS1_EMOJI")}{await load_json_key("session", "PS2_EMOJI")}{await load_json_key("session", "PS3_EMOJI")}{await load_json_key("session", "PS4_EMOJI")}{await load_json_key("session", "PS5_EMOJI")}",
-        "G1-G3": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
+        "G1_G3": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
         "G2_G4": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
         "G3_G4": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
         "G3_G5": f"{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "GS_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}{await load_json_key("session", "EMPTYSTAR_EMOJI")}",
