@@ -15,10 +15,7 @@ logger = helpers.load_logging()
 localisation = dict(helpers.load_localisation())
 
 intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
 intents.emojis_and_stickers = True
-intents.presences = True
 bot = commands.Bot(command_prefix="?CSR2", intents=intents)
 
 db_update_timer = None
