@@ -74,14 +74,27 @@ async def fetch_data(APP_DATA):
 async def fetch_google_play_data(package_name, country):
     try:
         async with semaphore:
-            result = await to_thread(google_play_app, package_name, lang="en", country=country)
+            result = await to_thread(
+                google_play_app,
+                package_name,
+                lang="en",
+                country=country
+            )
+
+        version = result.get("version", "N/A")
+        last_updated = result.get("updated")
+
         return {
             "country": country,
-            "version": result.get("version", "N/A"),
-            "last_updated": result.get("updated", "N/A"),
+            "version": version,
+            "last_updated": last_updated if last_updated else None,
         }
+
     except Exception as e:
-        return {"country": country, "error": str(e)}
+        return {
+            "country": country,
+            "error": str(e)
+        }
 
 async def async_fetch_app_store_data(app_id, country):
     return await to_thread(fetch_app_store_data, app_id, country)
@@ -125,8 +138,9 @@ async def detect_changes(old_data, new_data):
                         case = 1
                     continue
                 if old_error and "No app found with ID " in old_error:
-                    changes.append([platform, country, old_error, new_version, new_last_updated, "A new version has been released."])
-                    case = 2
+                    if helpers.is_valid_version(new_version):
+                        changes.append([platform, country, old_error, new_version, new_last_updated, "A new version has been released."])
+                        case = 2
                     continue
                 if new_error and "No app found with ID " in new_error:
                     changes.append([platform, country, old_version, old_last_updated, new_error, "The app might've been delisted from the countries store page."])
@@ -134,13 +148,27 @@ async def detect_changes(old_data, new_data):
                     continue
                 if old_error or new_error:
                     continue
-                if new_last_updated is None:
-                    new_last_updated = old_last_updated
-                if all([old_version, new_version, old_last_updated, new_last_updated]):
-                    if old_version >= new_version and old_last_updated >= new_last_updated:
+                if not helpers.is_valid_version(new_version):
+                    # Placeholder / junk value ("Varies with device" etc.) — never
+                    # announce it, and don't clobber the last good version on record.
+                    if helpers.is_valid_version(old_version):
                         new_entry["version"] = old_version
                         new_entry["last_updated"] = old_last_updated
-                    if old_version < new_version or old_last_updated < new_last_updated:
+                    continue
+                if not helpers.is_valid_version(old_version):
+                    # Old record is a placeholder from a previous bad scrape —
+                    # adopt the new valid version quietly (no false announcement).
+                    continue
+                if new_last_updated is None and old_last_updated is not None:
+                    new_last_updated = old_last_updated
+                    new_entry["last_updated"] = old_last_updated
+                if all([old_version, new_version, old_last_updated, new_last_updated]):
+                    old_key = helpers.version_key(old_version)
+                    new_key = helpers.version_key(new_version)
+                    if old_key >= new_key and old_last_updated >= new_last_updated:
+                        new_entry["version"] = old_version
+                        new_entry["last_updated"] = old_last_updated
+                    if old_key < new_key or old_last_updated < new_last_updated:
                         changes.append([platform, country, old_version, new_version, old_last_updated, new_last_updated, "A new version has been released."])
                         case = 4
                     continue
@@ -149,7 +177,20 @@ async def detect_changes(old_data, new_data):
                 case = 1
                 continue
             if not new_error:
-                changes.append([platform, country, new_version, new_last_updated, "A new version has been released."])
+                # Don't announce placeholder / junk versions ("Varies with device" etc.)
+                if not helpers.is_valid_version(new_version):
+                    continue
+                # Don't announce placeholder / bad scrape entries
+                if new_last_updated is None:
+                    continue
+
+                changes.append([
+                    platform,
+                    country,
+                    new_version,
+                    new_last_updated,
+                    "A new version has been released."
+                ])
                 case = 5
             continue
 

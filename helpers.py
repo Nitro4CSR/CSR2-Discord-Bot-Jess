@@ -6,6 +6,7 @@ import aiofiles
 import aiosqlite
 import json
 import os
+import re
 import pycountry_convert
 import random
 import sys
@@ -331,6 +332,23 @@ async def is_list(v):
             return False
     except:
         return False
+
+# Store placeholder / junk values (e.g. Google Play's "Varies with device") that
+# must never be treated as real versions: not announced, not saved as a version.
+IGNORED_VERSION_STRINGS = {"varies with device", "varies", "n/a", "none", "unknown"}
+
+def is_valid_version(version):
+    """True only for numeric dotted versions like 6.8.0, 6.8.1, 6.9.0, 7.0.0."""
+    if version is None:
+        return False
+    version = str(version).strip()
+    if not version or version.lower() in IGNORED_VERSION_STRINGS:
+        return False
+    return re.fullmatch(r"\d+(\.\d+)*", version) is not None
+
+def version_key(version):
+    """Numeric sort key so 6.10.0 compares after 6.9.0 (plain string compare can't)."""
+    return tuple(int(part) for part in str(version).split("."))
 
 async def restart():
     python = sys.executable
